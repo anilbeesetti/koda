@@ -10,9 +10,9 @@ use std::{
     path::{Component, Path, PathBuf},
 };
 
-#[cfg(feature = "bundled-preview")]
-#[path = "preview_bundle.rs"]
-mod bundle;
+#[path = "preview_runtime.rs"]
+mod runtime;
+pub use runtime::InstallationCancellation;
 
 pub const MODEL_TASK: &str = "zedAndroidPreviewModel";
 const OUTPUT: &str = "ANDROID_IDE_PREVIEW_MODEL=";
@@ -136,16 +136,18 @@ impl Preview {
 }
 
 pub fn installation() -> Result<PathBuf> {
+    installation_with_progress(&std::sync::atomic::AtomicBool::new(false), |_| {})
+}
+
+pub fn installation_with_progress(
+    cancel: &std::sync::atomic::AtomicBool,
+    progress: impl FnMut(String),
+) -> Result<PathBuf> {
     if let Some(directory) = env::var_os("ANDROID_IDE_COMPOSE_PREVIEW").map(PathBuf::from) {
         validate_installation(&directory)?;
         return Ok(directory);
     }
-    #[cfg(feature = "bundled-preview")]
-    return bundle::installation();
-    #[cfg(not(feature = "bundled-preview"))]
-    anyhow::bail!(
-        "This build does not include Compose preview dependencies. Build the Koda app to enable previews."
-    )
+    runtime::installation(cancel, progress)
 }
 
 fn validate_installation(directory: &Path) -> Result<()> {

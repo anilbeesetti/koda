@@ -1,0 +1,53 @@
+{
+  "protocol": "2",
+  "artifacts": [
+    {
+      "path": "renderer.jar",
+      "url": "https://dl.google.com/dl/android/maven2/com/android/tools/compose/compose-preview-renderer/0.0.1-alpha15/compose-preview-renderer-0.0.1-alpha15.jar",
+      "sha256": "0f5ebdac5c0b4fa2bfe1528fcf8cf1aa86921311f30c67e183921551aaed93ba",
+      "bytes": 51240789,
+      "expanded_bytes": 51240789
+    },
+    {
+      "path": "layoutlib.jar",
+      "url": "https://dl.google.com/dl/android/maven2/com/android/tools/layoutlib/layoutlib/16.2.4/layoutlib-16.2.4.jar",
+      "sha256": "7ba5541db4c9e9c1104ce7e5d22bb3e738818e88d9bba86796bf16ff30a3b3eb",
+      "bytes": 60286919,
+      "expanded_bytes": 60286919
+    },
+    {
+      "path": "layoutlib/data/framework_res.jar",
+      "url": "https://dl.google.com/dl/android/maven2/com/android/tools/layoutlib/layoutlib-resources/16.2.4/layoutlib-resources-16.2.4.jar",
+      "sha256": "6cd14a88b4b00bca9b342a07d9be80c6c13399c31dd54c43ee2974aac4106d8d",
+      "bytes": 34854638,
+      "expanded_bytes": 34854638
+    }
+  ],
+  "layoutlib": {
+    "linux-x86_64": {
+      "url": "https://dl.google.com/dl/android/maven2/com/android/tools/layoutlib/layoutlib-runtime/16.2.4/layoutlib-runtime-16.2.4-linux.jar",
+      "sha256": "9259303b3395894f25e2c7d402dccf66ac5cd80c7345e6036d58997291c55931",
+      "bytes": 80672212,
+      "expanded_bytes": 149374359
+    },
+    "windows-x86_64": {
+      "url": "https://dl.google.com/dl/android/maven2/com/android/tools/layoutlib/layoutlib-runtime/16.2.4/layoutlib-runtime-16.2.4-win.jar",
+      "sha256": "86178da9dd5a69852a5fb12b465ffd018480c091dc03bef3401f115cd681e97f",
+      "bytes": 76539853,
+      "expanded_bytes": 139169121
+    },
+    "macos-x86_64": {
+      "url": "https://dl.google.com/dl/android/maven2/com/android/tools/layoutlib/layoutlib-runtime/16.2.4/layoutlib-runtime-16.2.4-mac.jar",
+      "sha256": "b1453ca1bff5dc10769b9672a21fe47936af1a8ba2f2cf8cf18b8790e3e77d5d",
+      "bytes": 80269449,
+      "expanded_bytes": 150578545
+    },
+    "macos-aarch64": {
+      "url": "https://dl.google.com/dl/android/maven2/com/android/tools/layoutlib/layoutlib-runtime/16.2.4/layoutlib-runtime-16.2.4-mac-arm.jar",
+      "sha256": "0119fc087f58e363dd0a6df5b1c585f4d7bf0bbb1e5dd5129c2e3f324e244492",
+      "bytes": 79329886,
+      "expanded_bytes": 148190001
+    }
+  },
+  "schema": 1
+}

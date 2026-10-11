@@ -1155,23 +1155,47 @@ impl ComposePreviewView {
             self.pending_manual = false;
             self.building = true;
             self.error = None;
-            self.status = "Building and rendering Compose previews…".into();
+            self.status = "Preparing Compose preview libraries…".into();
+            let installation_cancel = preview::InstallationCancellation::default();
+            let cancel = installation_cancel.token();
             self.render_task = Some(cx.spawn_in(window, async move |view, cx| {
+                let _installation_cancel = installation_cancel;
                 let request_root = root.clone();
                 let request_target = target.clone();
                 let mut environment = environment.await.unwrap_or_default();
                 environment.extend(terminal_environment);
                 let result = async {
-                    // Await blocking extraction separately so cancelling setup cannot start a project build.
-                    let (installation, java) = cx.background_spawn(async {
-                        let installation = preview::installation()?;
+                    // Keep installation cancellable and report progress before starting a project build.
+                    let progress = Arc::new(std::sync::Mutex::new("Checking Compose preview libraries…".to_owned()));
+                    let worker_progress = progress.clone();
+                    let mut worker = cx.background_spawn(async move {
+                        let installation = preview::installation_with_progress(&cancel, |message| {
+                            if let Ok(mut progress) = worker_progress.lock() { *progress = message; }
+                        })?;
                         let java = preview::java_binary(&installation)?;
                         Ok::<_, anyhow::Error>((installation, java))
-                    }).await?;
+                    }).boxed();
+                    let (installation, java) = loop {
+                        match select(worker, cx.background_executor().timer(Duration::from_millis(100))).await {
+                            Either::Left((result, _)) => break result?,
+                            Either::Right((_, pending)) => {
+                                worker = pending;
+                                let message = progress.lock().ok().map(|progress| progress.clone());
+                                view.update_in(cx, |view, _, cx| {
+                                    if let Some(message) = message { view.installation_progress(message, cx); }
+                                })?;
+                            }
+                        }
+                    };
                     ensure!(view.update_in(cx, |view, _, cx| {
-                        view.project.read(cx).android_model().is_current(&model_token)
+                        let current = view.project.read(cx).android_model().is_current(&model_token)
                             && view.configuration_current(cx)
-                            && view.revision == revision
+                            && view.revision == revision;
+                        if current {
+                            view.status = "Building and rendering Compose previews…".into();
+                            cx.notify();
+                        }
+                        current
                     })?, "Discarded an outdated Compose preview request");
                     cx.background_spawn(async move {
                         let environment = android_tools::managed::command_environment_with(environment.iter())?;
@@ -1352,6 +1376,17 @@ impl ComposePreviewView {
             self.status = "Preview refresh failed".into();
         }
         cx.notify();
+    }
+
+    fn installation_progress(&mut self, message: String, cx: &mut Context<Self>) {
+        if self.building && self.configuration_current(cx) {
+            self.status = if self.pending {
+                format!("{message} · refresh queued").into()
+            } else {
+                message.into()
+            };
+            cx.notify();
+        }
     }
 
     fn release_images(&mut self, window: &mut Window, cx: &mut App) {
@@ -2243,6 +2278,21 @@ impl Render for ComposePreviewView {
                             ),
                     ),
             )
+            .when(self.building, |view| {
+                view.child(
+                    div()
+                        .id("compose-progress")
+                        .debug_selector(|| "compose-progress".into())
+                        .flex_none()
+                        .px_3()
+                        .py_2()
+                        .child(
+                            Label::new(self.status.clone())
+                                .size(LabelSize::Small)
+                                .color(Color::Muted),
+                        ),
+                )
+            })
             .when_some(self.error.clone(), |view, error| {
                 view.child(
                     div()
@@ -3698,6 +3748,43 @@ mod tests {
         view.update(cx, |view, cx| view.stop(cx));
         view.read_with(cx, |view, _| {
             assert!(!view.building && !view.pending && !view.pending_manual)
+        });
+    }
+
+    #[gpui::test]
+    async fn installation_progress_survives_edits_and_stop_cancels_its_worker(
+        cx: &mut TestAppContext,
+    ) {
+        let (project, buffer) = test_project(cx).await;
+        let (workspace, cx) =
+            cx.add_window_view(|window, cx| Workspace::test_new(project.clone(), window, cx));
+        let view = workspace.update_in(cx, |workspace, window, cx| {
+            add_preview(workspace, project, buffer, window, cx).0
+        });
+        let guard = preview::InstallationCancellation::default();
+        let cancel = guard.token();
+        view.update_in(cx, |view, window, cx| {
+            view.building = true;
+            view.render_task = Some(cx.spawn(async move |_, _| {
+                let _guard = guard;
+                futures::future::pending::<()>().await;
+            }));
+            view.installation_progress("Downloading Compose renderer: 1 / 49 MiB".into(), cx);
+            view.queue_refresh(false, window, cx);
+            view.queue_refresh(true, window, cx);
+            view.installation_progress("Downloading Compose renderer: 2 / 49 MiB".into(), cx);
+            assert!(view.status.contains("2 / 49 MiB"));
+            assert!(view.status.contains("refresh queued"));
+        });
+        cx.run_until_parked();
+        assert!(!cancel.load(std::sync::atomic::Ordering::Acquire));
+        view.update(cx, |view, cx| view.stop(cx));
+        cx.run_until_parked();
+        assert!(cancel.load(std::sync::atomic::Ordering::Acquire));
+        view.update(cx, |view, cx| {
+            view.installation_progress("Stale download progress".into(), cx);
+            assert_eq!(view.status, "Preview refresh stopped");
+            assert!(!view.pending && !view.building);
         });
     }
 

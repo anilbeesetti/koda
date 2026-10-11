@@ -8,9 +8,6 @@ license = "GPL-3.0-or-later"
 [lints]
 workspace = true
 
-[features]
-bundled-preview = ["dep:fs2", "dep:sha2", "dep:zip", "dep:flate2", "dep:reqwest", "dep:tar"]
-
 [lib]
 path = "src/android_tools.rs"
 doctest = false
@@ -32,18 +29,7 @@ smol.workspace = true
 serde.workspace = true
 serde_json.workspace = true
 tempfile.workspace = true
+tokio = { workspace = true, features = ["rt", "time", "macros"] }
 which.workspace = true
 uuid = { workspace = true, features = ["v4"] }
 zip = { version = "0.6.6", default-features = false, features = ["deflate"] }
-
-[build-dependencies]
-anyhow.workspace = true
-flate2 = { version = "1.1.8", optional = true }
-fs2 = { version = "0.4.3", optional = true }
-reqwest = { workspace = true, features = ["blocking"], optional = true }
-serde = { workspace = true, features = ["derive"] }
-serde_json.workspace = true
-sha2 = { workspace = true, optional = true }
-tar = { version = "0.4.44", optional = true }
-tempfile.workspace = true
-zip = { version = "0.6.6", default-features = false, features = ["deflate"], optional = true }

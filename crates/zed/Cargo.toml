@@ -63,7 +63,7 @@ path = "src/visual_test_runner.rs"
 required-features = ["visual-tests"]
 
 [dependencies]
-android_ui = { workspace = true, features = ["bundled-preview"] }
+android_ui.workspace = true
 acp_thread.workspace = true
 acp_tools.workspace = true
 action_log = { workspace = true, optional = true }

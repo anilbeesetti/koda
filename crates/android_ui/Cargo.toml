@@ -8,9 +8,6 @@ license = "GPL-3.0-or-later"
 [lints]
 workspace = true
 
-[features]
-bundled-preview = ["android_tools/bundled-preview"]
-
 [lib]
 path = "src/android_ui.rs"
 doctest = false

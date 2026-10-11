@@ -1,13 +1,16 @@
 # Compose previews
 
 Run `cargo run --locked -p zed --bin koda`, open a Kotlin file, and choose
-**Compose preview**. Cargo automatically fetches checksum-pinned preview build
-inputs on the first build. The renderer, native layoutlib, and compiled bridge are embedded in the executable
-and included in packaged apps. Java is selected separately in **Android Setup**:
+**Compose preview**. On first use, Koda downloads the checksum-pinned renderer,
+resources, and native layoutlib for this platform. Cargo builds and packaged apps
+contain only the small bridge source and release manifest. Select Java in **Android Setup**:
 use an existing full JDK 21 or download the managed Temurin JDK 21 into application
-storage. Preview uses that selection without a shell-exported Java path. The app unpacks its bundle into a versioned application cache on first
-use; subsequent refreshes reuse it. Missing or truncated cached files are repaired
-from the app's copy, and concurrent app instances share an extraction lock. The
+storage. Preview uses that selection without a shell-exported Java path and compiles
+its bridge once during installation. Subsequent refreshes reuse the verified cache,
+including offline. Missing or corrupt files are repaired from verified downloads;
+uncached libraries require a connection. The toolbar reports installation progress,
+and **Stop** cancels downloads and compilation. Completed downloads survive retry.
+Concurrent app instances share an installation lock. The
 gallery appears beside the code inside the selected Kotlin source tab, sharing
 that tab's navigation and file identity. It displays every discovered annotation,
 including multipreview annotations and each value from a preview parameter
@@ -33,7 +36,7 @@ shows whether previews are up to date, refreshing, or failed.
 
 Render output, Gradle exporter scripts, and unsaved source copies live in isolated
 temporary directories under the selected Koda data profile's
-`android-tools/compose-preview/renders` directory, beside the bundled preview runtime.
+`android-tools/compose-preview/renders` directory, beside the downloaded preview runtime.
 Stable, Nightly and custom `--user-data-dir` profiles have separate caches.
 Each request gets its own directory, so projects and app instances cannot overwrite
 one another's inputs. The directory is removed when its render fails or is
@@ -105,15 +108,22 @@ collection APIs produce an actionable build error.
 The alpha15 renderer reads only known JSON fields; source metadata stays outside
 its screenshot objects. Its relocated coroutine classes require the regular
 service loader, so the bridge disables the coroutine fast loader. Bridge protocol
-version 2 is packaged together with the renderer. The build uses a pinned Eclipse
-compiler and a host Java runtime, so bridge compilation also needs no local JDK.
-The build-only Java runtime is never copied into the shipped archive. Pinned inputs
-are cached under Cargo's home (or `KODA_COMPOSE_PREVIEW_ARTIFACT_CACHE`) and checked
-against `crates/android_tools/preview-bundle.json`; binaries carry no build-machine
-paths. Bundled Google tooling license notices are preserved; managed Java retains its own legal files.
-For offline builds, keep the artifact cache and set `CARGO_NET_OFFLINE=true`.
-Build scripts cannot see Cargo's `--offline` flag; this environment setting also
-prevents preview artifact downloads and fails immediately if an input is missing.
+version 2 is tested together with the renderer. The selected JDK 21 compiles the
+bridge during first use; building Koda needs no preview libraries or local JDK.
+`crates/android_tools/preview-manifest.json` pins URLs, sizes, and SHA-256 checksums.
+Update that manifest and validate rendering before shipping a new Koda release;
+the app never fetches an untested "latest" library version.
+
+Cache identities include the manifest, bridge source, and host platform. Each
+release selects only its own complete, verified generation, publishing a new
+selector atomically after extraction and compilation succeed. Updating Koda
+downloads new libraries on next preview use, reusing unchanged artifact downloads.
+If the required version is unavailable offline, connect and retry **Build and refresh**;
+an incompatible older generation is never substituted. Older generations are
+retained for rollback and other running Koda versions. Reveal managed storage from
+Android Setup, then close all Koda windows before manually removing unused generations;
+the existing managed storage budget bounds growth. Google tooling
+license notices are preserved; managed Java retains its own legal files.
 
 Only visible gallery rows create UI elements. Duplicate layout rectangles are
 collapsed once per render. Image assets are released when the gallery changes or
@@ -156,7 +166,7 @@ latency depends on the project and is longer than Studio's Fast Preview path.
 Preview configuration support follows the pinned standalone renderer; it does not
 offer every Studio display mode (for example, system-bar decorations).
 
-Bundled previews support Apple Silicon and Intel macOS, Linux x86-64, and Windows
+Previews support Apple Silicon and Intel macOS, Linux x86-64, and Windows
 x86-64, matching Google's available native layoutlib distributions. Android
 projects still need their normal SDK and Gradle-compatible project JDK. Navigation requires Compose
 compiler source information and project sources; framework and unavailable library
@@ -172,7 +182,7 @@ multipreview annotations, two parameter values, font scaling, and an intentional
 render failure. It should show ten cards, nine successful and one diagnostic.
 
 Use an isolated copy of the sample, a JDK accepted by its Gradle version, Android
-SDK 37, and a preview runtime extracted from the app's application cache:
+SDK 37, and a preview runtime installed in the app's application cache:
 
 ```sh
 fixture="$(mktemp -d)"
@@ -197,7 +207,13 @@ Compose 1.7.0 / Gradle 8.11.1 and the current sample's AGP 9.4.0 / Kotlin 2.2.10
 Compose BOM 2026.02.01 / Gradle 9.6.1. Separate Compose compiler fixtures verify
 multifile Kotlin facades, overloaded previews and coroutine rendering.
 
-Rust checks are `cargo test -p android_tools --features bundled-preview`, `cargo test -p android_ui`, and
+Rust checks are `cargo test -p android_tools`, `cargo test -p android_ui`, and
 `./script/clippy -p android_tools -p android_ui`. Editor tests cover scaled overlay
 clicks, navigation, request coalescing, variant cancellation, ignored generated
 outputs, and preserving unrelated tabs and unsaved edits when closing previews.
+
+To validate the real pinned libraries and first-use bridge compilation without an
+Android project, run
+`PREVIEW_TEST_JAVA=/absolute/path/to/jdk21/bin/java cargo test --locked -p android_tools real_preview_libraries_compile_and_run_the_bridge -- --ignored --nocapture`.
+This downloads the libraries into isolated temporary storage, exercises discovery,
+and verifies that the installed generation is reused without network work.
