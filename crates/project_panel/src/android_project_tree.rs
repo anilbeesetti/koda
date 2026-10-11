@@ -660,6 +660,8 @@ pub(crate) struct AndroidProjectTree {
     #[cfg(test)]
     row_paints_for_test: std::cell::Cell<usize>,
     #[cfg(test)]
+    row_debug_key_for_test: Option<NodeKey>,
+    #[cfg(test)]
     completion_for_test: Option<
         futures::channel::oneshot::Sender<(RequestOwner, Result<CapturedAndroidModuleTree>)>,
     >,
@@ -774,6 +776,8 @@ impl AndroidProjectTree {
             row_gate_for_test: None,
             #[cfg(test)]
             row_paints_for_test: std::cell::Cell::new(0),
+            #[cfg(test)]
+            row_debug_key_for_test: None,
             #[cfg(test)]
             completion_for_test: None,
         };
@@ -1770,16 +1774,6 @@ impl AndroidProjectTree {
             .collect()
     }
 
-    #[cfg(test)]
-    fn render_row(
-        &self,
-        index: usize,
-        window: &Window,
-        cx: &mut Context<Self>,
-    ) -> Option<AnyElement> {
-        self.render_prepared_row(index, &self.row_paint_context(window, cx)?, cx)
-    }
-
     fn render_prepared_row(
         &self,
         index: usize,
@@ -1797,6 +1791,10 @@ impl AndroidProjectTree {
         let key = row.key.clone();
         let disclosure_key = row.key.clone();
         let settings = super::ProjectPanelSettings::get_global(cx);
+        #[cfg(test)]
+        let debug_row = self.row_debug_key_for_test.as_ref() == Some(&row.key);
+        #[cfg(not(test))]
+        let debug_row = true;
         Some(
             div()
                 .when(index == 0, |element| {
@@ -1828,7 +1826,9 @@ impl AndroidProjectTree {
                         .start_slot(Icon::new(row.icon).size(IconSize::Small))
                         .child(
                             h_flex()
-                                .debug_selector(|| "android-logical-row-text".into())
+                                .when(debug_row, |element| {
+                                    element.debug_selector(|| "android-logical-row-text".into())
+                                })
                                 .min_w_0()
                                 .gap_1()
                                 .child(
@@ -3946,42 +3946,27 @@ mod tests {
 
     // Round-two regressions exercise the actual GPUI window/action routes and
     // gated jobs. They supplement, rather than replace, all prior assertions.
-    // Row listeners record Window::current_view during paint. Give isolated row
-    // draws their real tree identity through GPUI's regular view pipeline.
-    struct LogicalRowView {
-        tree: Entity<AndroidProjectTree>,
-        index: usize,
-    }
-
-    impl gpui::View for LogicalRowView {
-        fn entity_id(&self) -> Option<gpui::EntityId> {
-            Some(self.tree.entity_id())
-        }
-
-        fn render(self, window: &mut Window, cx: &mut App) -> impl IntoElement {
-            let Self { tree, index } = self;
-            tree.update(cx, |tree, cx| {
-                tree.render_row(index, window, cx)
-                    .expect("Actual logical row element")
-            })
-        }
-    }
-
+    // Isolated draws populate next_frame, while pointer dispatch uses the committed
+    // rendered_frame. Locate the requested row in the real workspace frame so its
+    // bounds and guarded listener belong to the same paint.
     fn draw_logical_row(
         window: &mut TestWindow,
         key: &NodeKey,
     ) -> Result<gpui::Bounds<gpui::Pixels>> {
         let tree = window.tree();
-        let index = tree
-            .read_with(&window.visual, |tree, _| {
-                tree.logical_rows.iter().position(|row| &row.key == key)
-            })
-            .context("Visible row to paint")?;
-        window.visual.draw(
-            gpui::point(px(0.), px(0.)),
-            gpui::size(px(600.), px(100.)),
-            |_, _| gpui::ViewElement::new(LogicalRowView { tree, index }),
-        );
+        tree.update(&mut window.visual, |tree, cx| {
+            let index = tree
+                .logical_rows
+                .iter()
+                .position(|row| &row.key == key)
+                .context("Visible row to paint")?;
+            tree.row_debug_key_for_test = Some(key.clone());
+            tree.logical_scroll
+                .scroll_to_item_strict(index, gpui::ScrollStrategy::Top);
+            cx.notify();
+            Ok::<_, anyhow::Error>(())
+        })?;
+        draw_workspace(window);
         window
             .visual
             .debug_bounds("android-logical-row-text")
