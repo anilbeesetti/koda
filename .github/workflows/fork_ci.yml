@@ -396,6 +396,8 @@ jobs:
           xcrun --find metal
       - name: Check macOS Zed application
         run: python3 script/ci-run stage 'macOS app check' -- cargo check --locked --keep-going -p zed --bin koda
+      - name: Test published managed Kotlin runtime
+        run: python3 script/ci-run stage 'macOS Kotlin download and startup' -- cargo test --locked -p android_tools --lib published_runtime_download_and_offline_reuse -- --ignored --nocapture
       - name: Save macOS build cache
         if: ${{ !cancelled() && github.event_name != 'pull_request' && steps.build-cache.outputs.cache-hit != 'true' }}
         continue-on-error: true

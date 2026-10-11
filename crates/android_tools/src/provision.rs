@@ -927,6 +927,7 @@ fn checked_url(value: &str) -> Result<reqwest::Url> {
                 "github.com"
                     | "release-assets.githubusercontent.com"
                     | "objects.githubusercontent.com"
+                    | "api.github.com"
                     | "dl.google.com"
             )
         ),
@@ -1057,7 +1058,7 @@ fn verify_download(path: &Path, artifact: &Artifact) -> Result<()> {
     Ok(())
 }
 
-fn download_client_builder() -> reqwest::blocking::ClientBuilder {
+pub(crate) fn download_client_builder() -> reqwest::blocking::ClientBuilder {
     // This fork polls blocking response bodies outside Tokio. Its async read_timeout
     // creates a Tokio timer lazily and panics on GPUI workers; blocking wait timeouts do not.
     reqwest::blocking::Client::builder()
@@ -1179,6 +1180,40 @@ fn download(
     Err(last_error.context("The download could not be started")?).with_context(|| format!("Could not download {}. Check your connection and storage, then retry. Verified completed downloads are retained.", artifact.name))
 }
 
+pub(crate) fn download_runtime(
+    root: &Path,
+    url: &str,
+    checksum: &str,
+    bytes: u64,
+    offline: bool,
+    cancel: &AtomicBool,
+    progress: &impl Fn(Progress),
+) -> Result<PathBuf> {
+    download(
+        root,
+        &Artifact {
+            host: String::new(),
+            name: "Kotlin language server".into(),
+            url: url.into(),
+            sha256: checksum.into(),
+            sha1: None,
+            bytes,
+            format: "tar.gz".into(),
+            destination: String::new(),
+            license_id: None,
+            revision: None,
+            sdk_api_level: None,
+            extension_level: None,
+            base_extension: None,
+        },
+        offline,
+        cancel,
+        progress,
+        0,
+        bytes,
+    )
+}
+
 fn storage_budget(root: &Path, planned: u64) -> Result<()> {
     let mut total = 0u64;
     let mut count = 0usize;
@@ -1283,9 +1318,12 @@ fn ensure_installation_space(
     .context("Koda's private archive cache and Java filesystem needs more free space")
 }
 
-fn archive_relative(path: &Path) -> Result<PathBuf> {
+fn archive_relative(path: &Path, strip_root: bool) -> Result<PathBuf> {
     safe_relative(path)?;
-    let relative = path.components().skip(1).collect::<PathBuf>();
+    let relative = path
+        .components()
+        .skip(usize::from(strip_root))
+        .collect::<PathBuf>();
     if !relative.as_os_str().is_empty() {
         safe_relative(&relative)?;
     }
@@ -1343,16 +1381,17 @@ fn copy_bounded(
     Ok(())
 }
 
-fn extract(
+pub(crate) fn extract(
     path: &Path,
-    artifact: &Artifact,
+    format: &str,
+    strip_root: bool,
     destination: &Path,
     cancel: &AtomicBool,
     expanded: &mut u64,
     entries: &mut usize,
 ) -> Result<()> {
     kotlin::ensure_directory(destination)?;
-    if artifact.format == "zip" {
+    if format == "zip" {
         let mut archive = zip::ZipArchive::new(fs::File::open(path)?)?;
         ensure!(
             archive.len() <= MAX_FILES,
@@ -1366,7 +1405,7 @@ fn extract(
                 "Setup contains too many archive entries"
             );
             let mut entry = archive.by_index(index)?;
-            let relative = archive_relative(Path::new(entry.name()))?;
+            let relative = archive_relative(Path::new(entry.name()), strip_root)?;
             if relative.as_os_str().is_empty() {
                 ensure!(entry.is_dir(), "An archive file lacks its root directory");
                 continue;
@@ -1394,7 +1433,7 @@ fn extract(
                 file.sync_all()?;
             }
         }
-    } else if artifact.format == "tar.gz" {
+    } else if format == "tar.gz" {
         let mut archive = tar::Archive::new(flate2::read::GzDecoder::new(fs::File::open(path)?));
         let mut links = Vec::new();
         for entry in archive.entries()? {
@@ -1405,7 +1444,7 @@ fn extract(
                 "Setup contains too many archive entries"
             );
             let mut entry = entry?;
-            let relative = archive_relative(&entry.path()?)?;
+            let relative = archive_relative(&entry.path()?, strip_root)?;
             let entry_type = entry.header().entry_type();
             if relative.as_os_str().is_empty() {
                 ensure!(
@@ -1494,7 +1533,7 @@ fn extract(
     Ok(())
 }
 
-fn inventory(
+pub(crate) fn inventory(
     directory: &Path,
     cancel: &AtomicBool,
 ) -> Result<(BTreeMap<String, String>, BTreeMap<String, u32>)> {
@@ -2250,7 +2289,8 @@ fn install_at_with_recipe(
         } else {
             extract(
                 &archive,
-                artifact,
+                &artifact.format,
+                true,
                 &destination,
                 cancel,
                 &mut expanded,
@@ -2864,7 +2904,8 @@ mod tests {
         assert!(
             extract(
                 &path,
-                &artifact,
+                &artifact.format,
+                true,
                 &temporary.path().join("out"),
                 &AtomicBool::new(false),
                 &mut 0,

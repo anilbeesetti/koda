@@ -1148,11 +1148,7 @@ impl LocalLspStore {
             let selected_managed_kotlin = managed_kotlin.is_some();
             let mut binary = if let Some(resolve) = managed_kotlin {
                 let path = cx.background_spawn(async move { resolve() }).await?;
-                log::info!(
-                    "Using Koda Kotlin server {} at {}",
-                    android_tools::kotlin::OFFICIAL_REVISION,
-                    path.display()
-                );
+                log::info!("Using Koda Kotlin server at {}", path.display());
                 LanguageServerBinary {
                     path,
                     arguments: vec![

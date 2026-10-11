@@ -106,7 +106,7 @@ struct Manifest {
     modes: BTreeMap<String, u32>,
 }
 
-fn read_json<T: serde::de::DeserializeOwned>(path: &Path, maximum: u64) -> Result<T> {
+pub(crate) fn read_json<T: serde::de::DeserializeOwned>(path: &Path, maximum: u64) -> Result<T> {
     let metadata = fs::symlink_metadata(path)?;
     ensure!(
         metadata.is_file() && !metadata.file_type().is_symlink(),
@@ -277,7 +277,11 @@ fn validate_inventory_inner(
 }
 
 pub fn resolve(tool: Tool) -> Result<PathBuf> {
-    resolve_at(&root(), tool).with_context(|| {
+    let result = match tool {
+        Tool::Kotlin => super::kotlin_runtime::resolve_at(&root()),
+        Tool::Debugger => resolve_at(&root(), tool),
+    };
+    result.with_context(|| {
         format!(
             "{} is unavailable. Run Android: Setup from the command palette, open Customize and Advanced tools, then choose Install / repair or Validate. Managed Kotlin and debugger installation currently supports Apple Silicon macOS.",
             tool.label()
@@ -322,7 +326,7 @@ fn validate_language_server_binary_at(root: &Path, path: &Path) -> Result<()> {
             current_profile,
             "This project references another Koda profile's managed Kotlin installation. Configure Kotlin to select this profile's validated runtime"
         );
-        let current = resolve_at(root, Tool::Kotlin).context("Managed Kotlin is unavailable. Run Android: Setup from the command palette, open Customize and Advanced tools, choose Install / repair, then run Configure Kotlin")?;
+        let current = super::kotlin_runtime::resolve_at(root).context("Managed Kotlin is unavailable. Run Android: Setup from the command palette, open Customize and Advanced tools, choose Install / repair, then run Configure Kotlin")?;
         ensure!(
             path.canonicalize()? == current.canonicalize()?,
             "This project references an older managed Kotlin installation. Configure Kotlin to select this Koda version's validated runtime"
@@ -331,7 +335,7 @@ fn validate_language_server_binary_at(root: &Path, path: &Path) -> Result<()> {
     Ok(())
 }
 
-fn resolve_at(root: &Path, tool: Tool) -> Result<PathBuf> {
+pub(crate) fn resolve_at(root: &Path, tool: Tool) -> Result<PathBuf> {
     let manifest: Manifest = read_json(
         &root.join(format!("{}.json", tool.name())),
         16 * 1024 * 1024,
@@ -791,7 +795,7 @@ pub fn status() -> Vec<String> {
         "Managed runtimes require Apple Silicon macOS".into()
     }];
     for (name, value) in [
-        ("Python 3.12+", python()),
+        ("Debugger build: Python 3.12+", python()),
         ("JDK 21", super::kotlin::java_home()),
         ("SDK / adb", super::adb_path()),
     ] {
