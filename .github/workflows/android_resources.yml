@@ -181,7 +181,7 @@ jobs:
             2>&1 | tee "$RESOURCE_ARTIFACTS/project-resource-integration-tests.log"
       - name: Run preview save-state and Editor rename/navigation regressions
         run: |
-          cargo test --locked -p android_ui --lib android_preview \
+          cargo test --locked -p android_ui --features bundled-preview --lib android_preview \
             2>&1 | tee "$RESOURCE_ARTIFACTS/preview-tests.log"
           cargo test --locked -p editor --features test-support --lib resource_rename \
             2>&1 | tee "$RESOURCE_ARTIFACTS/editor-resource-rename-tests.log"
