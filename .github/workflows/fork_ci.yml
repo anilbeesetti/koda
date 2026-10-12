@@ -617,6 +617,16 @@ jobs:
           fi
           test -x /usr/bin/time
           sha256sum /usr/bin/time > "$snapshot_dir/runtime-time-before.sha256"
+          snapshot_child_script="$snapshot_dir/limited-snapshot.sh"
+          cat > "$snapshot_child_script" <<'SOURCE42_LIMITED_SNAPSHOT'
+          set +o posix || exit "$?"
+          ulimit -c 0 || exit "$?"
+          ulimit -f 32768 || exit "$?"
+          cat /proc/self/limits > "$1" || exit "$?"
+          shift || exit "$?"
+          exec "$@"
+          SOURCE42_LIMITED_SNAPSHOT
+          sha256sum "$snapshot_child_script" > "$snapshot_dir/child-script-before.sha256"
           stream_limit_bytes=33554432
           snapshot_status=0
           (
@@ -628,14 +638,8 @@ jobs:
             # controller. Both time and the controller inherit the file cap.
             exec /usr/bin/time --output="$snapshot_dir/actual-process-wait.txt" \
               --format='gnu_time_exit_status=%x\nelapsed_seconds=%e\nmaximum_resident_kib=%M' \
-              -- /bin/bash --noprofile --norc -c '
-                set +o posix || exit "$?"
-                ulimit -c 0 || exit "$?"
-                ulimit -f 32768 || exit "$?"
-                cat /proc/self/limits > "$1" || exit "$?"
-                shift || exit "$?"
-                exec "$@"
-              ' source42-limited-snapshot "$snapshot_dir/actual-child-limits.txt" \
+              -- /bin/bash --noprofile --norc "$snapshot_child_script" \
+              "$snapshot_dir/actual-child-limits.txt" \
               "$controller_cli" native-artifact snapshot \
               --source "$GITHUB_WORKSPACE/next-native-source42-objects" \
               --sha "$NEXT_NATIVE_SOURCE_SHA" --tree "$NEXT_NATIVE_SOURCE_TREE" \
@@ -645,6 +649,8 @@ jobs:
           ) > "$snapshot_dir/snapshot.stdout.log" 2> "$snapshot_dir/snapshot.stderr.log" \
             || snapshot_status=$?
           sha256sum /usr/bin/time > "$snapshot_dir/runtime-time-after.sha256"
+          sha256sum "$snapshot_child_script" > "$snapshot_dir/child-script-after.sha256"
+          cmp "$snapshot_dir/child-script-before.sha256" "$snapshot_dir/child-script-after.sha256"
           stdout_stat_status=0
           stdout_bytes=$(stat -c '%s' "$snapshot_dir/snapshot.stdout.log") \
             || { stdout_stat_status=$?; stdout_bytes=-1; }
