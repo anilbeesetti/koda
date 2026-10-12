@@ -85,6 +85,19 @@ jobs:
           set -euo pipefail
           umask 077
           memory=$1; duration=$2; label=$3; log=$4; shift 4
+          # systemd-run resolves its executable before the service PATH applies;
+          # sudo's secure_path omits the caller's rustup/Cargo installation.
+          if command_path=$(command -v -- "$1"); then
+            [[ "$command_path" == /* && -f "$command_path" && -x "$command_path" ]] || {
+              printf 'ERROR: %s is not an absolute external executable\n' "$1" >&2
+              exit 1
+            }
+          else
+            status=$?
+            printf 'ERROR: caller PATH cannot find executable %s\n' "$1" >&2
+            exit "$status"
+          fi
+          set -- "$command_path" "${@:2}"
           capture_limit=$((64 * 1024 * 1024))
           nonce=$(od -An -N16 -tx1 /dev/urandom | tr -d ' \n')
           [[ "$nonce" =~ ^[0-9a-f]{32}$ ]]

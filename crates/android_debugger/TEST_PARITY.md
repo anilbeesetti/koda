@@ -307,7 +307,7 @@ with the repository configuration and skip_children=true. This formatted proposa
 preserves all244 test registrations,1457 body assertions and1672 whole-source
 assertion macros. Of244 test functions,218 remain whole-byte exact;26 are explicit
 formatter adaptations with only twenty explicitly enumerated trailing-comma
-insertions immediately before closing delimiters. Every old function/assertion
+insertions immediately before closing delimiters. Every old test-function/assertion
 token, operator, string, number and interior separator remains exact and ordered;
 no token is deleted/replaced and no block wrapper is added. The earlier raw
 packets and unformatted-status sections are retained historical evidence.
@@ -318,3 +318,48 @@ CHECK0 are syntax/formatting evidence only. All143 standalone and244 scoped test
 Rust compilation, live JVM/Gradle fixtures, full IDE/app and exhaustive reference
 parity still await execution. Global runtime-library metadata was not independently
 observed. No compiler/JVM/app gates were changed and no raw143 source was edited.
+
+
+## CI345 inherited installer fixture adaptation
+
+The active `KotlinBootstrapTests.test_debugger_bootstraps_its_own_shared_sources_and_jdk`
+case is adapted to execute the compatibility shell through a controlled Cargo
+transport, rather than loading that shell as Python. The other three whole Kotlin
+installer tests and all four registrations remain unchanged. The original debugger
+case and its exact fixtures/assertions are retained in the before-source packet.
+This is a test API adaptation, not deletion, skipping, or full-case exclusion.
+
+| Original predicate/sub-behavior | Status | Rust replacement or precise reason |
+| --- | --- | --- |
+| Build includes the external shared Kotlin Gradle project | Not applicable sub-behavior | The custom Java/JDI engine and fwcd shared Kotlin project were replaced by the Rust `android_debugger` crate. The adapted active case checks Cargo package/binary/target arguments and repository bootstrap. |
+| Included shared-source directory exists | Not applicable sub-behavior | There is no external shared Kotlin source archive; the Rust crate lives in the repository. The active case verifies a repository path containing spaces is selected even when invoked elsewhere. |
+| Downloaded Java11 HOME contains java | Not applicable sub-behavior | The Rust installer/engine needs no host JDK. The active transport case succeeds without JAVA_HOME/JAVA11_HOME. Official JVM/compiler runtimes remain required only by the separate real JVM fixture and Android builds. |
+| Official Kotlin LSP installation is called before debugger build | Not applicable dependency | The Rust debugger is independent of the Kotlin language server. Its installation must not install or modify that server; both old server-location absence and independence remain active checks. |
+| Installed `.revision` matches current debugger version | Ported | Existing Rust `installation_contains_only_rust_binary_and_revision_without_jvm_downloads` plus the new matching-repeat test authenticate `INSTALL_REVISION`. |
+| fwcd shared Kotlin library license copied into Java adapter distribution | Not applicable artifact | No fwcd Kotlin library is linked/copied by the Rust adapter. Its old license artifact would misattribute an unused component; Rust dependency/fixture attribution remains retained. |
+| Community Kotlin language-server directory is not created | Adapted | Active transport case retains the absence check; Rust binary installation contains only its binary and revision. |
+| Shared-source download uses pinned SHA256 and revision URL | Not applicable download | No external fwcd source download occurs; the Rust source/package is bound to the reviewed Git tree and Cargo.lock. |
+| Java11 archive uses pinned SHA256 | Not applicable download | Rust installation does not download a JDK; official JDK/Kotlin compiler acquisition in the separate fixture workflow remains pinned and unrun until that CI succeeds. |
+| Second install succeeds without repeated downloads | Ported | Exact matching revision/binary/files now produce a read-only repeat success. Unknown/changed installations remain refused; new Rust tests cover repeat, changed binary, extra user content, substituted revision symlink and filesystem failures. |
+| Build/dependency failure propagates to caller | Adapted/strengthened | Active transport fixture injects Cargo exit29 and requires exact return29; new Rust filesystem failure test requires user data preserved. |
+
+Matching-install verification is read-only, bounded to the two expected root entries
+and one binary entry, a fixed marker length and64KiB binary chunks. It refuses
+static symlink components, uses no-follow/nonblocking Unix leaf opens, and checks
+opened file identity/size/permissions/modification before and after comparison.
+It does not claim arbitrary hostile same-user directory interference is impossible.
+All old143 standalone Rust test functions/assertions remain unchanged; five new
+Rust tests and a caller-PATH/restricted-sudo transport regression are added.
+
+The genuine first CI failures remain retained: parity run38195767831 did not compile
+Rust because the sudo/systemd-run client could not locate cargo; Fork345 failed
+Python runpy parsing of the shell entry point. Neither failure is a passing test or
+reference-parity claim. New compiler, unit, installer and live fixture execution
+remains required. Current local check status is reported by the accompanying
+actual receipt rather than inferred from these authored tests.
+
+The unchanged example compiles against API37. The dedicated workflow already
+requires its android.jar and build-tools36 aapt2 after sdkmanager returns; these
+postconditions are preserved. Earlier unrelated SDK35/build-tools35/36 setup does
+not establish API37 availability. Parity1 never reached SDK installation, so all
+SDK37-dependent Gradle probes remain unrun and the SDK37 prerequisite is unresolved.
