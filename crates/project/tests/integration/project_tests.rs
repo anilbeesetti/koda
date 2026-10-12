@@ -24528,6 +24528,12 @@ async fn test_android_resource_legacy_navigation_parses_only_gradle_sources_in_b
     cx: &mut TestAppContext,
 ) {
     let (project, filesystem, _) = android_resource_semantics_fixture(cx).await;
+    // This legacy lookup enumerates worktree entries, including deep values XML.
+    cx.update_global::<SettingsStore, _>(|store, cx| {
+        store.update_user_settings(cx, |settings| {
+            settings.project.worktree.file_scan_depth = Some(0);
+        });
+    });
     let path = path!("/android-resources/app/src/main/code/LegacyWorkerCursor.kt");
     filesystem.insert_tree(path!("/android-resources/app"), json!({
         "build.gradle.kts": "android { namespace = \"example.app\" }",
@@ -24544,6 +24550,11 @@ async fn test_android_resource_legacy_navigation_parses_only_gradle_sources_in_b
     project.update(cx, |project, cx| {
         project.invalidate_android_model(None, cx);
     });
+    // With no evaluated model, parser counters use the file display identity.
+    let source_identity = source.read_with(cx, |buffer, cx| {
+        buffer.file().expect("Legacy source file").full_path(cx)
+    });
+    let path = source_identity.as_path();
     let task = project.update(cx, |project, cx| {
         let before = project.android_resource_context_parse_count_for_test(path);
         let task = project.definitions(&source, source.read(cx).len() - 2, cx);
@@ -24585,6 +24596,10 @@ async fn test_android_resource_legacy_navigation_parses_only_gradle_sources_in_b
         .update(cx, |project, cx| project.open_local_buffer(nongradle, cx))
         .await
         .expect("Non-Gradle source");
+    let nongradle_identity = nongradle_source.read_with(cx, |buffer, cx| {
+        buffer.file().expect("Non-Gradle source file").full_path(cx)
+    });
+    let nongradle = nongradle_identity.as_path();
     let _ = project
         .update(cx, |project, cx| {
             project.definitions(&nongradle_source, 20, cx)
@@ -24802,10 +24817,12 @@ async fn test_android_resource_legacy_qualified_navigation_rechecks_unsaved_grad
         cx.subscribe(&store, move |_, _, event, cx| {
             if let project::buffer_store::BufferStoreEvent::BufferAdded(buffer) = event
                 && buffer.read(cx).file().is_some_and(|file| {
-                    file.full_path(cx).as_path()
-                        == Path::new(path!(
-                            "/legacy-namespace/app/src/main/res/values/strings.xml"
-                        ))
+                    file.as_local().is_some_and(|file| {
+                        file.abs_path(cx).as_path()
+                            == Path::new(path!(
+                                "/legacy-namespace/app/src/main/res/values/strings.xml"
+                            ))
+                    })
                 })
             {
                 // The qualified lookup has already captured the Gradle namespace
@@ -24817,11 +24834,13 @@ async fn test_android_resource_legacy_qualified_navigation_rechecks_unsaved_grad
             }
         })
     });
-    let error = project
+    let result = project
         .update(cx, |project, cx| {
             project.definitions(&source, source.read(cx).len() - 2, cx)
         })
-        .await
+        .await;
+    assert!(namespace_edited.load(atomic::Ordering::SeqCst));
+    let error = result
         .err()
         .expect("Unsaved namespace change cannot publish old qualified definitions");
     assert!(namespace_edited.load(atomic::Ordering::SeqCst));
@@ -24876,6 +24895,13 @@ async fn test_android_resource_legacy_navigation_rejects_an_earlier_input_change
         .update(cx, |project, cx| project.open_local_buffer(source_path, cx))
         .await
         .expect("Legacy batch source");
+    let source_identity = source.read_with(cx, |buffer, cx| {
+        buffer
+            .file()
+            .expect("Legacy batch source file")
+            .full_path(cx)
+    });
+    let source_path = source_identity.as_path();
     let first = project
         .update(cx, |project, cx| {
             project.open_local_buffer(
@@ -24889,10 +24915,11 @@ async fn test_android_resource_legacy_navigation_rejects_an_earlier_input_change
     let subscription = cx.update(|cx| {
         let first = first.clone();
         let edited = edited.clone();
+        let source_identity = source_identity.clone();
         cx.observe(&project, move |project, cx| {
             if project
                 .read(cx)
-                .android_resource_legacy_validation_batch_count_for_test(source_path)
+                .android_resource_legacy_validation_batch_count_for_test(source_identity.as_path())
                 == 2
                 && !edited.swap(true, atomic::Ordering::SeqCst)
             {
@@ -24904,11 +24931,13 @@ async fn test_android_resource_legacy_navigation_rejects_an_earlier_input_change
             }
         })
     });
-    let error = project
+    let result = project
         .update(cx, |project, cx| {
             project.definitions(&source, source.read(cx).len() - 2, cx)
         })
-        .await
+        .await;
+    assert!(edited.load(atomic::Ordering::SeqCst));
+    let error = result
         .err()
         .expect("A late edit cannot publish already-validated resource locations");
     assert!(edited.load(atomic::Ordering::SeqCst));
