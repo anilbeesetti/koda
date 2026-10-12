@@ -145,64 +145,56 @@ class KotlinBootstrapTests(unittest.TestCase):
         self.assertIn("invalid choice", result.stderr)
 
     def test_debugger_bootstraps_its_own_shared_sources_and_jdk(self):
-        debugger = runpy.run_path(str(Path(__file__).with_name("install-android-debugger")))
+        # Adapted to the Rust installer contract. JVM-source/JDK/archive-specific
+        # predicates are itemized in android_debugger/TEST_PARITY.md; the actual
+        # revision/binary/repeat/refusal checks are Rust CLI unit tests.
         with tempfile.TemporaryDirectory() as temporary:
             temporary = Path(temporary)
-            dependencies = temporary / "dependencies"
-            dependencies.mkdir()
-            source = temporary / f"kotlin-debug-adapter-{debugger['REVISION']}"
-            source.mkdir()
-            (source / "LICENSE").write_text("debugger license")
-            (source / "gradlew").touch()
-            shared = temporary / f"kotlin-language-server-{debugger['SHARED_REVISION']}"
-            shared.mkdir()
-            (shared / "LICENSE.txt").write_text("shared library license")
-            java = temporary / "jdk-11.0.32.1+1/Contents/Home/bin/java"
-            java.parent.mkdir(parents=True)
-            java.touch()
-            archives = {}
-            for name, directory in (("kotlin-debug-adapter-source.tar.gz", source),
-                                    ("fwcd-kls-6d9e61b.tar.gz", shared),
-                                    ("temurin11.tar.gz", java.parents[3])):
-                archive = temporary / name
-                with tarfile.open(archive, "w:gz") as output:
-                    output.add(directory, arcname=directory.name)
-                archives[name] = archive
-            downloads = []
+            repository = temporary / "repository with spaces"
+            launcher = repository / "script/install-android-debugger"
+            launcher.parent.mkdir(parents=True)
+            shutil.copy2(Path(__file__).with_name("install-android-debugger"), launcher)
+            tools = temporary / "caller tools"
+            tools.mkdir()
+            requests = temporary / "requests.jsonl"
+            cargo = tools / "cargo"
+            cargo.write_text(
+                "#!" + sys.executable + "\nimport json, os, pathlib, sys\n"
+                "with pathlib.Path(os.environ['INSTALLER_REQUESTS']).open('a') as output:\n"
+                "    output.write(json.dumps({'args': sys.argv[1:], 'cwd': os.getcwd(), "
+                "'java11': os.environ.get('JAVA11_HOME'), 'java': os.environ.get('JAVA_HOME')}) + '\\n')\n"
+                "sys.exit(int(os.environ.get('INSTALLER_CARGO_FAILURE', '0')))\n"
+            )
+            cargo.chmod(0o755)
+            environment = {key: value for key, value in os.environ.items()
+                           if key not in ("JAVA11_HOME", "JAVA_HOME")}
+            environment["PATH"] = str(tools) + os.pathsep + environment["PATH"]
+            environment["INSTALLER_REQUESTS"] = str(requests)
 
-            def download(name, url, checksum):
-                downloads.append((name, url, checksum))
-                return archives[name]
+            def launch():
+                return subprocess.run([str(launcher)], cwd=temporary, env=environment,
+                                      text=True, capture_output=True)
 
-            def build(command, **options):
-                if command[0] == "patch":
-                    return subprocess.CompletedProcess(command, 0)
-                self.assertIn("--include-build", command)
-                self.assertTrue(Path(command[command.index("--include-build") + 1]).is_dir())
-                self.assertTrue((Path(options["env"]["JAVA_HOME"]) / "bin/java").is_file())
-                distribution = Path(command[0]).parent / "adapter/build/install/adapter/bin"
-                distribution.mkdir(parents=True)
-                (distribution / "kotlin-debug-adapter").touch()
-                return subprocess.CompletedProcess(command, 0)
+            expected = ["run", "-p", "android_debugger", "--bin", "android-debugger", "--",
+                        "install", "target/android-ide/dependencies/kotlin-debug-adapter"]
+            first = launch()
+            self.assertEqual(first.returncode, 0, first.stderr)
+            request = json.loads(requests.read_text().splitlines()[0])
+            self.assertEqual(request["args"], expected)
+            self.assertEqual(request["cwd"], str(repository))
+            self.assertIsNone(request["java11"])
+            self.assertIsNone(request["java"])
+            self.assertFalse((repository / "target/android-ide/dependencies/kotlin-language-server").exists())
+            self.assertFalse((repository / "target/android-ide/dependencies/kotlin-lsp").exists())
+            second = launch()
+            self.assertEqual(second.returncode, 0, second.stderr)
+            self.assertEqual(len(requests.read_text().splitlines()), 2)
+            self.assertEqual(json.loads(requests.read_text().splitlines()[1])["args"], expected)
+            environment["INSTALLER_CARGO_FAILURE"] = "29"
+            failed = launch()
+            self.assertEqual(failed.returncode, 29)
+            self.assertEqual(len(requests.read_text().splitlines()), 3)
 
-            official_installs = []
-            bootstrap = {"main": lambda: official_installs.append(True),
-                         "DEPENDENCIES": dependencies, "download": download}
-            environment = {key: value for key, value in os.environ.items() if key != "JAVA11_HOME"}
-            with patch.dict(os.environ, environment, clear=True), \
-                    patch("runpy.run_path", return_value=bootstrap), \
-                    patch("subprocess.run", side_effect=build):
-                debugger["main"]()
-                self.assertEqual(official_installs, [True])
-                installation = dependencies / "kotlin-debug-adapter"
-                self.assertEqual((installation / ".revision").read_text().strip(), debugger["VERSION"])
-                self.assertEqual((installation / "KOTLIN-SERVER-LICENSE.txt").read_text(), "shared library license")
-                self.assertFalse((dependencies / "kotlin-language-server").exists())
-                self.assertEqual(downloads[1][2], debugger["SHARED_SHA256"])
-                self.assertIn(debugger["SHARED_REVISION"], downloads[1][1])
-                self.assertEqual(downloads[2][2], debugger["JDK_SHA256"])
-                debugger["main"]()
-                self.assertEqual(len(downloads), 3)
 
     def test_official_default_preserves_settings_and_project_java(self):
         bootstrap = runpy.run_path(str(Path(__file__).with_name("install-android-kotlin")))

@@ -1,0 +1,14 @@
+The adapter is a new Rust implementation of the Debug Adapter Protocol and
+Java Debug Wire Protocol. It contains no Java/JDI debugger runtime or copied
+Kotlin engine implementation.
+
+Test behavior and the sample/workspace/App.kt fixture are adapted from
+fwcd/kotlin-debug-adapter at 7f05669b642d21afa46ac7b75307fa5d523a7263:
+SampleWorkspaceTest.testBreakpointsAndVariables,
+PathUtilsTest.testFilePathToJVMClassNames and ObjectPoolTest.testObjectPool.
+Copyright (c) 2018 fwcd. The original MIT license is in LICENSE.fwcd.
+
+The application's existing Android debugger and test-runner behavior, Kotlin/
+Java fixture files, model-token tests and cancellation regressions are retained.
+AOSP/IntelliJ test parity is tracked separately; this upstream adapter fixture
+does not establish complete Android Studio debugger parity.

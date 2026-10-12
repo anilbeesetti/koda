@@ -81,6 +81,11 @@ pub fn is_archive_path(path: &Path) -> bool {
 pub trait Watcher: Send + Sync {
     fn add(&self, path: &Path) -> Result<()>;
     fn remove(&self, path: &Path) -> Result<()>;
+    /// `add` may arrange a delayed retry. Callers requiring current coverage
+    /// must distinguish that pending work from an owned active registration.
+    fn is_watching(&self, _path: &Path) -> bool {
+        false
+    }
 }
 
 #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Debug)]
@@ -1551,12 +1556,35 @@ pub struct FakeFs {
 }
 
 #[cfg(feature = "test-support")]
+struct FakeFsObservedWatcher {
+    watcher: Arc<dyn Watcher>,
+    observer: Arc<dyn Fn(&Path) + Send + Sync>,
+}
+
+#[cfg(feature = "test-support")]
+impl Watcher for FakeFsObservedWatcher {
+    fn add(&self, path: &Path) -> Result<()> {
+        self.watcher.add(path)
+    }
+
+    fn remove(&self, path: &Path) -> Result<()> {
+        (self.observer)(path);
+        self.watcher.remove(path)
+    }
+
+    fn is_watching(&self, path: &Path) -> bool {
+        self.watcher.is_watching(path)
+    }
+}
+
+#[cfg(feature = "test-support")]
 struct FakeFsState {
     root: FakeFsEntry,
     next_inode: u64,
     next_mtime: SystemTime,
     git_event_tx: async_channel::Sender<PathBuf>,
     watch_roots: Vec<(PathBuf, std::sync::Weak<dyn Watcher>)>,
+    watch_removal_observer: Option<Arc<dyn Fn(&Path) + Send + Sync>>,
     watches: FakeWatches,
     events_paused: bool,
     buffered_events: Vec<PathEvent>,
@@ -1927,6 +1955,7 @@ impl FakeFs {
             next_mtime: UNIX_EPOCH + Self::SYSTEMTIME_INTERVAL,
             next_inode: 1,
             watch_roots: Vec::new(),
+            watch_removal_observer: None,
             watches: FakeWatches::default(),
             buffered_events: Vec::new(),
             events_paused: false,
@@ -2152,6 +2181,12 @@ impl FakeFs {
     /// including paths that were later unwatched.
     pub fn watch_calls(&self) -> Vec<PathBuf> {
         self.state.lock().watches.watch_calls.clone()
+    }
+
+    /// Applies only to watchers created after this call, so a test can observe
+    /// an input observer without intercepting the existing Worktree scanner.
+    pub fn observe_new_watcher_removals(&self, observer: Arc<dyn Fn(&Path) + Send + Sync>) {
+        self.state.lock().watch_removal_observer = Some(observer);
     }
 
     pub fn flush_events(&self, count: usize) {
@@ -3500,6 +3535,12 @@ impl Fs for FakeFs {
             .lock()
             .watch_roots
             .push((normalize_path(path), Arc::downgrade(&watcher)));
+        let removal_observer = self.state.lock().watch_removal_observer.clone();
+        let watcher = if let Some(observer) = removal_observer {
+            Arc::new(FakeFsObservedWatcher { watcher, observer }) as Arc<dyn Watcher>
+        } else {
+            watcher
+        };
         (events, watcher)
     }
 

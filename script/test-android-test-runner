@@ -1,0 +1,5 @@
+#!/bin/sh
+# Acceptance logic and predicates live in Rust; this file only launches the CLI.
+set -eu
+repo_root=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd -P)
+exec "${KODA_ANDROID_DEBUGGER:-$repo_root/target/debug/android-debugger}" probe-test-runner --root "$repo_root" "$@"
