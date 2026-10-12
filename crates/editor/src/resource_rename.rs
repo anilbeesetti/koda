@@ -267,7 +267,7 @@ mod tests {
                 lsp::ServerCapabilities {
                     rename_provider: Some(lsp::OneOf::Right(lsp::RenameOptions {
                         prepare_provider: Some(true),
-                        ..Default::default()
+                        work_done_progress_options: Default::default(),
                     })),
                     ..Default::default()
                 },

@@ -1114,6 +1114,8 @@ mod tests {
                                 namespace: Some("example.app".into()),
                                 kind: ModuleKind::Application,
                                 default_variant: None,
+                                source_providers: None,
+                                evaluated_providers: None,
                                 variants: vec![Variant {
                                     name: "debug".into(),
                                     output_listing: None,
@@ -1137,8 +1139,6 @@ mod tests {
                                     }],
                                 }],
                             }],
-                            source_providers: None,
-                            evaluated_providers: None,
                             resource_models: std::collections::BTreeMap::from_iter([(
                                 ":app/debug".into(),
                                 ResourceModel {
