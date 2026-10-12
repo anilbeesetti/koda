@@ -52,3 +52,11 @@ pub fn separated_list_contains(input: &str, element: &str, separators: &str) -> 
     let separators: Vec<_> = separators.encode_utf16().collect();
     separated_list_contains_utf16(&input, &element, &separators)
 }
+
+mod case;
+mod text;
+mod tokenize;
+
+pub use case::{CaseMapping, append_capitalized_utf16, append_capitalized_words_utf16, append_camel_case_utf16, capitalize_and_append_utf16, capitalize_ascii, combine_as_camel_case_mapped_into_utf16, combine_as_camel_case_mapped_utf16, combine_as_camel_case_utf16, us_locale_capitalize_utf16, us_locale_decapitalize_utf16};
+pub use text::{StringHelperArgument, SystemLineSeparator, to_line_separator_utf16, to_strings_utf16, to_system_line_separator, to_system_line_separator_utf16};
+pub use tokenize::{CommandLinePlatform, TokenMode, tokenize_command_line_to_escaped, tokenize_command_line_to_raw, tokenize_command_line_utf16};

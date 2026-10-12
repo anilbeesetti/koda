@@ -3,7 +3,7 @@
   "repository": "platform/tools/base",
   "revision": "4a5d2ec9571e2021fc9a4621e24a195f966ee6dd",
   "license": "Apache-2.0",
-  "scope": "Complete pinned StringHelper source and 19-method test suite; no global census claim",
+  "scope": "Complete pinned 19-method StringHelper suite mapped to Rust source; no execution or global census completeness credit.",
   "files": [
     {
       "repository": "platform/tools/base",
@@ -45,7 +45,59 @@
       "declaration_line": 25,
       "method_text_sha256": "9ab9e62aa152f10f116b6b6e6e54bb3b23b1f26f1669fe75197a94ee84c58e3f",
       "method_text_hash_encoding": "UTF-8 bytes from fun keyword through matched closing brace, excluding leading indentation and final newline",
-      "selected_original_assertions": null
+      "selected_original_assertions": 1,
+      "rust_test_name": "string_helper_basic_capitalize",
+      "rust_integration_target": "string_helper",
+      "port_status": "adapted",
+      "run_status": "not_run",
+      "not_applicable": false,
+      "adaptation": "Rust ordered equality/assertions retain every original operand and predicate; Java strings use UTF-16 adapters. Casing fixtures run against all five explicit supported Unicode versions, never an inferred JBR default; collection displays are explicit callbacks; tokenization selects both platforms.",
+      "original_assertion_specification": {
+        "reference_id": "base@4a5d2ec9571e2021fc9a4621e24a195f966ee6dd:common/src/test/java/com/android/utils/StringHelperTest.kt#com.android.utils.StringHelperTest.testBasicCapitalize",
+        "suite": "com.android.utils.StringHelperTest",
+        "method": "testBasicCapitalize",
+        "declaration_line": 25,
+        "method_text_sha256": "9ab9e62aa152f10f116b6b6e6e54bb3b23b1f26f1669fe75197a94ee84c58e3f",
+        "method_text_hash_encoding": "UTF-8 bytes from fun keyword through matched closing brace, excluding leading indentation and final newline",
+        "selected_original_assertions": null,
+        "status": "unported",
+        "execution_status": "not_run",
+        "effective_runtime_cases": null,
+        "method_text": "fun testBasicCapitalize() {\n    assertThat(\"foo\".usLocaleCapitalize()).isEqualTo(\"Foo\")\n  }",
+        "assertion_count": 1,
+        "assertions": [
+          {
+            "ordinal": 1,
+            "original_line": 26,
+            "original_assertion_text": "assertThat(\"foo\".usLocaleCapitalize()).isEqualTo(\"Foo\")",
+            "original_assertion_sha256": "ab50ce7f925de2222b2e226e309e6b82fbf4eae3870dd3d4b093e3479dd1f1d2",
+            "comparison_chain": [
+              "isEqualTo"
+            ],
+            "preserve_order_requirement": false,
+            "literal_fixtures": [
+              {
+                "source_spelling": "\"foo\"",
+                "dynamic_kotlin_interpolation": false,
+                "utf16_code_units": [
+                  102,
+                  111,
+                  111
+                ]
+              },
+              {
+                "source_spelling": "\"Foo\"",
+                "dynamic_kotlin_interpolation": false,
+                "utf16_code_units": [
+                  70,
+                  111,
+                  111
+                ]
+              }
+            ]
+          }
+        ]
+      }
     },
     {
       "reference_id": "base@4a5d2ec9571e2021fc9a4621e24a195f966ee6dd:common/src/test/java/com/android/utils/StringHelperTest.kt#com.android.utils.StringHelperTest.testNonLetterCapitalize",
@@ -54,7 +106,63 @@
       "declaration_line": 30,
       "method_text_sha256": "e5fa93a1a646d81e4822865532fd25c6c28f9feca3589d95943e593c6b768a65",
       "method_text_hash_encoding": "UTF-8 bytes from fun keyword through matched closing brace, excluding leading indentation and final newline",
-      "selected_original_assertions": null
+      "selected_original_assertions": 1,
+      "rust_test_name": "string_helper_non_letter_capitalize",
+      "rust_integration_target": "string_helper",
+      "port_status": "adapted",
+      "run_status": "not_run",
+      "not_applicable": false,
+      "adaptation": "Rust ordered equality/assertions retain every original operand and predicate; Java strings use UTF-16 adapters. Casing fixtures run against all five explicit supported Unicode versions, never an inferred JBR default; collection displays are explicit callbacks; tokenization selects both platforms.",
+      "original_assertion_specification": {
+        "reference_id": "base@4a5d2ec9571e2021fc9a4621e24a195f966ee6dd:common/src/test/java/com/android/utils/StringHelperTest.kt#com.android.utils.StringHelperTest.testNonLetterCapitalize",
+        "suite": "com.android.utils.StringHelperTest",
+        "method": "testNonLetterCapitalize",
+        "declaration_line": 30,
+        "method_text_sha256": "e5fa93a1a646d81e4822865532fd25c6c28f9feca3589d95943e593c6b768a65",
+        "method_text_hash_encoding": "UTF-8 bytes from fun keyword through matched closing brace, excluding leading indentation and final newline",
+        "selected_original_assertions": null,
+        "status": "unported",
+        "execution_status": "not_run",
+        "effective_runtime_cases": null,
+        "method_text": "fun testNonLetterCapitalize() {\n    assertThat(\"1-Foo\".usLocaleCapitalize()).isEqualTo(\"1-Foo\")\n  }",
+        "assertion_count": 1,
+        "assertions": [
+          {
+            "ordinal": 1,
+            "original_line": 31,
+            "original_assertion_text": "assertThat(\"1-Foo\".usLocaleCapitalize()).isEqualTo(\"1-Foo\")",
+            "original_assertion_sha256": "cb0873cf317bfeba36da1f2c9a0ff2efa38e1c62b398bb424d96552cdbff8ddb",
+            "comparison_chain": [
+              "isEqualTo"
+            ],
+            "preserve_order_requirement": false,
+            "literal_fixtures": [
+              {
+                "source_spelling": "\"1-Foo\"",
+                "dynamic_kotlin_interpolation": false,
+                "utf16_code_units": [
+                  49,
+                  45,
+                  70,
+                  111,
+                  111
+                ]
+              },
+              {
+                "source_spelling": "\"1-Foo\"",
+                "dynamic_kotlin_interpolation": false,
+                "utf16_code_units": [
+                  49,
+                  45,
+                  70,
+                  111,
+                  111
+                ]
+              }
+            ]
+          }
+        ]
+      }
     },
     {
       "reference_id": "base@4a5d2ec9571e2021fc9a4621e24a195f966ee6dd:common/src/test/java/com/android/utils/StringHelperTest.kt#com.android.utils.StringHelperTest.testUnicodeCapitalize",
@@ -63,7 +171,63 @@
       "declaration_line": 35,
       "method_text_sha256": "750c4c0daaaac62a2879b943c35809d812078eb546d961fd1fb20591badf8036",
       "method_text_hash_encoding": "UTF-8 bytes from fun keyword through matched closing brace, excluding leading indentation and final newline",
-      "selected_original_assertions": null
+      "selected_original_assertions": 1,
+      "rust_test_name": "string_helper_unicode_capitalize",
+      "rust_integration_target": "string_helper",
+      "port_status": "adapted",
+      "run_status": "not_run",
+      "not_applicable": false,
+      "adaptation": "Rust ordered equality/assertions retain every original operand and predicate; Java strings use UTF-16 adapters. Casing fixtures run against all five explicit supported Unicode versions, never an inferred JBR default; collection displays are explicit callbacks; tokenization selects both platforms.",
+      "original_assertion_specification": {
+        "reference_id": "base@4a5d2ec9571e2021fc9a4621e24a195f966ee6dd:common/src/test/java/com/android/utils/StringHelperTest.kt#com.android.utils.StringHelperTest.testUnicodeCapitalize",
+        "suite": "com.android.utils.StringHelperTest",
+        "method": "testUnicodeCapitalize",
+        "declaration_line": 35,
+        "method_text_sha256": "750c4c0daaaac62a2879b943c35809d812078eb546d961fd1fb20591badf8036",
+        "method_text_hash_encoding": "UTF-8 bytes from fun keyword through matched closing brace, excluding leading indentation and final newline",
+        "selected_original_assertions": null,
+        "status": "unported",
+        "execution_status": "not_run",
+        "effective_runtime_cases": null,
+        "method_text": "fun testUnicodeCapitalize() {\n    assertThat(\"ê-foo\".usLocaleCapitalize()).isEqualTo(\"Ê-foo\")\n  }",
+        "assertion_count": 1,
+        "assertions": [
+          {
+            "ordinal": 1,
+            "original_line": 36,
+            "original_assertion_text": "assertThat(\"ê-foo\".usLocaleCapitalize()).isEqualTo(\"Ê-foo\")",
+            "original_assertion_sha256": "cda7e9a23440d81c6b34fb99349563cf44480344d8e22672ae35766142ad3b58",
+            "comparison_chain": [
+              "isEqualTo"
+            ],
+            "preserve_order_requirement": false,
+            "literal_fixtures": [
+              {
+                "source_spelling": "\"ê-foo\"",
+                "dynamic_kotlin_interpolation": false,
+                "utf16_code_units": [
+                  234,
+                  45,
+                  102,
+                  111,
+                  111
+                ]
+              },
+              {
+                "source_spelling": "\"Ê-foo\"",
+                "dynamic_kotlin_interpolation": false,
+                "utf16_code_units": [
+                  202,
+                  45,
+                  102,
+                  111,
+                  111
+                ]
+              }
+            ]
+          }
+        ]
+      }
     },
     {
       "reference_id": "base@4a5d2ec9571e2021fc9a4621e24a195f966ee6dd:common/src/test/java/com/android/utils/StringHelperTest.kt#com.android.utils.StringHelperTest.testSurrogateValuesCapitalize",
@@ -72,7 +236,65 @@
       "declaration_line": 40,
       "method_text_sha256": "ee4c2116010ca929e5b592b8d7df25673811c726ebcecbe27ef628f6a235b607",
       "method_text_hash_encoding": "UTF-8 bytes from fun keyword through matched closing brace, excluding leading indentation and final newline",
-      "selected_original_assertions": null
+      "selected_original_assertions": 1,
+      "rust_test_name": "string_helper_surrogate_values_capitalize",
+      "rust_integration_target": "string_helper",
+      "port_status": "adapted",
+      "run_status": "not_run",
+      "not_applicable": false,
+      "adaptation": "Rust ordered equality/assertions retain every original operand and predicate; Java strings use UTF-16 adapters. Casing fixtures run against all five explicit supported Unicode versions, never an inferred JBR default; collection displays are explicit callbacks; tokenization selects both platforms.",
+      "original_assertion_specification": {
+        "reference_id": "base@4a5d2ec9571e2021fc9a4621e24a195f966ee6dd:common/src/test/java/com/android/utils/StringHelperTest.kt#com.android.utils.StringHelperTest.testSurrogateValuesCapitalize",
+        "suite": "com.android.utils.StringHelperTest",
+        "method": "testSurrogateValuesCapitalize",
+        "declaration_line": 40,
+        "method_text_sha256": "ee4c2116010ca929e5b592b8d7df25673811c726ebcecbe27ef628f6a235b607",
+        "method_text_hash_encoding": "UTF-8 bytes from fun keyword through matched closing brace, excluding leading indentation and final newline",
+        "selected_original_assertions": null,
+        "status": "unported",
+        "execution_status": "not_run",
+        "effective_runtime_cases": null,
+        "method_text": "fun testSurrogateValuesCapitalize() {\n    // this double characters is apparently not capitalizable.\n    // FIXME find a better example...\n    assertThat(\"\\uD801\\uDC00-foo\".usLocaleCapitalize()).isEqualTo(\"\\uD801\\uDC00-foo\")\n  }",
+        "assertion_count": 1,
+        "assertions": [
+          {
+            "ordinal": 1,
+            "original_line": 43,
+            "original_assertion_text": "assertThat(\"\\uD801\\uDC00-foo\".usLocaleCapitalize()).isEqualTo(\"\\uD801\\uDC00-foo\")",
+            "original_assertion_sha256": "44a9042f2025703a0344c3f7352c0a7570469b4ccae8a1e165a8f1d768a3e46c",
+            "comparison_chain": [
+              "isEqualTo"
+            ],
+            "preserve_order_requirement": false,
+            "literal_fixtures": [
+              {
+                "source_spelling": "\"\\uD801\\uDC00-foo\"",
+                "dynamic_kotlin_interpolation": false,
+                "utf16_code_units": [
+                  55297,
+                  56320,
+                  45,
+                  102,
+                  111,
+                  111
+                ]
+              },
+              {
+                "source_spelling": "\"\\uD801\\uDC00-foo\"",
+                "dynamic_kotlin_interpolation": false,
+                "utf16_code_units": [
+                  55297,
+                  56320,
+                  45,
+                  102,
+                  111,
+                  111
+                ]
+              }
+            ]
+          }
+        ]
+      }
     },
     {
       "reference_id": "base@4a5d2ec9571e2021fc9a4621e24a195f966ee6dd:common/src/test/java/com/android/utils/StringHelperTest.kt#com.android.utils.StringHelperTest.testAppendCapitalized",
@@ -81,7 +303,81 @@
       "declaration_line": 47,
       "method_text_sha256": "663947c91fcfd21f3b7990668d324355bcc076cd4aeb5ffc0693d610b0fd8b62",
       "method_text_hash_encoding": "UTF-8 bytes from fun keyword through matched closing brace, excluding leading indentation and final newline",
-      "selected_original_assertions": null
+      "selected_original_assertions": 1,
+      "rust_test_name": "string_helper_append_capitalized",
+      "rust_integration_target": "string_helper",
+      "port_status": "adapted",
+      "run_status": "not_run",
+      "not_applicable": false,
+      "adaptation": "Rust ordered equality/assertions retain every original operand and predicate; Java strings use UTF-16 adapters. Casing fixtures run against all five explicit supported Unicode versions, never an inferred JBR default; collection displays are explicit callbacks; tokenization selects both platforms.",
+      "original_assertion_specification": {
+        "reference_id": "base@4a5d2ec9571e2021fc9a4621e24a195f966ee6dd:common/src/test/java/com/android/utils/StringHelperTest.kt#com.android.utils.StringHelperTest.testAppendCapitalized",
+        "suite": "com.android.utils.StringHelperTest",
+        "method": "testAppendCapitalized",
+        "declaration_line": 47,
+        "method_text_sha256": "663947c91fcfd21f3b7990668d324355bcc076cd4aeb5ffc0693d610b0fd8b62",
+        "method_text_hash_encoding": "UTF-8 bytes from fun keyword through matched closing brace, excluding leading indentation and final newline",
+        "selected_original_assertions": null,
+        "status": "unported",
+        "execution_status": "not_run",
+        "effective_runtime_cases": null,
+        "method_text": "fun testAppendCapitalized() {\n    assertThat(\"assemble\".appendCapitalized(\"foo\")).isEqualTo(\"assembleFoo\")\n  }",
+        "assertion_count": 1,
+        "assertions": [
+          {
+            "ordinal": 1,
+            "original_line": 48,
+            "original_assertion_text": "assertThat(\"assemble\".appendCapitalized(\"foo\")).isEqualTo(\"assembleFoo\")",
+            "original_assertion_sha256": "ac761ec82c156a4a0ed7bcedb775f6a9589611621c4b45075050ec33368a60b0",
+            "comparison_chain": [
+              "isEqualTo"
+            ],
+            "preserve_order_requirement": false,
+            "literal_fixtures": [
+              {
+                "source_spelling": "\"assemble\"",
+                "dynamic_kotlin_interpolation": false,
+                "utf16_code_units": [
+                  97,
+                  115,
+                  115,
+                  101,
+                  109,
+                  98,
+                  108,
+                  101
+                ]
+              },
+              {
+                "source_spelling": "\"foo\"",
+                "dynamic_kotlin_interpolation": false,
+                "utf16_code_units": [
+                  102,
+                  111,
+                  111
+                ]
+              },
+              {
+                "source_spelling": "\"assembleFoo\"",
+                "dynamic_kotlin_interpolation": false,
+                "utf16_code_units": [
+                  97,
+                  115,
+                  115,
+                  101,
+                  109,
+                  98,
+                  108,
+                  101,
+                  70,
+                  111,
+                  111
+                ]
+              }
+            ]
+          }
+        ]
+      }
     },
     {
       "reference_id": "base@4a5d2ec9571e2021fc9a4621e24a195f966ee6dd:common/src/test/java/com/android/utils/StringHelperTest.kt#com.android.utils.StringHelperTest.testAppendCapitalizedVarArgs",
@@ -90,7 +386,105 @@
       "declaration_line": 52,
       "method_text_sha256": "10459b4534e0ad26159d1e661a726c97e82ca674c87692742c321ef5bde0ca92",
       "method_text_hash_encoding": "UTF-8 bytes from fun keyword through matched closing brace, excluding leading indentation and final newline",
-      "selected_original_assertions": null
+      "selected_original_assertions": 1,
+      "rust_test_name": "string_helper_append_capitalized_var_args",
+      "rust_integration_target": "string_helper",
+      "port_status": "adapted",
+      "run_status": "not_run",
+      "not_applicable": false,
+      "adaptation": "Rust ordered equality/assertions retain every original operand and predicate; Java strings use UTF-16 adapters. Casing fixtures run against all five explicit supported Unicode versions, never an inferred JBR default; collection displays are explicit callbacks; tokenization selects both platforms.",
+      "original_assertion_specification": {
+        "reference_id": "base@4a5d2ec9571e2021fc9a4621e24a195f966ee6dd:common/src/test/java/com/android/utils/StringHelperTest.kt#com.android.utils.StringHelperTest.testAppendCapitalizedVarArgs",
+        "suite": "com.android.utils.StringHelperTest",
+        "method": "testAppendCapitalizedVarArgs",
+        "declaration_line": 52,
+        "method_text_sha256": "10459b4534e0ad26159d1e661a726c97e82ca674c87692742c321ef5bde0ca92",
+        "method_text_hash_encoding": "UTF-8 bytes from fun keyword through matched closing brace, excluding leading indentation and final newline",
+        "selected_original_assertions": null,
+        "status": "unported",
+        "execution_status": "not_run",
+        "effective_runtime_cases": null,
+        "method_text": "fun testAppendCapitalizedVarArgs() {\n    assertThat(\"assemble\".appendCapitalized(\"foo\", \"bar\", \"foo\")).isEqualTo(\"assembleFooBarFoo\")\n  }",
+        "assertion_count": 1,
+        "assertions": [
+          {
+            "ordinal": 1,
+            "original_line": 53,
+            "original_assertion_text": "assertThat(\"assemble\".appendCapitalized(\"foo\", \"bar\", \"foo\")).isEqualTo(\"assembleFooBarFoo\")",
+            "original_assertion_sha256": "04ed3df54d55bf9ab452c8cf111aa1831474b7918596a2a626334eeb85a4d59c",
+            "comparison_chain": [
+              "isEqualTo"
+            ],
+            "preserve_order_requirement": false,
+            "literal_fixtures": [
+              {
+                "source_spelling": "\"assemble\"",
+                "dynamic_kotlin_interpolation": false,
+                "utf16_code_units": [
+                  97,
+                  115,
+                  115,
+                  101,
+                  109,
+                  98,
+                  108,
+                  101
+                ]
+              },
+              {
+                "source_spelling": "\"foo\"",
+                "dynamic_kotlin_interpolation": false,
+                "utf16_code_units": [
+                  102,
+                  111,
+                  111
+                ]
+              },
+              {
+                "source_spelling": "\"bar\"",
+                "dynamic_kotlin_interpolation": false,
+                "utf16_code_units": [
+                  98,
+                  97,
+                  114
+                ]
+              },
+              {
+                "source_spelling": "\"foo\"",
+                "dynamic_kotlin_interpolation": false,
+                "utf16_code_units": [
+                  102,
+                  111,
+                  111
+                ]
+              },
+              {
+                "source_spelling": "\"assembleFooBarFoo\"",
+                "dynamic_kotlin_interpolation": false,
+                "utf16_code_units": [
+                  97,
+                  115,
+                  115,
+                  101,
+                  109,
+                  98,
+                  108,
+                  101,
+                  70,
+                  111,
+                  111,
+                  66,
+                  97,
+                  114,
+                  70,
+                  111,
+                  111
+                ]
+              }
+            ]
+          }
+        ]
+      }
     },
     {
       "reference_id": "base@4a5d2ec9571e2021fc9a4621e24a195f966ee6dd:common/src/test/java/com/android/utils/StringHelperTest.kt#com.android.utils.StringHelperTest.testDecapitalizeEmpty",
@@ -99,7 +493,51 @@
       "declaration_line": 57,
       "method_text_sha256": "c7d5a317873a9c51c1718b301546579820c923716429d8c3fdd522100a55cd56",
       "method_text_hash_encoding": "UTF-8 bytes from fun keyword through matched closing brace, excluding leading indentation and final newline",
-      "selected_original_assertions": null
+      "selected_original_assertions": 1,
+      "rust_test_name": "string_helper_decapitalize_empty",
+      "rust_integration_target": "string_helper",
+      "port_status": "adapted",
+      "run_status": "not_run",
+      "not_applicable": false,
+      "adaptation": "Rust ordered equality/assertions retain every original operand and predicate; Java strings use UTF-16 adapters. Casing fixtures run against all five explicit supported Unicode versions, never an inferred JBR default; collection displays are explicit callbacks; tokenization selects both platforms.",
+      "original_assertion_specification": {
+        "reference_id": "base@4a5d2ec9571e2021fc9a4621e24a195f966ee6dd:common/src/test/java/com/android/utils/StringHelperTest.kt#com.android.utils.StringHelperTest.testDecapitalizeEmpty",
+        "suite": "com.android.utils.StringHelperTest",
+        "method": "testDecapitalizeEmpty",
+        "declaration_line": 57,
+        "method_text_sha256": "c7d5a317873a9c51c1718b301546579820c923716429d8c3fdd522100a55cd56",
+        "method_text_hash_encoding": "UTF-8 bytes from fun keyword through matched closing brace, excluding leading indentation and final newline",
+        "selected_original_assertions": null,
+        "status": "unported",
+        "execution_status": "not_run",
+        "effective_runtime_cases": null,
+        "method_text": "fun testDecapitalizeEmpty() {\n    assertThat(\"\".usLocaleDecapitalize()).isEqualTo(\"\")\n  }",
+        "assertion_count": 1,
+        "assertions": [
+          {
+            "ordinal": 1,
+            "original_line": 58,
+            "original_assertion_text": "assertThat(\"\".usLocaleDecapitalize()).isEqualTo(\"\")",
+            "original_assertion_sha256": "894463ca2f67a09779079d20cb6b494eed6b101a849d88a9e8fe124793e02465",
+            "comparison_chain": [
+              "isEqualTo"
+            ],
+            "preserve_order_requirement": false,
+            "literal_fixtures": [
+              {
+                "source_spelling": "\"\"",
+                "dynamic_kotlin_interpolation": false,
+                "utf16_code_units": []
+              },
+              {
+                "source_spelling": "\"\"",
+                "dynamic_kotlin_interpolation": false,
+                "utf16_code_units": []
+              }
+            ]
+          }
+        ]
+      }
     },
     {
       "reference_id": "base@4a5d2ec9571e2021fc9a4621e24a195f966ee6dd:common/src/test/java/com/android/utils/StringHelperTest.kt#com.android.utils.StringHelperTest.testDecapitalizeNonLetter",
@@ -108,7 +546,63 @@
       "declaration_line": 62,
       "method_text_sha256": "80d09a813186a8ee91e67c14ec7b984671ed209d4e5fac5c360a8f3ffb005502",
       "method_text_hash_encoding": "UTF-8 bytes from fun keyword through matched closing brace, excluding leading indentation and final newline",
-      "selected_original_assertions": null
+      "selected_original_assertions": 1,
+      "rust_test_name": "string_helper_decapitalize_non_letter",
+      "rust_integration_target": "string_helper",
+      "port_status": "adapted",
+      "run_status": "not_run",
+      "not_applicable": false,
+      "adaptation": "Rust ordered equality/assertions retain every original operand and predicate; Java strings use UTF-16 adapters. Casing fixtures run against all five explicit supported Unicode versions, never an inferred JBR default; collection displays are explicit callbacks; tokenization selects both platforms.",
+      "original_assertion_specification": {
+        "reference_id": "base@4a5d2ec9571e2021fc9a4621e24a195f966ee6dd:common/src/test/java/com/android/utils/StringHelperTest.kt#com.android.utils.StringHelperTest.testDecapitalizeNonLetter",
+        "suite": "com.android.utils.StringHelperTest",
+        "method": "testDecapitalizeNonLetter",
+        "declaration_line": 62,
+        "method_text_sha256": "80d09a813186a8ee91e67c14ec7b984671ed209d4e5fac5c360a8f3ffb005502",
+        "method_text_hash_encoding": "UTF-8 bytes from fun keyword through matched closing brace, excluding leading indentation and final newline",
+        "selected_original_assertions": null,
+        "status": "unported",
+        "execution_status": "not_run",
+        "effective_runtime_cases": null,
+        "method_text": "fun testDecapitalizeNonLetter() {\n    assertThat(\"1-Foo\".usLocaleDecapitalize()).isEqualTo(\"1-Foo\")\n  }",
+        "assertion_count": 1,
+        "assertions": [
+          {
+            "ordinal": 1,
+            "original_line": 63,
+            "original_assertion_text": "assertThat(\"1-Foo\".usLocaleDecapitalize()).isEqualTo(\"1-Foo\")",
+            "original_assertion_sha256": "138808a95212914e8672bc2f2a477e878c275beb7ce90d33ea342ff2e49dced4",
+            "comparison_chain": [
+              "isEqualTo"
+            ],
+            "preserve_order_requirement": false,
+            "literal_fixtures": [
+              {
+                "source_spelling": "\"1-Foo\"",
+                "dynamic_kotlin_interpolation": false,
+                "utf16_code_units": [
+                  49,
+                  45,
+                  70,
+                  111,
+                  111
+                ]
+              },
+              {
+                "source_spelling": "\"1-Foo\"",
+                "dynamic_kotlin_interpolation": false,
+                "utf16_code_units": [
+                  49,
+                  45,
+                  70,
+                  111,
+                  111
+                ]
+              }
+            ]
+          }
+        ]
+      }
     },
     {
       "reference_id": "base@4a5d2ec9571e2021fc9a4621e24a195f966ee6dd:common/src/test/java/com/android/utils/StringHelperTest.kt#com.android.utils.StringHelperTest.testDecapitalizeUnicode",
@@ -117,7 +611,63 @@
       "declaration_line": 67,
       "method_text_sha256": "e8d56afbf643f3ef66d1515c3753d17c8e49cdcb9ac07292870baeb5f3802b98",
       "method_text_hash_encoding": "UTF-8 bytes from fun keyword through matched closing brace, excluding leading indentation and final newline",
-      "selected_original_assertions": null
+      "selected_original_assertions": 1,
+      "rust_test_name": "string_helper_decapitalize_unicode",
+      "rust_integration_target": "string_helper",
+      "port_status": "adapted",
+      "run_status": "not_run",
+      "not_applicable": false,
+      "adaptation": "Rust ordered equality/assertions retain every original operand and predicate; Java strings use UTF-16 adapters. Casing fixtures run against all five explicit supported Unicode versions, never an inferred JBR default; collection displays are explicit callbacks; tokenization selects both platforms.",
+      "original_assertion_specification": {
+        "reference_id": "base@4a5d2ec9571e2021fc9a4621e24a195f966ee6dd:common/src/test/java/com/android/utils/StringHelperTest.kt#com.android.utils.StringHelperTest.testDecapitalizeUnicode",
+        "suite": "com.android.utils.StringHelperTest",
+        "method": "testDecapitalizeUnicode",
+        "declaration_line": 67,
+        "method_text_sha256": "e8d56afbf643f3ef66d1515c3753d17c8e49cdcb9ac07292870baeb5f3802b98",
+        "method_text_hash_encoding": "UTF-8 bytes from fun keyword through matched closing brace, excluding leading indentation and final newline",
+        "selected_original_assertions": null,
+        "status": "unported",
+        "execution_status": "not_run",
+        "effective_runtime_cases": null,
+        "method_text": "fun testDecapitalizeUnicode() {\n    assertThat(\"Ê-foo\".usLocaleDecapitalize()).isEqualTo(\"ê-foo\")\n  }",
+        "assertion_count": 1,
+        "assertions": [
+          {
+            "ordinal": 1,
+            "original_line": 68,
+            "original_assertion_text": "assertThat(\"Ê-foo\".usLocaleDecapitalize()).isEqualTo(\"ê-foo\")",
+            "original_assertion_sha256": "fec6c20d95fd595c713f38cdba82f4443cccf1fe9c793bb7e2a4e98741f3cb5b",
+            "comparison_chain": [
+              "isEqualTo"
+            ],
+            "preserve_order_requirement": false,
+            "literal_fixtures": [
+              {
+                "source_spelling": "\"Ê-foo\"",
+                "dynamic_kotlin_interpolation": false,
+                "utf16_code_units": [
+                  202,
+                  45,
+                  102,
+                  111,
+                  111
+                ]
+              },
+              {
+                "source_spelling": "\"ê-foo\"",
+                "dynamic_kotlin_interpolation": false,
+                "utf16_code_units": [
+                  234,
+                  45,
+                  102,
+                  111,
+                  111
+                ]
+              }
+            ]
+          }
+        ]
+      }
     },
     {
       "reference_id": "base@4a5d2ec9571e2021fc9a4621e24a195f966ee6dd:common/src/test/java/com/android/utils/StringHelperTest.kt#com.android.utils.StringHelperTest.testSurrogateValuesDecapitalize",
@@ -126,7 +676,65 @@
       "declaration_line": 72,
       "method_text_sha256": "6e5508d8cf617b7a01944f5ed7eba5c0ecdbae3bee9cd0c09625c9edc3383b39",
       "method_text_hash_encoding": "UTF-8 bytes from fun keyword through matched closing brace, excluding leading indentation and final newline",
-      "selected_original_assertions": null
+      "selected_original_assertions": 1,
+      "rust_test_name": "string_helper_surrogate_values_decapitalize",
+      "rust_integration_target": "string_helper",
+      "port_status": "adapted",
+      "run_status": "not_run",
+      "not_applicable": false,
+      "adaptation": "Rust ordered equality/assertions retain every original operand and predicate; Java strings use UTF-16 adapters. Casing fixtures run against all five explicit supported Unicode versions, never an inferred JBR default; collection displays are explicit callbacks; tokenization selects both platforms.",
+      "original_assertion_specification": {
+        "reference_id": "base@4a5d2ec9571e2021fc9a4621e24a195f966ee6dd:common/src/test/java/com/android/utils/StringHelperTest.kt#com.android.utils.StringHelperTest.testSurrogateValuesDecapitalize",
+        "suite": "com.android.utils.StringHelperTest",
+        "method": "testSurrogateValuesDecapitalize",
+        "declaration_line": 72,
+        "method_text_sha256": "6e5508d8cf617b7a01944f5ed7eba5c0ecdbae3bee9cd0c09625c9edc3383b39",
+        "method_text_hash_encoding": "UTF-8 bytes from fun keyword through matched closing brace, excluding leading indentation and final newline",
+        "selected_original_assertions": null,
+        "status": "unported",
+        "execution_status": "not_run",
+        "effective_runtime_cases": null,
+        "method_text": "fun testSurrogateValuesDecapitalize() {\n    assertThat(\"\\uD801\\uDC00-foo\".usLocaleDecapitalize()).isEqualTo(\"\\uD801\\uDC00-foo\")\n  }",
+        "assertion_count": 1,
+        "assertions": [
+          {
+            "ordinal": 1,
+            "original_line": 73,
+            "original_assertion_text": "assertThat(\"\\uD801\\uDC00-foo\".usLocaleDecapitalize()).isEqualTo(\"\\uD801\\uDC00-foo\")",
+            "original_assertion_sha256": "ded50e96733e767cef500087845a8113fb7f33b4d5e526145d56e0272d45d5be",
+            "comparison_chain": [
+              "isEqualTo"
+            ],
+            "preserve_order_requirement": false,
+            "literal_fixtures": [
+              {
+                "source_spelling": "\"\\uD801\\uDC00-foo\"",
+                "dynamic_kotlin_interpolation": false,
+                "utf16_code_units": [
+                  55297,
+                  56320,
+                  45,
+                  102,
+                  111,
+                  111
+                ]
+              },
+              {
+                "source_spelling": "\"\\uD801\\uDC00-foo\"",
+                "dynamic_kotlin_interpolation": false,
+                "utf16_code_units": [
+                  55297,
+                  56320,
+                  45,
+                  102,
+                  111,
+                  111
+                ]
+              }
+            ]
+          }
+        ]
+      }
     },
     {
       "reference_id": "base@4a5d2ec9571e2021fc9a4621e24a195f966ee6dd:common/src/test/java/com/android/utils/StringHelperTest.kt#com.android.utils.StringHelperTest.testAsSeparatedListContains",
@@ -135,7 +743,13 @@
       "declaration_line": 77,
       "method_text_sha256": "b8f86fc25f835f2ebfc0b29f3caebe6069143ca43dc1a2686449d820b71bdd93",
       "method_text_hash_encoding": "UTF-8 bytes from fun keyword through matched closing brace, excluding leading indentation and final newline",
-      "selected_original_assertions": 6
+      "selected_original_assertions": 6,
+      "rust_test_name": "string_helper_as_separated_list_contains",
+      "rust_integration_target": "string_helper",
+      "port_status": "adapted",
+      "run_status": "not_run",
+      "not_applicable": false,
+      "adaptation": "Rust ordered equality/assertions retain every original operand and predicate; Java strings use UTF-16 adapters. Casing fixtures run against all five explicit supported Unicode versions, never an inferred JBR default; collection displays are explicit callbacks; tokenization selects both platforms."
     },
     {
       "reference_id": "base@4a5d2ec9571e2021fc9a4621e24a195f966ee6dd:common/src/test/java/com/android/utils/StringHelperTest.kt#com.android.utils.StringHelperTest.testStringBuilderAppendCapitalized",
@@ -144,7 +758,133 @@
       "declaration_line": 87,
       "method_text_sha256": "4dfc7df1c1ca15610abe0f7d92ed474fa6f556d6868697b9c7236f1aaf4701c0",
       "method_text_hash_encoding": "UTF-8 bytes from fun keyword through matched closing brace, excluding leading indentation and final newline",
-      "selected_original_assertions": null
+      "selected_original_assertions": 3,
+      "rust_test_name": "string_helper_string_builder_append_capitalized",
+      "rust_integration_target": "string_helper",
+      "port_status": "adapted",
+      "run_status": "not_run",
+      "not_applicable": false,
+      "adaptation": "Rust ordered equality/assertions retain every original operand and predicate; Java strings use UTF-16 adapters. Casing fixtures run against all five explicit supported Unicode versions, never an inferred JBR default; collection displays are explicit callbacks; tokenization selects both platforms.",
+      "original_assertion_specification": {
+        "reference_id": "base@4a5d2ec9571e2021fc9a4621e24a195f966ee6dd:common/src/test/java/com/android/utils/StringHelperTest.kt#com.android.utils.StringHelperTest.testStringBuilderAppendCapitalized",
+        "suite": "com.android.utils.StringHelperTest",
+        "method": "testStringBuilderAppendCapitalized",
+        "declaration_line": 87,
+        "method_text_sha256": "4dfc7df1c1ca15610abe0f7d92ed474fa6f556d6868697b9c7236f1aaf4701c0",
+        "method_text_hash_encoding": "UTF-8 bytes from fun keyword through matched closing brace, excluding leading indentation and final newline",
+        "selected_original_assertions": null,
+        "status": "unported",
+        "execution_status": "not_run",
+        "effective_runtime_cases": null,
+        "method_text": "fun testStringBuilderAppendCapitalized() {\n    assertThat(StringBuilder(\"prefix\").appendCapitalized(\"word\").toString()).isEqualTo(\"prefixWord\")\n    assertThat(StringBuilder().appendCapitalized(\"word\").toString()).isEqualTo(\"Word\")\n    assertThat(StringBuilder().appendCapitalized(\"\").toString()).isEqualTo(\"\")\n  }",
+        "assertion_count": 3,
+        "assertions": [
+          {
+            "ordinal": 1,
+            "original_line": 88,
+            "original_assertion_text": "assertThat(StringBuilder(\"prefix\").appendCapitalized(\"word\").toString()).isEqualTo(\"prefixWord\")",
+            "original_assertion_sha256": "09d49b9ad67b43e32bb35fa6b305c0b922eeddbcc35af1a8abe5ba017d959ccb",
+            "comparison_chain": [
+              "isEqualTo"
+            ],
+            "preserve_order_requirement": false,
+            "literal_fixtures": [
+              {
+                "source_spelling": "\"prefix\"",
+                "dynamic_kotlin_interpolation": false,
+                "utf16_code_units": [
+                  112,
+                  114,
+                  101,
+                  102,
+                  105,
+                  120
+                ]
+              },
+              {
+                "source_spelling": "\"word\"",
+                "dynamic_kotlin_interpolation": false,
+                "utf16_code_units": [
+                  119,
+                  111,
+                  114,
+                  100
+                ]
+              },
+              {
+                "source_spelling": "\"prefixWord\"",
+                "dynamic_kotlin_interpolation": false,
+                "utf16_code_units": [
+                  112,
+                  114,
+                  101,
+                  102,
+                  105,
+                  120,
+                  87,
+                  111,
+                  114,
+                  100
+                ]
+              }
+            ]
+          },
+          {
+            "ordinal": 2,
+            "original_line": 89,
+            "original_assertion_text": "assertThat(StringBuilder().appendCapitalized(\"word\").toString()).isEqualTo(\"Word\")",
+            "original_assertion_sha256": "acaa7889d0ab0f66881280a81b4ca59a99913f2aa7a24a2322ef722607d8154c",
+            "comparison_chain": [
+              "isEqualTo"
+            ],
+            "preserve_order_requirement": false,
+            "literal_fixtures": [
+              {
+                "source_spelling": "\"word\"",
+                "dynamic_kotlin_interpolation": false,
+                "utf16_code_units": [
+                  119,
+                  111,
+                  114,
+                  100
+                ]
+              },
+              {
+                "source_spelling": "\"Word\"",
+                "dynamic_kotlin_interpolation": false,
+                "utf16_code_units": [
+                  87,
+                  111,
+                  114,
+                  100
+                ]
+              }
+            ]
+          },
+          {
+            "ordinal": 3,
+            "original_line": 90,
+            "original_assertion_text": "assertThat(StringBuilder().appendCapitalized(\"\").toString()).isEqualTo(\"\")",
+            "original_assertion_sha256": "bb66b35b5a2f023ca3753469f5c7a221425b3594cf58bda3b55453a77449afde",
+            "comparison_chain": [
+              "isEqualTo"
+            ],
+            "preserve_order_requirement": false,
+            "literal_fixtures": [
+              {
+                "source_spelling": "\"\"",
+                "dynamic_kotlin_interpolation": false,
+                "utf16_code_units": []
+              },
+              {
+                "source_spelling": "\"\"",
+                "dynamic_kotlin_interpolation": false,
+                "utf16_code_units": []
+              }
+            ]
+          }
+        ]
+      }
     },
     {
       "reference_id": "base@4a5d2ec9571e2021fc9a4621e24a195f966ee6dd:common/src/test/java/com/android/utils/StringHelperTest.kt#com.android.utils.StringHelperTest.testAppendCapitalizedOverloads",
@@ -153,7 +893,131 @@
       "declaration_line": 94,
       "method_text_sha256": "ec50f5d4da046392410d9eebdd2a41b3b65bece2cf3ab0e94221bfef88644f1b",
       "method_text_hash_encoding": "UTF-8 bytes from fun keyword through matched closing brace, excluding leading indentation and final newline",
-      "selected_original_assertions": null
+      "selected_original_assertions": 2,
+      "rust_test_name": "string_helper_append_capitalized_overloads",
+      "rust_integration_target": "string_helper",
+      "port_status": "adapted",
+      "run_status": "not_run",
+      "not_applicable": false,
+      "adaptation": "Rust ordered equality/assertions retain every original operand and predicate; Java strings use UTF-16 adapters. Casing fixtures run against all five explicit supported Unicode versions, never an inferred JBR default; collection displays are explicit callbacks; tokenization selects both platforms.",
+      "original_assertion_specification": {
+        "reference_id": "base@4a5d2ec9571e2021fc9a4621e24a195f966ee6dd:common/src/test/java/com/android/utils/StringHelperTest.kt#com.android.utils.StringHelperTest.testAppendCapitalizedOverloads",
+        "suite": "com.android.utils.StringHelperTest",
+        "method": "testAppendCapitalizedOverloads",
+        "declaration_line": 94,
+        "method_text_sha256": "ec50f5d4da046392410d9eebdd2a41b3b65bece2cf3ab0e94221bfef88644f1b",
+        "method_text_hash_encoding": "UTF-8 bytes from fun keyword through matched closing brace, excluding leading indentation and final newline",
+        "selected_original_assertions": null,
+        "status": "unported",
+        "execution_status": "not_run",
+        "effective_runtime_cases": null,
+        "method_text": "fun testAppendCapitalizedOverloads() {\n    assertThat(\"base\".appendCapitalized(\"word\")).isEqualTo(\"baseWord\")\n    assertThat(\"base\".appendCapitalized(\"one\", \"two\")).isEqualTo(\"baseOneTwo\")\n  }",
+        "assertion_count": 2,
+        "assertions": [
+          {
+            "ordinal": 1,
+            "original_line": 95,
+            "original_assertion_text": "assertThat(\"base\".appendCapitalized(\"word\")).isEqualTo(\"baseWord\")",
+            "original_assertion_sha256": "5975f3cc89a2fb37dafb2093f6087dc10ccf1368fc415ea7be35e3950c35dce7",
+            "comparison_chain": [
+              "isEqualTo"
+            ],
+            "preserve_order_requirement": false,
+            "literal_fixtures": [
+              {
+                "source_spelling": "\"base\"",
+                "dynamic_kotlin_interpolation": false,
+                "utf16_code_units": [
+                  98,
+                  97,
+                  115,
+                  101
+                ]
+              },
+              {
+                "source_spelling": "\"word\"",
+                "dynamic_kotlin_interpolation": false,
+                "utf16_code_units": [
+                  119,
+                  111,
+                  114,
+                  100
+                ]
+              },
+              {
+                "source_spelling": "\"baseWord\"",
+                "dynamic_kotlin_interpolation": false,
+                "utf16_code_units": [
+                  98,
+                  97,
+                  115,
+                  101,
+                  87,
+                  111,
+                  114,
+                  100
+                ]
+              }
+            ]
+          },
+          {
+            "ordinal": 2,
+            "original_line": 96,
+            "original_assertion_text": "assertThat(\"base\".appendCapitalized(\"one\", \"two\")).isEqualTo(\"baseOneTwo\")",
+            "original_assertion_sha256": "db93f2f22f0c3117da8bddbb03c1782cb24637de724d740b7a302bca788169fa",
+            "comparison_chain": [
+              "isEqualTo"
+            ],
+            "preserve_order_requirement": false,
+            "literal_fixtures": [
+              {
+                "source_spelling": "\"base\"",
+                "dynamic_kotlin_interpolation": false,
+                "utf16_code_units": [
+                  98,
+                  97,
+                  115,
+                  101
+                ]
+              },
+              {
+                "source_spelling": "\"one\"",
+                "dynamic_kotlin_interpolation": false,
+                "utf16_code_units": [
+                  111,
+                  110,
+                  101
+                ]
+              },
+              {
+                "source_spelling": "\"two\"",
+                "dynamic_kotlin_interpolation": false,
+                "utf16_code_units": [
+                  116,
+                  119,
+                  111
+                ]
+              },
+              {
+                "source_spelling": "\"baseOneTwo\"",
+                "dynamic_kotlin_interpolation": false,
+                "utf16_code_units": [
+                  98,
+                  97,
+                  115,
+                  101,
+                  79,
+                  110,
+                  101,
+                  84,
+                  119,
+                  111
+                ]
+              }
+            ]
+          }
+        ]
+      }
     },
     {
       "reference_id": "base@4a5d2ec9571e2021fc9a4621e24a195f966ee6dd:common/src/test/java/com/android/utils/StringHelperTest.kt#com.android.utils.StringHelperTest.testCapitalizeAndAppend",
@@ -162,7 +1026,120 @@
       "declaration_line": 100,
       "method_text_sha256": "621d6c431d70f7ce6b87a2ffe005e74959c9e344e6ba674994cfe5e2f8639ef6",
       "method_text_hash_encoding": "UTF-8 bytes from fun keyword through matched closing brace, excluding leading indentation and final newline",
-      "selected_original_assertions": null
+      "selected_original_assertions": 2,
+      "rust_test_name": "string_helper_capitalize_and_append",
+      "rust_integration_target": "string_helper",
+      "port_status": "adapted",
+      "run_status": "not_run",
+      "not_applicable": false,
+      "adaptation": "Rust ordered equality/assertions retain every original operand and predicate; Java strings use UTF-16 adapters. Casing fixtures run against all five explicit supported Unicode versions, never an inferred JBR default; collection displays are explicit callbacks; tokenization selects both platforms.",
+      "original_assertion_specification": {
+        "reference_id": "base@4a5d2ec9571e2021fc9a4621e24a195f966ee6dd:common/src/test/java/com/android/utils/StringHelperTest.kt#com.android.utils.StringHelperTest.testCapitalizeAndAppend",
+        "suite": "com.android.utils.StringHelperTest",
+        "method": "testCapitalizeAndAppend",
+        "declaration_line": 100,
+        "method_text_sha256": "621d6c431d70f7ce6b87a2ffe005e74959c9e344e6ba674994cfe5e2f8639ef6",
+        "method_text_hash_encoding": "UTF-8 bytes from fun keyword through matched closing brace, excluding leading indentation and final newline",
+        "selected_original_assertions": null,
+        "status": "unported",
+        "execution_status": "not_run",
+        "effective_runtime_cases": null,
+        "method_text": "fun testCapitalizeAndAppend() {\n    assertThat(\"word\".capitalizeAndAppend(\"Suffix\")).isEqualTo(\"WordSuffix\")\n    assertThat(\"\".capitalizeAndAppend(\"Suffix\")).isEqualTo(\"Suffix\")\n  }",
+        "assertion_count": 2,
+        "assertions": [
+          {
+            "ordinal": 1,
+            "original_line": 101,
+            "original_assertion_text": "assertThat(\"word\".capitalizeAndAppend(\"Suffix\")).isEqualTo(\"WordSuffix\")",
+            "original_assertion_sha256": "0c36cd58baa66dd3e098f0afb5f2a8d048726ab0bbbd3238191bc7547e1ea732",
+            "comparison_chain": [
+              "isEqualTo"
+            ],
+            "preserve_order_requirement": false,
+            "literal_fixtures": [
+              {
+                "source_spelling": "\"word\"",
+                "dynamic_kotlin_interpolation": false,
+                "utf16_code_units": [
+                  119,
+                  111,
+                  114,
+                  100
+                ]
+              },
+              {
+                "source_spelling": "\"Suffix\"",
+                "dynamic_kotlin_interpolation": false,
+                "utf16_code_units": [
+                  83,
+                  117,
+                  102,
+                  102,
+                  105,
+                  120
+                ]
+              },
+              {
+                "source_spelling": "\"WordSuffix\"",
+                "dynamic_kotlin_interpolation": false,
+                "utf16_code_units": [
+                  87,
+                  111,
+                  114,
+                  100,
+                  83,
+                  117,
+                  102,
+                  102,
+                  105,
+                  120
+                ]
+              }
+            ]
+          },
+          {
+            "ordinal": 2,
+            "original_line": 102,
+            "original_assertion_text": "assertThat(\"\".capitalizeAndAppend(\"Suffix\")).isEqualTo(\"Suffix\")",
+            "original_assertion_sha256": "0b16681488078dc538f37199c9cef539e0d85d96ad4163870ad732b0c2941b7b",
+            "comparison_chain": [
+              "isEqualTo"
+            ],
+            "preserve_order_requirement": false,
+            "literal_fixtures": [
+              {
+                "source_spelling": "\"\"",
+                "dynamic_kotlin_interpolation": false,
+                "utf16_code_units": []
+              },
+              {
+                "source_spelling": "\"Suffix\"",
+                "dynamic_kotlin_interpolation": false,
+                "utf16_code_units": [
+                  83,
+                  117,
+                  102,
+                  102,
+                  105,
+                  120
+                ]
+              },
+              {
+                "source_spelling": "\"Suffix\"",
+                "dynamic_kotlin_interpolation": false,
+                "utf16_code_units": [
+                  83,
+                  117,
+                  102,
+                  102,
+                  105,
+                  120
+                ]
+              }
+            ]
+          }
+        ]
+      }
     },
     {
       "reference_id": "base@4a5d2ec9571e2021fc9a4621e24a195f966ee6dd:common/src/test/java/com/android/utils/StringHelperTest.kt#com.android.utils.StringHelperTest.testAppendCamelCase",
@@ -171,7 +1148,143 @@
       "declaration_line": 106,
       "method_text_sha256": "89d39baffe6823e9fd023ca9b1a8bc17cee72cb59ad1ed14574f5f57fc3ddf87",
       "method_text_hash_encoding": "UTF-8 bytes from fun keyword through matched closing brace, excluding leading indentation and final newline",
-      "selected_original_assertions": null
+      "selected_original_assertions": 3,
+      "rust_test_name": "string_helper_append_camel_case",
+      "rust_integration_target": "string_helper",
+      "port_status": "adapted",
+      "run_status": "not_run",
+      "not_applicable": false,
+      "adaptation": "Rust ordered equality/assertions retain every original operand and predicate; Java strings use UTF-16 adapters. Casing fixtures run against all five explicit supported Unicode versions, never an inferred JBR default; collection displays are explicit callbacks; tokenization selects both platforms.",
+      "original_assertion_specification": {
+        "reference_id": "base@4a5d2ec9571e2021fc9a4621e24a195f966ee6dd:common/src/test/java/com/android/utils/StringHelperTest.kt#com.android.utils.StringHelperTest.testAppendCamelCase",
+        "suite": "com.android.utils.StringHelperTest",
+        "method": "testAppendCamelCase",
+        "declaration_line": 106,
+        "method_text_sha256": "89d39baffe6823e9fd023ca9b1a8bc17cee72cb59ad1ed14574f5f57fc3ddf87",
+        "method_text_hash_encoding": "UTF-8 bytes from fun keyword through matched closing brace, excluding leading indentation and final newline",
+        "selected_original_assertions": null,
+        "status": "unported",
+        "execution_status": "not_run",
+        "effective_runtime_cases": null,
+        "method_text": "fun testAppendCamelCase() {\n    assertThat(StringBuilder().appendCamelCase(\"foo\").toString()).isEqualTo(\"foo\")\n    assertThat(StringBuilder(\"foo\").appendCamelCase(\"bar\").toString()).isEqualTo(\"fooBar\")\n    assertThat(StringBuilder(\"foo\").appendCamelCase(\"Bar\").toString()).isEqualTo(\"fooBar\")\n  }",
+        "assertion_count": 3,
+        "assertions": [
+          {
+            "ordinal": 1,
+            "original_line": 107,
+            "original_assertion_text": "assertThat(StringBuilder().appendCamelCase(\"foo\").toString()).isEqualTo(\"foo\")",
+            "original_assertion_sha256": "c640578129737c464eaab0cf314a9b4ea934aa46e6540193b1a4b365b9932266",
+            "comparison_chain": [
+              "isEqualTo"
+            ],
+            "preserve_order_requirement": false,
+            "literal_fixtures": [
+              {
+                "source_spelling": "\"foo\"",
+                "dynamic_kotlin_interpolation": false,
+                "utf16_code_units": [
+                  102,
+                  111,
+                  111
+                ]
+              },
+              {
+                "source_spelling": "\"foo\"",
+                "dynamic_kotlin_interpolation": false,
+                "utf16_code_units": [
+                  102,
+                  111,
+                  111
+                ]
+              }
+            ]
+          },
+          {
+            "ordinal": 2,
+            "original_line": 108,
+            "original_assertion_text": "assertThat(StringBuilder(\"foo\").appendCamelCase(\"bar\").toString()).isEqualTo(\"fooBar\")",
+            "original_assertion_sha256": "2257035f21875b5a64d9f8f5e9dca4b88a58bebfa30ab3256ddad5cb40d7c832",
+            "comparison_chain": [
+              "isEqualTo"
+            ],
+            "preserve_order_requirement": false,
+            "literal_fixtures": [
+              {
+                "source_spelling": "\"foo\"",
+                "dynamic_kotlin_interpolation": false,
+                "utf16_code_units": [
+                  102,
+                  111,
+                  111
+                ]
+              },
+              {
+                "source_spelling": "\"bar\"",
+                "dynamic_kotlin_interpolation": false,
+                "utf16_code_units": [
+                  98,
+                  97,
+                  114
+                ]
+              },
+              {
+                "source_spelling": "\"fooBar\"",
+                "dynamic_kotlin_interpolation": false,
+                "utf16_code_units": [
+                  102,
+                  111,
+                  111,
+                  66,
+                  97,
+                  114
+                ]
+              }
+            ]
+          },
+          {
+            "ordinal": 3,
+            "original_line": 109,
+            "original_assertion_text": "assertThat(StringBuilder(\"foo\").appendCamelCase(\"Bar\").toString()).isEqualTo(\"fooBar\")",
+            "original_assertion_sha256": "5b3ce0e2c744da3798caa06dd0324eea3e9b490a37d7185b7f6b480018da0264",
+            "comparison_chain": [
+              "isEqualTo"
+            ],
+            "preserve_order_requirement": false,
+            "literal_fixtures": [
+              {
+                "source_spelling": "\"foo\"",
+                "dynamic_kotlin_interpolation": false,
+                "utf16_code_units": [
+                  102,
+                  111,
+                  111
+                ]
+              },
+              {
+                "source_spelling": "\"Bar\"",
+                "dynamic_kotlin_interpolation": false,
+                "utf16_code_units": [
+                  66,
+                  97,
+                  114
+                ]
+              },
+              {
+                "source_spelling": "\"fooBar\"",
+                "dynamic_kotlin_interpolation": false,
+                "utf16_code_units": [
+                  102,
+                  111,
+                  111,
+                  66,
+                  97,
+                  114
+                ]
+              }
+            ]
+          }
+        ]
+      }
     },
     {
       "reference_id": "base@4a5d2ec9571e2021fc9a4621e24a195f966ee6dd:common/src/test/java/com/android/utils/StringHelperTest.kt#com.android.utils.StringHelperTest.testCombineAsCamelCase",
@@ -180,7 +1293,192 @@
       "declaration_line": 113,
       "method_text_sha256": "6f23d1d860545352e25f48f837b230709d7a60438015fd2952991e089789b3ba",
       "method_text_hash_encoding": "UTF-8 bytes from fun keyword through matched closing brace, excluding leading indentation and final newline",
-      "selected_original_assertions": null
+      "selected_original_assertions": 4,
+      "rust_test_name": "string_helper_combine_as_camel_case",
+      "rust_integration_target": "string_helper",
+      "port_status": "adapted",
+      "run_status": "not_run",
+      "not_applicable": false,
+      "adaptation": "Rust ordered equality/assertions retain every original operand and predicate; Java strings use UTF-16 adapters. Casing fixtures run against all five explicit supported Unicode versions, never an inferred JBR default; collection displays are explicit callbacks; tokenization selects both platforms.",
+      "original_assertion_specification": {
+        "reference_id": "base@4a5d2ec9571e2021fc9a4621e24a195f966ee6dd:common/src/test/java/com/android/utils/StringHelperTest.kt#com.android.utils.StringHelperTest.testCombineAsCamelCase",
+        "suite": "com.android.utils.StringHelperTest",
+        "method": "testCombineAsCamelCase",
+        "declaration_line": 113,
+        "method_text_sha256": "6f23d1d860545352e25f48f837b230709d7a60438015fd2952991e089789b3ba",
+        "method_text_hash_encoding": "UTF-8 bytes from fun keyword through matched closing brace, excluding leading indentation and final newline",
+        "selected_original_assertions": null,
+        "status": "unported",
+        "execution_status": "not_run",
+        "effective_runtime_cases": null,
+        "method_text": "fun testCombineAsCamelCase() {\n    assertThat(listOf(\"foo\", \"bar\", \"baz\").combineAsCamelCase()).isEqualTo(\"fooBarBaz\")\n    assertThat(listOf(\"Foo\", \"bar\", \"Baz\").combineAsCamelCase()).isEqualTo(\"FooBarBaz\")\n    assertThat(emptyList<String>().combineAsCamelCase()).isEqualTo(\"\")\n\n    val objects = listOf(1, 2, 3)\n    assertThat(combineAsCamelCase(objects) { \"item$it\" }).isEqualTo(\"item1Item2Item3\")\n  }",
+        "assertion_count": 4,
+        "assertions": [
+          {
+            "ordinal": 1,
+            "original_line": 114,
+            "original_assertion_text": "assertThat(listOf(\"foo\", \"bar\", \"baz\").combineAsCamelCase()).isEqualTo(\"fooBarBaz\")",
+            "original_assertion_sha256": "222501028e1b2f86486a67e68b9979432569323812e6340aabe46b7e78551075",
+            "comparison_chain": [
+              "isEqualTo"
+            ],
+            "preserve_order_requirement": false,
+            "literal_fixtures": [
+              {
+                "source_spelling": "\"foo\"",
+                "dynamic_kotlin_interpolation": false,
+                "utf16_code_units": [
+                  102,
+                  111,
+                  111
+                ]
+              },
+              {
+                "source_spelling": "\"bar\"",
+                "dynamic_kotlin_interpolation": false,
+                "utf16_code_units": [
+                  98,
+                  97,
+                  114
+                ]
+              },
+              {
+                "source_spelling": "\"baz\"",
+                "dynamic_kotlin_interpolation": false,
+                "utf16_code_units": [
+                  98,
+                  97,
+                  122
+                ]
+              },
+              {
+                "source_spelling": "\"fooBarBaz\"",
+                "dynamic_kotlin_interpolation": false,
+                "utf16_code_units": [
+                  102,
+                  111,
+                  111,
+                  66,
+                  97,
+                  114,
+                  66,
+                  97,
+                  122
+                ]
+              }
+            ]
+          },
+          {
+            "ordinal": 2,
+            "original_line": 115,
+            "original_assertion_text": "assertThat(listOf(\"Foo\", \"bar\", \"Baz\").combineAsCamelCase()).isEqualTo(\"FooBarBaz\")",
+            "original_assertion_sha256": "5befb5a601e410c37e385acaacd77dc96ef095ff64a3100f65185a53d445bfb9",
+            "comparison_chain": [
+              "isEqualTo"
+            ],
+            "preserve_order_requirement": false,
+            "literal_fixtures": [
+              {
+                "source_spelling": "\"Foo\"",
+                "dynamic_kotlin_interpolation": false,
+                "utf16_code_units": [
+                  70,
+                  111,
+                  111
+                ]
+              },
+              {
+                "source_spelling": "\"bar\"",
+                "dynamic_kotlin_interpolation": false,
+                "utf16_code_units": [
+                  98,
+                  97,
+                  114
+                ]
+              },
+              {
+                "source_spelling": "\"Baz\"",
+                "dynamic_kotlin_interpolation": false,
+                "utf16_code_units": [
+                  66,
+                  97,
+                  122
+                ]
+              },
+              {
+                "source_spelling": "\"FooBarBaz\"",
+                "dynamic_kotlin_interpolation": false,
+                "utf16_code_units": [
+                  70,
+                  111,
+                  111,
+                  66,
+                  97,
+                  114,
+                  66,
+                  97,
+                  122
+                ]
+              }
+            ]
+          },
+          {
+            "ordinal": 3,
+            "original_line": 116,
+            "original_assertion_text": "assertThat(emptyList<String>().combineAsCamelCase()).isEqualTo(\"\")",
+            "original_assertion_sha256": "9866e708545ed87ebd89c117d7fc4a2a9b721bc7c837c034ebd5ae51b5efb941",
+            "comparison_chain": [
+              "isEqualTo"
+            ],
+            "preserve_order_requirement": false,
+            "literal_fixtures": [
+              {
+                "source_spelling": "\"\"",
+                "dynamic_kotlin_interpolation": false,
+                "utf16_code_units": []
+              }
+            ]
+          },
+          {
+            "ordinal": 4,
+            "original_line": 119,
+            "original_assertion_text": "assertThat(combineAsCamelCase(objects) { \"item$it\" }).isEqualTo(\"item1Item2Item3\")",
+            "original_assertion_sha256": "6f266571180826e75bd7e8c4b217a0e9f2287bab1229f02fc856f4fef63189a8",
+            "comparison_chain": [
+              "isEqualTo"
+            ],
+            "preserve_order_requirement": false,
+            "literal_fixtures": [
+              {
+                "source_spelling": "\"item$it\"",
+                "dynamic_kotlin_interpolation": true,
+                "utf16_code_units": null
+              },
+              {
+                "source_spelling": "\"item1Item2Item3\"",
+                "dynamic_kotlin_interpolation": false,
+                "utf16_code_units": [
+                  105,
+                  116,
+                  101,
+                  109,
+                  49,
+                  73,
+                  116,
+                  101,
+                  109,
+                  50,
+                  73,
+                  116,
+                  101,
+                  109,
+                  51
+                ]
+              }
+            ]
+          }
+        ]
+      }
     },
     {
       "reference_id": "base@4a5d2ec9571e2021fc9a4621e24a195f966ee6dd:common/src/test/java/com/android/utils/StringHelperTest.kt#com.android.utils.StringHelperTest.testToStrings",
@@ -189,7 +1487,170 @@
       "declaration_line": 123,
       "method_text_sha256": "5cbe764ff8d9b39a449ec5ee0e69a9f23147441241013c3fa12a6995cd2c9017",
       "method_text_hash_encoding": "UTF-8 bytes from fun keyword through matched closing brace, excluding leading indentation and final newline",
-      "selected_original_assertions": null
+      "selected_original_assertions": 3,
+      "rust_test_name": "string_helper_to_strings",
+      "rust_integration_target": "string_helper",
+      "port_status": "adapted",
+      "run_status": "not_run",
+      "not_applicable": false,
+      "adaptation": "Rust ordered equality/assertions retain every original operand and predicate; Java strings use UTF-16 adapters. Casing fixtures run against all five explicit supported Unicode versions, never an inferred JBR default; collection displays are explicit callbacks; tokenization selects both platforms.",
+      "original_assertion_specification": {
+        "reference_id": "base@4a5d2ec9571e2021fc9a4621e24a195f966ee6dd:common/src/test/java/com/android/utils/StringHelperTest.kt#com.android.utils.StringHelperTest.testToStrings",
+        "suite": "com.android.utils.StringHelperTest",
+        "method": "testToStrings",
+        "declaration_line": 123,
+        "method_text_sha256": "5cbe764ff8d9b39a449ec5ee0e69a9f23147441241013c3fa12a6995cd2c9017",
+        "method_text_hash_encoding": "UTF-8 bytes from fun keyword through matched closing brace, excluding leading indentation and final newline",
+        "selected_original_assertions": null,
+        "status": "unported",
+        "execution_status": "not_run",
+        "effective_runtime_cases": null,
+        "method_text": "fun testToStrings() {\n    assertThat(toStrings(\"a\", \"b\")).containsExactly(\"a\", \"b\").inOrder()\n    assertThat(toStrings(\"a\", listOf(\"b\", \"c\"), 123)).containsExactly(\"a\", \"b\", \"c\", \"123\").inOrder()\n    assertThat(\n        toStrings(\n          object : Any() {\n            override fun toString() = \"custom\"\n          }\n        )\n      )\n      .containsExactly(\"custom\")\n  }",
+        "assertion_count": 3,
+        "assertions": [
+          {
+            "ordinal": 1,
+            "original_line": 124,
+            "original_assertion_text": "assertThat(toStrings(\"a\", \"b\")).containsExactly(\"a\", \"b\").inOrder()",
+            "original_assertion_sha256": "4230808763ddad3eb3dc7e72089063cc2f57829486977c079e49779bb9c1658e",
+            "comparison_chain": [
+              "containsExactly",
+              "inOrder"
+            ],
+            "preserve_order_requirement": true,
+            "literal_fixtures": [
+              {
+                "source_spelling": "\"a\"",
+                "dynamic_kotlin_interpolation": false,
+                "utf16_code_units": [
+                  97
+                ]
+              },
+              {
+                "source_spelling": "\"b\"",
+                "dynamic_kotlin_interpolation": false,
+                "utf16_code_units": [
+                  98
+                ]
+              },
+              {
+                "source_spelling": "\"a\"",
+                "dynamic_kotlin_interpolation": false,
+                "utf16_code_units": [
+                  97
+                ]
+              },
+              {
+                "source_spelling": "\"b\"",
+                "dynamic_kotlin_interpolation": false,
+                "utf16_code_units": [
+                  98
+                ]
+              }
+            ]
+          },
+          {
+            "ordinal": 2,
+            "original_line": 125,
+            "original_assertion_text": "assertThat(toStrings(\"a\", listOf(\"b\", \"c\"), 123)).containsExactly(\"a\", \"b\", \"c\", \"123\").inOrder()",
+            "original_assertion_sha256": "da9168512d31b569e4fdaaa72dae8bce207b8b8dc2224d89a48187cdf6ad8f35",
+            "comparison_chain": [
+              "containsExactly",
+              "inOrder"
+            ],
+            "preserve_order_requirement": true,
+            "literal_fixtures": [
+              {
+                "source_spelling": "\"a\"",
+                "dynamic_kotlin_interpolation": false,
+                "utf16_code_units": [
+                  97
+                ]
+              },
+              {
+                "source_spelling": "\"b\"",
+                "dynamic_kotlin_interpolation": false,
+                "utf16_code_units": [
+                  98
+                ]
+              },
+              {
+                "source_spelling": "\"c\"",
+                "dynamic_kotlin_interpolation": false,
+                "utf16_code_units": [
+                  99
+                ]
+              },
+              {
+                "source_spelling": "\"a\"",
+                "dynamic_kotlin_interpolation": false,
+                "utf16_code_units": [
+                  97
+                ]
+              },
+              {
+                "source_spelling": "\"b\"",
+                "dynamic_kotlin_interpolation": false,
+                "utf16_code_units": [
+                  98
+                ]
+              },
+              {
+                "source_spelling": "\"c\"",
+                "dynamic_kotlin_interpolation": false,
+                "utf16_code_units": [
+                  99
+                ]
+              },
+              {
+                "source_spelling": "\"123\"",
+                "dynamic_kotlin_interpolation": false,
+                "utf16_code_units": [
+                  49,
+                  50,
+                  51
+                ]
+              }
+            ]
+          },
+          {
+            "ordinal": 3,
+            "original_line": 126,
+            "original_assertion_text": "assertThat(\n        toStrings(\n          object : Any() {\n            override fun toString() = \"custom\"\n          }\n        )\n      )\n      .containsExactly(\"custom\")",
+            "original_assertion_sha256": "b0e7570095aed3ef5a394369957a6c971b02c17562021d6df3057ad20053970d",
+            "comparison_chain": [
+              "containsExactly"
+            ],
+            "preserve_order_requirement": false,
+            "literal_fixtures": [
+              {
+                "source_spelling": "\"custom\"",
+                "dynamic_kotlin_interpolation": false,
+                "utf16_code_units": [
+                  99,
+                  117,
+                  115,
+                  116,
+                  111,
+                  109
+                ]
+              },
+              {
+                "source_spelling": "\"custom\"",
+                "dynamic_kotlin_interpolation": false,
+                "utf16_code_units": [
+                  99,
+                  117,
+                  115,
+                  116,
+                  111,
+                  109
+                ]
+              }
+            ]
+          }
+        ]
+      }
     },
     {
       "reference_id": "base@4a5d2ec9571e2021fc9a4621e24a195f966ee6dd:common/src/test/java/com/android/utils/StringHelperTest.kt#com.android.utils.StringHelperTest.testTokenizeCommandLine",
@@ -198,7 +1659,165 @@
       "declaration_line": 137,
       "method_text_sha256": "5e29d419007cdf89b7e85e7b7785bd60fad0d2f2de24321e885316aad4e59e15",
       "method_text_hash_encoding": "UTF-8 bytes from fun keyword through matched closing brace, excluding leading indentation and final newline",
-      "selected_original_assertions": null
+      "selected_original_assertions": 2,
+      "rust_test_name": "test_tokenize_command_line",
+      "rust_integration_target": "string_helper_tokenize",
+      "port_status": "adapted",
+      "run_status": "not_run",
+      "not_applicable": false,
+      "adaptation": "Rust ordered equality/assertions retain every original operand and predicate; Java strings use UTF-16 adapters. Casing fixtures run against all five explicit supported Unicode versions, never an inferred JBR default; collection displays are explicit callbacks; tokenization selects both platforms.",
+      "original_assertion_specification": {
+        "reference_id": "base@4a5d2ec9571e2021fc9a4621e24a195f966ee6dd:common/src/test/java/com/android/utils/StringHelperTest.kt#com.android.utils.StringHelperTest.testTokenizeCommandLine",
+        "suite": "com.android.utils.StringHelperTest",
+        "method": "testTokenizeCommandLine",
+        "declaration_line": 137,
+        "method_text_sha256": "5e29d419007cdf89b7e85e7b7785bd60fad0d2f2de24321e885316aad4e59e15",
+        "method_text_hash_encoding": "UTF-8 bytes from fun keyword through matched closing brace, excluding leading indentation and final newline",
+        "selected_original_assertions": null,
+        "status": "unported",
+        "execution_status": "not_run",
+        "effective_runtime_cases": null,
+        "method_text": "fun testTokenizeCommandLine() {\n    // raw = true includes quotes in the tokens\n    assertThat(\"foo bar \\\"baz qux\\\"\".tokenizeCommandLineToRaw()).containsExactly(\"foo\", \"bar\", \"\\\"baz qux\\\"\").inOrder()\n\n    // raw = false (escaped) removes quotes\n    assertThat(\"foo bar \\\"baz qux\\\"\".tokenizeCommandLineToEscaped()).containsExactly(\"foo\", \"bar\", \"baz qux\").inOrder()\n  }",
+        "assertion_count": 2,
+        "assertions": [
+          {
+            "ordinal": 1,
+            "original_line": 139,
+            "original_assertion_text": "assertThat(\"foo bar \\\"baz qux\\\"\".tokenizeCommandLineToRaw()).containsExactly(\"foo\", \"bar\", \"\\\"baz qux\\\"\").inOrder()",
+            "original_assertion_sha256": "9b6d9bef6780419b9344bdb58dc342a25866baa1b3fbcd5bc78410385dba179d",
+            "comparison_chain": [
+              "containsExactly",
+              "inOrder"
+            ],
+            "preserve_order_requirement": true,
+            "literal_fixtures": [
+              {
+                "source_spelling": "\"foo bar \\\"baz qux\\\"\"",
+                "dynamic_kotlin_interpolation": false,
+                "utf16_code_units": [
+                  102,
+                  111,
+                  111,
+                  32,
+                  98,
+                  97,
+                  114,
+                  32,
+                  34,
+                  98,
+                  97,
+                  122,
+                  32,
+                  113,
+                  117,
+                  120,
+                  34
+                ]
+              },
+              {
+                "source_spelling": "\"foo\"",
+                "dynamic_kotlin_interpolation": false,
+                "utf16_code_units": [
+                  102,
+                  111,
+                  111
+                ]
+              },
+              {
+                "source_spelling": "\"bar\"",
+                "dynamic_kotlin_interpolation": false,
+                "utf16_code_units": [
+                  98,
+                  97,
+                  114
+                ]
+              },
+              {
+                "source_spelling": "\"\\\"baz qux\\\"\"",
+                "dynamic_kotlin_interpolation": false,
+                "utf16_code_units": [
+                  34,
+                  98,
+                  97,
+                  122,
+                  32,
+                  113,
+                  117,
+                  120,
+                  34
+                ]
+              }
+            ]
+          },
+          {
+            "ordinal": 2,
+            "original_line": 142,
+            "original_assertion_text": "assertThat(\"foo bar \\\"baz qux\\\"\".tokenizeCommandLineToEscaped()).containsExactly(\"foo\", \"bar\", \"baz qux\").inOrder()",
+            "original_assertion_sha256": "eafb69e5c1bed4822ea0eeabd63e6994adacde644e50d0fcf448d43d426f8e24",
+            "comparison_chain": [
+              "containsExactly",
+              "inOrder"
+            ],
+            "preserve_order_requirement": true,
+            "literal_fixtures": [
+              {
+                "source_spelling": "\"foo bar \\\"baz qux\\\"\"",
+                "dynamic_kotlin_interpolation": false,
+                "utf16_code_units": [
+                  102,
+                  111,
+                  111,
+                  32,
+                  98,
+                  97,
+                  114,
+                  32,
+                  34,
+                  98,
+                  97,
+                  122,
+                  32,
+                  113,
+                  117,
+                  120,
+                  34
+                ]
+              },
+              {
+                "source_spelling": "\"foo\"",
+                "dynamic_kotlin_interpolation": false,
+                "utf16_code_units": [
+                  102,
+                  111,
+                  111
+                ]
+              },
+              {
+                "source_spelling": "\"bar\"",
+                "dynamic_kotlin_interpolation": false,
+                "utf16_code_units": [
+                  98,
+                  97,
+                  114
+                ]
+              },
+              {
+                "source_spelling": "\"baz qux\"",
+                "dynamic_kotlin_interpolation": false,
+                "utf16_code_units": [
+                  98,
+                  97,
+                  122,
+                  32,
+                  113,
+                  117,
+                  120
+                ]
+              }
+            ]
+          }
+        ]
+      }
     },
     {
       "reference_id": "base@4a5d2ec9571e2021fc9a4621e24a195f966ee6dd:common/src/test/java/com/android/utils/StringHelperTest.kt#com.android.utils.StringHelperTest.testToSystemLineSeparator",
@@ -207,7 +1826,98 @@
       "declaration_line": 146,
       "method_text_sha256": "7482883e8ceba12fdb1229507e751ae309e275b95ed4710568e6db0d802e343e",
       "method_text_hash_encoding": "UTF-8 bytes from fun keyword through matched closing brace, excluding leading indentation and final newline",
-      "selected_original_assertions": null
+      "selected_original_assertions": 2,
+      "rust_test_name": "string_helper_to_system_line_separator",
+      "rust_integration_target": "string_helper",
+      "port_status": "adapted",
+      "run_status": "not_run",
+      "not_applicable": false,
+      "adaptation": "Rust ordered equality/assertions retain every original operand and predicate; Java strings use UTF-16 adapters. Casing fixtures run against all five explicit supported Unicode versions, never an inferred JBR default; collection displays are explicit callbacks; tokenization selects both platforms.",
+      "original_assertion_specification": {
+        "reference_id": "base@4a5d2ec9571e2021fc9a4621e24a195f966ee6dd:common/src/test/java/com/android/utils/StringHelperTest.kt#com.android.utils.StringHelperTest.testToSystemLineSeparator",
+        "suite": "com.android.utils.StringHelperTest",
+        "method": "testToSystemLineSeparator",
+        "declaration_line": 146,
+        "method_text_sha256": "7482883e8ceba12fdb1229507e751ae309e275b95ed4710568e6db0d802e343e",
+        "method_text_hash_encoding": "UTF-8 bytes from fun keyword through matched closing brace, excluding leading indentation and final newline",
+        "selected_original_assertions": null,
+        "status": "unported",
+        "execution_status": "not_run",
+        "effective_runtime_cases": null,
+        "method_text": "fun testToSystemLineSeparator() {\n    val systemLineSeparator = System.lineSeparator()\n    assertThat(\"line1\\nline2\".toSystemLineSeparator()).isEqualTo(\"line1${systemLineSeparator}line2\")\n    assertThat(\"line1\\r\\nline2\".toSystemLineSeparator()).isEqualTo(\"line1${systemLineSeparator}line2\")\n  }",
+        "assertion_count": 2,
+        "assertions": [
+          {
+            "ordinal": 1,
+            "original_line": 148,
+            "original_assertion_text": "assertThat(\"line1\\nline2\".toSystemLineSeparator()).isEqualTo(\"line1${systemLineSeparator}line2\")",
+            "original_assertion_sha256": "eec73cf95049965b98d9442210c5c64ea640573cd8913d69206bf93f266057b2",
+            "comparison_chain": [
+              "isEqualTo"
+            ],
+            "preserve_order_requirement": false,
+            "literal_fixtures": [
+              {
+                "source_spelling": "\"line1\\nline2\"",
+                "dynamic_kotlin_interpolation": false,
+                "utf16_code_units": [
+                  108,
+                  105,
+                  110,
+                  101,
+                  49,
+                  10,
+                  108,
+                  105,
+                  110,
+                  101,
+                  50
+                ]
+              },
+              {
+                "source_spelling": "\"line1${systemLineSeparator}line2\"",
+                "dynamic_kotlin_interpolation": true,
+                "utf16_code_units": null
+              }
+            ]
+          },
+          {
+            "ordinal": 2,
+            "original_line": 149,
+            "original_assertion_text": "assertThat(\"line1\\r\\nline2\".toSystemLineSeparator()).isEqualTo(\"line1${systemLineSeparator}line2\")",
+            "original_assertion_sha256": "369801f5e755158606acd04dfc7af1fb17ca234ca89de529f52bab354c37f99d",
+            "comparison_chain": [
+              "isEqualTo"
+            ],
+            "preserve_order_requirement": false,
+            "literal_fixtures": [
+              {
+                "source_spelling": "\"line1\\r\\nline2\"",
+                "dynamic_kotlin_interpolation": false,
+                "utf16_code_units": [
+                  108,
+                  105,
+                  110,
+                  101,
+                  49,
+                  13,
+                  10,
+                  108,
+                  105,
+                  110,
+                  101,
+                  50
+                ]
+              },
+              {
+                "source_spelling": "\"line1${systemLineSeparator}line2\"",
+                "dynamic_kotlin_interpolation": true,
+                "utf16_code_units": null
+              }
+            ]
+          }
+        ]
+      }
     }
   ],
   "original_assertion_mapping": [
@@ -247,5 +1957,9 @@
       "original_default_separator": false,
       "separator_string": ", "
     }
-  ]
+  ],
+  "baseline_jbr_version_status": "unbound; explicit supported JDK17–25 case maps only; baseline/JVM differential acceptance remains pending",
+  "original_method_count": 19,
+  "original_assertion_count": 37,
+  "new_runtime_credit": 0
 }

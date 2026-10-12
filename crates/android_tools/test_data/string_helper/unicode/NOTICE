@@ -1,0 +1,23 @@
+The generated StringHelper case tables use UnicodeData.txt and SpecialCasing.txt
+13.0.0, 14.0.0, 15.0.0, 15.1.0 and 16.0.0 from the Unicode Consortium. Exact
+original URLs, sizes and SHA-256 digests are in manifest.json. LICENSE-UNICODE
+retains Unicode License v3. Runtime implementation and regeneration are Rust.
+
+These are the already attributed inputs retained by PR77 at
+074ef8782244b18240d199c887595247b9ac131d, not PR33. The JDK Character API records
+bind JDK17–18 to Unicode13, JDK19 to14, JDK20–21 to15, JDK22–23 to15.1 and
+JDK24–25 to16. See the official versioned Character documentation:
+https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Character.html
+and corresponding release18 through25 paths.
+
+The generated tables contain simple upper/lower mappings. For the leading
+supplementary uppercase branch, these exact SpecialCasing inputs contain no
+supplementary unconditional override. For first-unit US lowercasing the only
+unconditional expansion is U+0130 to U+0069 U+0307, implemented explicitly.
+The Rust generator validates both facts before publishing tables.
+
+No default case-data version is inferred from the host Rust compiler, user
+locale or Gradle runtime. Binding the pinned Android Studio Rabbit1 bundled
+JBR remains pending. Original test fixtures are asserted for every supported
+version; this does not establish that missing baseline binding or JVM runtime
+comparison. Source data is not a non-Rust runtime component.

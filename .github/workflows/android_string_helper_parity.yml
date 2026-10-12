@@ -1,0 +1,80 @@
+name: Android StringHelper parity
+
+on:
+  pull_request:
+    branches: [android-studio]
+    types: [opened, synchronize, reopened, ready_for_review]
+    paths:
+      - crates/android_tools/**
+      - tooling/xtask/**
+      - Cargo.toml
+      - Cargo.lock
+      - rust-toolchain.toml
+      - .github/workflows/android_string_helper_parity.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: android-string-helper-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+env:
+  CARGO_INCREMENTAL: '0'
+  CARGO_PROFILE_DEV_DEBUG: '0'
+  CARGO_PROFILE_DEV_BUILD_OVERRIDE_DEBUG: '0'
+  CARGO_TERM_COLOR: never
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  parity:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
+        with:
+          persist-credentials: false
+          ref: ${{ github.sha }}
+      - name: Install inherited Linux build dependencies
+        run: ./script/linux
+      - name: Select pinned repository toolchain
+        run: rustup show active-toolchain
+      - name: Test every StringHelper port and supplemental case
+        run: >-
+          cargo test --locked --manifest-path crates/android_tools/Cargo.toml
+          -p android_tools --test string_helper --test string_helper_tokenize -- --show-output
+      - name: Test strict named recording
+        run: cargo test --locked -p xtask android_string_helper::tests:: -- --show-output
+      - name: Run the original separated-list case with an exact filter
+        id: named
+        run: |
+          set +e
+          cargo test --locked --manifest-path crates/android_tools/Cargo.toml -p android_tools --test string_helper string_helper_as_separated_list_contains -- --exact --show-output > "$RUNNER_TEMP/string-helper-named.log" 2>&1
+          cargo_status=$?
+          cat "$RUNNER_TEMP/string-helper-named.log"
+          echo "exit_code=$cargo_status" >> "$GITHUB_OUTPUT"
+          exit "$cargo_status"
+      - name: Record the completed named Cargo outcome
+        if: ${{ always() && steps.named.outcome != 'skipped' }}
+        env:
+          TESTED_COMMIT: ${{ github.sha }}
+          NAMED_EXIT_CODE: ${{ steps.named.outputs.exit_code }}
+        run: >-
+          cargo xtask android-string-helper record --repository .
+          --test-name string_helper_as_separated_list_contains
+          --tested-commit "$TESTED_COMMIT" --exit-code "$NAMED_EXIT_CODE"
+          --log "$RUNNER_TEMP/string-helper-named.log"
+          --output "$RUNNER_TEMP/string-helper-named-receipt.json"
+      - name: Retain named evidence and genuine failures
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: string-helper-named-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            ${{ runner.temp }}/string-helper-named.log
+            ${{ runner.temp }}/string-helper-named-receipt.json
+          if-no-files-found: warn

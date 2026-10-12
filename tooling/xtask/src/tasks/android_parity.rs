@@ -772,7 +772,7 @@ impl RustTarget {
     }
 }
 
-fn verify_test_output(output: &str, name: &str, passing: bool) -> Result<()> {
+pub(super) fn verify_test_output(output: &str, name: &str, passing: bool) -> Result<()> {
     let outcome = if passing { "ok" } else { "FAILED" };
     let result = if passing {
         "test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured;"
