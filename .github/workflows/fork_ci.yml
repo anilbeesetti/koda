@@ -15,6 +15,17 @@ on:
       - script/publish-macos-release
       - script/tests/test_macos_*.py
   workflow_dispatch:
+    inputs:
+      strict_source_sha:
+        description: 'Exact commit SHA for optional isolated Android IDE strict Clippy'
+        required: false
+        default: ''
+        type: string
+      strict_source_tree:
+        description: 'Expected Git tree SHA for strict_source_sha; supply both inputs'
+        required: false
+        default: ''
+        type: string
 
 permissions:
   contents: read
@@ -274,6 +285,91 @@ jobs:
             extensions/test-extension/target/wasm32-wasip2/debug/*.wasm
           key: ${{ steps.build-cache.outputs.cache-primary-key }}
 
+  strict_android_ide_selection:
+    name: Select isolated Android IDE strict source
+    if: >-
+      (github.event_name == 'workflow_dispatch' && (inputs.strict_source_sha != '' || inputs.strict_source_tree != '')) ||
+      (github.event_name == 'pull_request' && github.head_ref == 'android-studio-task/1-evaluated-tree-isolated-strict-ci')
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    outputs:
+      selected: ${{ steps.select.outputs.selected }}
+    steps:
+      - name: Select exact head branch
+        id: select
+        env:
+          CI_EVENT_NAME: ${{ github.event_name }}
+          CI_HEAD_REF: ${{ github.head_ref }}
+        run: |
+          # GitHub expression equality ignores case; Bash preserves Git branch spelling.
+          if [[ "$CI_EVENT_NAME" == 'pull_request' && "$CI_HEAD_REF" != 'android-studio-task/1-evaluated-tree-isolated-strict-ci' ]]; then
+            echo 'selected=false' >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          echo 'selected=true' >> "$GITHUB_OUTPUT"
+
+  strict_android_ide:
+    name: Isolated Android IDE strict Clippy
+    needs: strict_android_ide_selection
+    if: needs.strict_android_ide_selection.outputs.selected == 'true'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 180
+    env:
+      CC: clang
+      CXX: clang++
+      STRICT_SOURCE_SHA: ${{ github.event_name == 'pull_request' && 'bf7a2f4f1494985c941f7602ca719d9d7612c559' || inputs.strict_source_sha }}
+      STRICT_SOURCE_TREE: ${{ github.event_name == 'pull_request' && 'bd6b6fd6612a520c39115fc69201e77d41fdbaf0' || inputs.strict_source_tree }}
+    steps:
+      - name: Validate exact source inputs
+        run: |
+          [[ "$STRICT_SOURCE_SHA" =~ ^[0-9a-f]{40}$ ]]
+          [[ "$STRICT_SOURCE_TREE" =~ ^[0-9a-f]{40}$ ]]
+      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
+        with:
+          persist-credentials: false
+          ref: ${{ env.STRICT_SOURCE_SHA }}
+      - name: Verify source and frozen strict command
+        env:
+          CI_WORKFLOW_SHA: ${{ github.sha }}
+        run: |
+          actual_source_sha=$(git rev-parse HEAD)
+          actual_source_tree=$(git rev-parse 'HEAD^{tree}')
+          tracked_status=$(git status --porcelain --untracked-files=no)
+          test "$actual_source_sha" = "$STRICT_SOURCE_SHA"
+          test "$actual_source_tree" = "$STRICT_SOURCE_TREE"
+          test -z "$tracked_status"
+          echo '0a2fa62c186e472ed7eb70f066d93d5b1e880d9d7e2c40b81f2a9e15544cfdb8  script/clippy' | sha256sum --check --strict
+          printf 'Workflow commit: %s\nStrict source commit: %s\nStrict source tree: %s\n' \
+            "$CI_WORKFLOW_SHA" "$STRICT_SOURCE_SHA" "$STRICT_SOURCE_TREE" | tee -a "$GITHUB_STEP_SUMMARY"
+      # Reuse the Linux job's bootstrap without its test services or build cache.
+      - name: Select runner concurrency
+        run: python3 script/ci-run resources --github-env "$GITHUB_ENV"
+      - name: Free runner disk space
+        run: sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc
+      - name: Install Linux dependencies
+        run: ./script/linux
+      - name: Install repository Rust toolchain
+        run: rustup show active-toolchain
+      - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v4
+        with:
+          node-version: '24'
+          package-manager-cache: false
+      - name: Install WASI SDK
+        run: ./script/download-wasi-sdk
+      - name: Verify source remains frozen
+        run: |
+          actual_source_sha=$(git rev-parse HEAD)
+          actual_source_tree=$(git rev-parse 'HEAD^{tree}')
+          tracked_status=$(git status --porcelain --untracked-files=no)
+          test "$actual_source_sha" = "$STRICT_SOURCE_SHA"
+          test "$actual_source_tree" = "$STRICT_SOURCE_TREE"
+          test -z "$tracked_status"
+          echo '0a2fa62c186e472ed7eb70f066d93d5b1e880d9d7e2c40b81f2a9e15544cfdb8  script/clippy' | sha256sum --check --strict
+      - name: Run exact nine-crate strict Clippy
+        run: >-
+          ./script/clippy --locked -p android_tools -p android_ui -p command_palette
+          -p fs -p gpui -p project -p title_bar -p workspace -p zed
+
   macos:
     name: macOS application check
     needs: checks
@@ -370,3 +466,720 @@ jobs:
             target/debug/deps/*.a
             target/debug/deps/*.d
           key: ${{ steps.build-cache.outputs.cache-primary-key }}
+
+  request_independent_controller_bootstrap:
+    name: Request-independent exact controller Rust bootstrap
+    # The existing opened/synchronize/reopened/ready_for_review PR events expose
+    # labels. Root adds this label before an ordinary synchronize push; no new
+    # labeled-event trigger, native Request or canonical manifest is required.
+    if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository && contains(github.event.pull_request.labels.*.name, 'native-controller-bootstrap')
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    env:
+      CARGO_INCREMENTAL: '0'
+      CARGO_PROFILE_DEV_DEBUG: '0'
+      CARGO_PROFILE_DEV_BUILD_OVERRIDE_DEBUG: '0'
+      CARGO_PROFILE_DEV_OPT_LEVEL: 's'
+      CARGO_PROFILE_DEV_STRIP: symbols
+    steps:
+      - name: Set runner-local Cargo target directory
+        shell: bash
+        run: |
+          printf 'CARGO_TARGET_DIR=%s/native-independent-bootstrap-target\n' "$RUNNER_TEMP" >> "$GITHUB_ENV"
+      - name: Checkout exact same-repository bootstrap controller head
+        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          path: bootstrap-control
+          persist-credentials: false
+      - name: Install controller-pinned bootstrap Rust toolchain
+        working-directory: bootstrap-control
+        run: rustup show active-toolchain
+      - name: Record actual pinned bootstrap compiler and Cargo facts
+        working-directory: bootstrap-control
+        run: |
+          rustc -vV
+          cargo --version
+      - name: Restore existing portable Cargo sources for independent bootstrap
+        id: sources
+        uses: actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830
+        with:
+          path: |
+            .ci-cache/cargo-sources/registry
+            .ci-cache/cargo-sources/git
+          enableCrossOsArchive: true
+          key: fork-ci-source-v3-shared-${{ hashFiles('bootstrap-control/rust-toolchain.toml') }}-${{ hashFiles('bootstrap-control/Cargo.lock', 'bootstrap-control/extensions/test-extension/Cargo.lock') }}
+          restore-keys: fork-ci-source-v3-shared-${{ hashFiles('bootstrap-control/rust-toolchain.toml') }}-
+      - name: Restore bootstrap sources into the original Cargo home
+        if: steps.sources.outputs.cache-matched-key != ''
+        working-directory: bootstrap-control
+        run: python3 script/ci-source-cache restore --cache-dir ../.ci-cache/cargo-sources
+      - name: Compile unaccepted Rust checkout constructor only
+        id: constructor_compile
+        working-directory: bootstrap-control
+        run: |
+          set +e
+          cargo build --locked -p xtask --bin xtask --message-format=json-render-diagnostics | head -c 4194304 > "$RUNNER_TEMP/native-independent-constructor-build.jsonl"
+          actual_status=("${PIPESTATUS[@]}")
+          set -e
+          printf '{"actual_cargo_exit":%s,"actual_capture_exit":%s,"maximum_log_bytes":4194304}\n' "${actual_status[0]}" "${actual_status[1]}" > "$RUNNER_TEMP/native-independent-constructor-compile-exits.json"
+          test "${actual_status[0]}" -eq 0
+          test "${actual_status[1]}" -eq 0
+      - name: Bind independent bootstrap controller tree
+        id: bootstrap_tree
+        working-directory: bootstrap-control
+        run: printf 'tree=%s\n' "$(git rev-parse 'HEAD^{tree}')" >> "$GITHUB_OUTPUT"
+      - name: Construct new exact controller source with Rust
+        id: bootstrap_checkout
+        env:
+          CONTROLLER_SHA: ${{ github.event.pull_request.head.sha }}
+          CONTROLLER_TREE: ${{ steps.bootstrap_tree.outputs.tree }}
+        run: >-
+          "$CARGO_TARGET_DIR/debug/xtask" native-artifact prepare-bootstrap-checkout
+          --source "$GITHUB_WORKSPACE/bootstrap-control" --sha "$CONTROLLER_SHA" --tree "$CONTROLLER_TREE"
+          --output-dir "$RUNNER_TEMP/owned-independent-bootstrap-controller"
+          --receipt "$RUNNER_TEMP/owned-independent-bootstrap-checkout.json"
+      - name: Compile export-candidate tool in the Rust-constructed exact checkout
+        id: bootstrap_compile
+        working-directory: ${{ runner.temp }}/owned-independent-bootstrap-controller
+        run: |
+          set +e
+          cargo build --locked -p xtask --bin xtask --message-format=json-render-diagnostics | head -c 4194304 > "$RUNNER_TEMP/native-independent-bootstrap-build.jsonl"
+          actual_status=("${PIPESTATUS[@]}")
+          set -e
+          printf '{"actual_cargo_exit":%s,"actual_capture_exit":%s,"maximum_log_bytes":4194304}\n' "${actual_status[0]}" "${actual_status[1]}" > "$RUNNER_TEMP/native-independent-bootstrap-compile-exits.json"
+          test "${actual_status[0]}" -eq 0
+          test "${actual_status[1]}" -eq 0
+      - name: Export request-independent controller bootstrap with Rust
+        id: bootstrap_export
+        env:
+          CONTROLLER_SHA: ${{ github.event.pull_request.head.sha }}
+          CONTROLLER_TREE: ${{ steps.bootstrap_tree.outputs.tree }}
+        run: >-
+          "$CARGO_TARGET_DIR/debug/xtask" native-artifact export-bootstrap
+          --source "$RUNNER_TEMP/owned-independent-bootstrap-controller" --sha "$CONTROLLER_SHA" --tree "$CONTROLLER_TREE"
+          --cargo-build-log "$RUNNER_TEMP/native-independent-bootstrap-build.jsonl"
+          --run-id "$GITHUB_RUN_ID" --run-attempt "$GITHUB_RUN_ATTEMPT"
+          --output-dir "$RUNNER_TEMP/native-independent-controller-bootstrap"
+      - name: Upload independently compiled bootstrap with separate artifact provenance
+        id: bootstrap_upload
+        if: steps.bootstrap_export.outcome == 'success'
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: independent-native-controller-bootstrap-${{ github.event.pull_request.head.sha }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            ${{ runner.temp }}/native-independent-controller-bootstrap/xtask
+            ${{ runner.temp }}/native-independent-controller-bootstrap/bootstrap.json
+            ${{ runner.temp }}/native-independent-controller-bootstrap/cargo-build.jsonl
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 7
+      # Acquire the next Source42 request identity without replacing the active
+      # Source33 request or authorizing an application build for this checkout.
+      - name: Checkout exact next Source42 Git objects for Rust snapshot
+        id: source42_snapshot_checkout
+        timeout-minutes: 5
+        if: ${{ !cancelled() && steps.bootstrap_export.outcome == 'success' }}
+        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd
+        with:
+          repository: anilbeesetti/koda
+          ref: 2c91419ab6fcbd5cd82ef13f0b8ed330d3303809
+          path: next-native-source42-objects
+          fetch-depth: 1
+          # Git omits blobs >=65MiB; every Rust-accepted <=64MiB blob is included.
+          filter: blob:limit=65m
+          persist-credentials: false
+          lfs: false
+          submodules: false
+          sparse-checkout: .rules
+          sparse-checkout-cone-mode: false
+      - name: Produce genuine next Source42 manifest and owner receipt with Rust
+        id: source42_next_snapshot
+        if: ${{ !cancelled() && steps.bootstrap_export.outcome == 'success' && steps.source42_snapshot_checkout.outcome == 'success' }}
+        timeout-minutes: 5
+        env:
+          NEXT_NATIVE_SOURCE_SHA: 2c91419ab6fcbd5cd82ef13f0b8ed330d3303809
+          NEXT_NATIVE_SOURCE_TREE: da8f5c180ea10b5ce2c2e716d325b0005069eb27
+        shell: bash
+        run: |
+          set -euo pipefail
+          snapshot_dir="$RUNNER_TEMP/native-next-source42-provenance"
+          test ! -e "$snapshot_dir"
+          mkdir "$snapshot_dir"
+          controller_cli="$RUNNER_TEMP/native-independent-controller-bootstrap/xtask"
+          sha256sum "$controller_cli" \
+            "$RUNNER_TEMP/native-independent-controller-bootstrap/bootstrap.json" \
+            "$RUNNER_TEMP/native-independent-controller-bootstrap/cargo-build.jsonl" \
+            > "$snapshot_dir/controller-before.sha256"
+          if [[ ! -x /usr/bin/time ]]; then
+            sudo apt-get update
+            sudo apt-get install --no-install-recommends -y time
+          fi
+          test -x /usr/bin/time
+          sha256sum /usr/bin/time > "$snapshot_dir/runtime-time-before.sha256"
+          snapshot_child_script="$snapshot_dir/limited-snapshot.sh"
+          cat > "$snapshot_child_script" <<'SOURCE42_LIMITED_SNAPSHOT'
+          set +o posix || exit "$?"
+          ulimit -c 0 || exit "$?"
+          ulimit -f 32768 || exit "$?"
+          cat /proc/self/limits > "$1" || exit "$?"
+          shift || exit "$?"
+          exec "$@"
+          SOURCE42_LIMITED_SNAPSHOT
+          sha256sum "$snapshot_child_script" > "$snapshot_dir/child-script-before.sha256"
+          stream_limit_bytes=33554432
+          snapshot_status=0
+          (
+            set +o posix || exit "$?"
+            export LC_ALL=C
+            ulimit -c 0 || exit "$?"
+            ulimit -f 32768 || exit "$?"
+            # GNU time waits on Bash's PID after that child execs the real Rust
+            # controller. Both time and the controller inherit the file cap.
+            exec /usr/bin/time --output="$snapshot_dir/actual-process-wait.txt" \
+              --format='gnu_time_exit_status=%x\nelapsed_seconds=%e\nmaximum_resident_kib=%M' \
+              -- /bin/bash --noprofile --norc "$snapshot_child_script" \
+              "$snapshot_dir/actual-child-limits.txt" \
+              "$controller_cli" native-artifact snapshot \
+              --source "$GITHUB_WORKSPACE/next-native-source42-objects" \
+              --sha "$NEXT_NATIVE_SOURCE_SHA" --tree "$NEXT_NATIVE_SOURCE_TREE" \
+              --authentication git-objects \
+              --output "$snapshot_dir/source-manifest.json" \
+              --receipt "$snapshot_dir/source-owner-receipt.json"
+          ) > "$snapshot_dir/snapshot.stdout.log" 2> "$snapshot_dir/snapshot.stderr.log" \
+            || snapshot_status=$?
+          sha256sum /usr/bin/time > "$snapshot_dir/runtime-time-after.sha256"
+          sha256sum "$snapshot_child_script" > "$snapshot_dir/child-script-after.sha256"
+          cmp "$snapshot_dir/child-script-before.sha256" "$snapshot_dir/child-script-after.sha256"
+          stdout_stat_status=0
+          stdout_bytes=$(stat -c '%s' "$snapshot_dir/snapshot.stdout.log") \
+            || { stdout_stat_status=$?; stdout_bytes=-1; }
+          stderr_stat_status=0
+          stderr_bytes=$(stat -c '%s' "$snapshot_dir/snapshot.stderr.log") \
+            || { stderr_stat_status=$?; stderr_bytes=-1; }
+          wait_report_present=0
+          observed_signal=UNOBSERVED
+          if [[ -s "$snapshot_dir/actual-process-wait.txt" ]]; then
+            wait_report_present=1
+            while IFS= read -r wait_line; do
+              if [[ "$wait_line" =~ ^Command\ terminated\ by\ signal\ ([0-9]+)$ ]]; then
+                observed_signal=${BASH_REMATCH[1]}
+              fi
+            done < "$snapshot_dir/actual-process-wait.txt"
+          fi
+          cap_saturated=0
+          if (( stdout_bytes >= stream_limit_bytes || stderr_bytes >= stream_limit_bytes )); then
+            cap_saturated=1
+          fi
+          # Saturation is rejected even if a child catches EFBIG and exits zero.
+          # A signal is known only from time's report, never inferred from153.
+          printf '{"snapshot_shell_wait_status":%s,"signal_from_gnu_time_report":"%s","stream_cap_bytes":%s,"stdout_bytes":%s,"stderr_bytes":%s,"stdout_stat_exit":%s,"stderr_stat_exit":%s,"cap_saturated":%s,"wait_report_present":%s,"source_sha":"%s","source_tree":"%s","descendant_cleanup":"UNPROVED_BY_CI_WRAPPER_VALIDATE_RUST_RECEIPT_ONLY_ON_SUCCESS","acceptance_credit":0}\n' \
+            "$snapshot_status" "$observed_signal" "$stream_limit_bytes" \
+            "$stdout_bytes" "$stderr_bytes" "$stdout_stat_status" "$stderr_stat_status" \
+            "$cap_saturated" "$wait_report_present" "$NEXT_NATIVE_SOURCE_SHA" "$NEXT_NATIVE_SOURCE_TREE" \
+            > "$snapshot_dir/actual-snapshot-exit.json"
+          sha256sum "$controller_cli" \
+            "$RUNNER_TEMP/native-independent-controller-bootstrap/bootstrap.json" \
+            "$RUNNER_TEMP/native-independent-controller-bootstrap/cargo-build.jsonl" \
+            > "$snapshot_dir/controller-after.sha256"
+          cmp "$snapshot_dir/controller-before.sha256" "$snapshot_dir/controller-after.sha256"
+          cmp "$snapshot_dir/runtime-time-before.sha256" "$snapshot_dir/runtime-time-after.sha256"
+          test "$snapshot_status" -eq 0
+          test "$stdout_stat_status" -eq 0
+          test "$stderr_stat_status" -eq 0
+          test "$wait_report_present" -eq 1
+          test "$observed_signal" = UNOBSERVED
+          test "$cap_saturated" -eq 0
+          sha256sum "$snapshot_dir/source-manifest.json" "$snapshot_dir/source-owner-receipt.json" \
+            > "$snapshot_dir/source-provenance.sha256"
+      - name: Retain actual next Source42 Rust source provenance and failures
+        if: ${{ always() && (steps.source42_next_snapshot.outcome == 'success' || steps.source42_next_snapshot.outcome == 'failure' || steps.source42_next_snapshot.outcome == 'cancelled') }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: next-source42-provenance-2c91419ab6fcbd5cd82ef13f0b8ed330d3303809-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            ${{ runner.temp }}/native-next-source42-provenance/
+            ${{ runner.temp }}/native-independent-controller-bootstrap/bootstrap.json
+            ${{ runner.temp }}/native-independent-controller-bootstrap/cargo-build.jsonl
+            ${{ runner.temp }}/owned-independent-bootstrap-checkout.json
+            ${{ runner.temp }}/native-independent-constructor-compile-exits.json
+            ${{ runner.temp }}/native-independent-bootstrap-compile-exits.json
+          if-no-files-found: error
+          compression-level: 6
+          retention-days: 7
+      - name: Retain actual request-independent bootstrap boundary outcomes
+        if: always()
+        env:
+          CONTROLLER_SHA: ${{ github.event.pull_request.head.sha }}
+          ACTUAL_CONSTRUCTOR_COMPILE: ${{ steps.constructor_compile.outcome }}
+          ACTUAL_CHECKOUT: ${{ steps.bootstrap_checkout.outcome }}
+          ACTUAL_COMPILE: ${{ steps.bootstrap_compile.outcome }}
+          ACTUAL_EXPORT: ${{ steps.bootstrap_export.outcome }}
+          ACTUAL_UPLOAD: ${{ steps.bootstrap_upload.outcome }}
+        run: |
+          mkdir "$RUNNER_TEMP/native-independent-bootstrap-boundary"
+          printf '{"state":"ACTUAL_REQUEST_INDEPENDENT_BOOTSTRAP_BOUNDARY_ZERO_ACCEPTANCE","controller_sha":"%s","run_id":"%s","run_attempt":"%s","constructor_compile_outcome":"%s","owned_checkout_outcome":"%s","compile_outcome":"%s","export_outcome":"%s","upload_outcome":"%s","native_request_required":false,"acceptance_credit":0}\n' "$CONTROLLER_SHA" "$GITHUB_RUN_ID" "$GITHUB_RUN_ATTEMPT" "$ACTUAL_CONSTRUCTOR_COMPILE" "$ACTUAL_CHECKOUT" "$ACTUAL_COMPILE" "$ACTUAL_EXPORT" "$ACTUAL_UPLOAD" > "$RUNNER_TEMP/native-independent-bootstrap-boundary/outcome.json"
+      - name: Always upload bounded independent bootstrap compile failure evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: independent-native-bootstrap-diagnostics-${{ github.event.pull_request.head.sha }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            ${{ runner.temp }}/native-independent-bootstrap-boundary/outcome.json
+            ${{ runner.temp }}/native-independent-constructor-build.jsonl
+            ${{ runner.temp }}/native-independent-constructor-compile-exits.json
+            ${{ runner.temp }}/owned-independent-bootstrap-checkout.json
+            ${{ runner.temp }}/native-independent-bootstrap-build.jsonl
+            ${{ runner.temp }}/native-independent-bootstrap-compile-exits.json
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 7
+
+  select_exact_native_artifact:
+    name: Select exact same-repository native artifact source
+    if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    env:
+      CARGO_INCREMENTAL: '0'
+      CARGO_PROFILE_DEV_DEBUG: '0'
+      CARGO_PROFILE_DEV_BUILD_OVERRIDE_DEBUG: '0'
+      CARGO_PROFILE_DEV_OPT_LEVEL: 's'
+      CARGO_PROFILE_DEV_STRIP: symbols
+    outputs:
+      selected: ${{ steps.select.outputs.selected || steps.presence.outputs.selected }}
+      source_sha: ${{ steps.select.outputs.source_sha }}
+      source_tree: ${{ steps.select.outputs.source_tree }}
+      source_manifest_sha256: ${{ steps.select.outputs.source_manifest_sha256 }}
+      source_owner_receipt_sha256: ${{ steps.select.outputs.source_owner_receipt_sha256 }}
+      request_sha256: ${{ steps.select.outputs.request_sha256 }}
+    steps:
+      - name: Set runner-local Cargo target directory
+        shell: bash
+        run: |
+          printf 'CARGO_TARGET_DIR=%s/native-request-tool-target\n' "$RUNNER_TEMP" >> "$GITHUB_ENV"
+      - name: Checkout exact PR controller head
+        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          path: control
+          persist-credentials: false
+      - name: Avoid compiling optional tooling when the literal request is absent
+        id: presence
+        run: |
+          if [[ ! -e control/.ci/native-artifact-request.json && ! -L control/.ci/native-artifact-request.json ]]; then
+            printf 'selected=false\n' >> "$GITHUB_OUTPUT"
+            printf 'exists=false\n' >> "$GITHUB_OUTPUT"
+          else
+            printf 'exists=true\n' >> "$GITHUB_OUTPUT"
+          fi
+      - name: Install controller-pinned Rust toolchain
+        if: steps.presence.outputs.exists == 'true'
+        working-directory: control
+        run: rustup show active-toolchain
+      - name: Restore existing portable Cargo sources for the Rust selector
+        if: steps.presence.outputs.exists == 'true'
+        id: sources
+        uses: actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830
+        with:
+          path: |
+            .ci-cache/cargo-sources/registry
+            .ci-cache/cargo-sources/git
+          enableCrossOsArchive: true
+          key: fork-ci-source-v3-shared-${{ hashFiles('control/rust-toolchain.toml') }}-${{ hashFiles('control/Cargo.lock', 'control/extensions/test-extension/Cargo.lock') }}
+          restore-keys: fork-ci-source-v3-shared-${{ hashFiles('control/rust-toolchain.toml') }}-
+      - name: Restore portable sources into the original Cargo home
+        if: steps.presence.outputs.exists == 'true' && steps.sources.outputs.cache-matched-key != ''
+        working-directory: control
+        run: python3 script/ci-source-cache restore --cache-dir ../.ci-cache/cargo-sources
+      - name: Compile unaccepted Rust checkout constructor only
+        id: constructor_compile
+        if: steps.presence.outputs.exists == 'true'
+        working-directory: control
+        run: |
+          set +e
+          cargo build --locked -p xtask --bin xtask --message-format=json-render-diagnostics | head -c 4194304 > "$RUNNER_TEMP/native-controller-constructor-build.jsonl"
+          actual_status=("${PIPESTATUS[@]}")
+          set -e
+          printf '{"actual_cargo_exit":%s,"actual_capture_exit":%s,"maximum_log_bytes":4194304}\n' "${actual_status[0]}" "${actual_status[1]}" > "$RUNNER_TEMP/native-controller-constructor-compile-exits.json"
+          test "${actual_status[0]}" -eq 0
+          test "${actual_status[1]}" -eq 0
+      - name: Bind exact controller tree
+        if: steps.presence.outputs.exists == 'true'
+        id: bootstrap_tree
+        working-directory: control
+        run: printf 'tree=%s\n' "$(git rev-parse 'HEAD^{tree}')" >> "$GITHUB_OUTPUT"
+      - name: Construct new exact controller source with Rust
+        if: steps.presence.outputs.exists == 'true'
+        id: bootstrap_checkout
+        env:
+          CONTROLLER_SHA: ${{ github.event.pull_request.head.sha }}
+          CONTROLLER_TREE: ${{ steps.bootstrap_tree.outputs.tree }}
+        run: >-
+          "$CARGO_TARGET_DIR/debug/xtask" native-artifact prepare-bootstrap-checkout
+          --source "$GITHUB_WORKSPACE/control" --sha "$CONTROLLER_SHA" --tree "$CONTROLLER_TREE"
+          --output-dir "$RUNNER_TEMP/owned-request-bootstrap-controller"
+          --receipt "$RUNNER_TEMP/owned-request-bootstrap-checkout.json"
+      - name: Compile export-candidate tool in the Rust-constructed exact checkout
+        if: steps.presence.outputs.exists == 'true'
+        id: bootstrap_compile
+        working-directory: ${{ runner.temp }}/owned-request-bootstrap-controller
+        run: |
+          set +e
+          cargo build --locked -p xtask --bin xtask --message-format=json-render-diagnostics | head -c 4194304 > "$RUNNER_TEMP/native-controller-bootstrap-build.jsonl"
+          actual_status=("${PIPESTATUS[@]}")
+          set -e
+          printf '{"actual_cargo_exit":%s,"actual_capture_exit":%s,"maximum_log_bytes":4194304}\n' "${actual_status[0]}" "${actual_status[1]}" > "$RUNNER_TEMP/native-controller-bootstrap-compile-exits.json"
+          test "${actual_status[0]}" -eq 0
+          test "${actual_status[1]}" -eq 0
+      - name: Export bounded remotely compiled controller bootstrap with Rust
+        if: steps.presence.outputs.exists == 'true'
+        id: bootstrap_export
+        env:
+          CONTROLLER_SHA: ${{ github.event.pull_request.head.sha }}
+          CONTROLLER_TREE: ${{ steps.bootstrap_tree.outputs.tree }}
+        run: >-
+          "$CARGO_TARGET_DIR/debug/xtask" native-artifact export-bootstrap
+          --source "$RUNNER_TEMP/owned-request-bootstrap-controller" --sha "$CONTROLLER_SHA" --tree "$CONTROLLER_TREE"
+          --cargo-build-log "$RUNNER_TEMP/native-controller-bootstrap-build.jsonl"
+          --run-id "$GITHUB_RUN_ID" --run-attempt "$GITHUB_RUN_ATTEMPT"
+          --output-dir "$RUNNER_TEMP/native-controller-bootstrap"
+      - name: Upload bounded controller bootstrap before app artifacts
+        if: steps.bootstrap_export.outcome == 'success'
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: native-controller-bootstrap-${{ github.event.pull_request.head.sha }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            ${{ runner.temp }}/native-controller-bootstrap/xtask
+            ${{ runner.temp }}/native-controller-bootstrap/bootstrap.json
+            ${{ runner.temp }}/native-controller-bootstrap/cargo-build.jsonl
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 7
+      - name: Select bounded exact request with Rust
+        if: steps.presence.outputs.exists == 'true'
+        id: select
+        env:
+          CONTROLLER_SHA: ${{ github.event.pull_request.head.sha }}
+          HEAD_REPOSITORY: ${{ github.event.pull_request.head.repo.full_name }}
+        run: >-
+          "$CARGO_TARGET_DIR/debug/xtask" native-artifact select-request
+          --controller "$GITHUB_WORKSPACE/control" --controller-sha "$CONTROLLER_SHA"
+          --repository "$GITHUB_REPOSITORY" --head-repository "$HEAD_REPOSITORY"
+          --github-output "$GITHUB_OUTPUT"
+
+      - name: Retain actual controller bootstrap boundary outcome
+        if: always() && steps.presence.outputs.exists == 'true'
+        env:
+          ACTUAL_CONSTRUCTOR_COMPILE: ${{ steps.constructor_compile.outcome }}
+          ACTUAL_CHECKOUT: ${{ steps.bootstrap_checkout.outcome }}
+          ACTUAL_COMPILE: ${{ steps.bootstrap_compile.outcome }}
+          ACTUAL_EXPORT: ${{ steps.bootstrap_export.outcome }}
+          CONTROLLER_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          mkdir "$RUNNER_TEMP/native-bootstrap-boundary"
+          printf '{"state":"ACTUAL_BOOTSTRAP_BOUNDARY_ZERO_ACCEPTANCE","controller_sha":"%s","run_id":"%s","run_attempt":"%s","constructor_compile_outcome":"%s","owned_checkout_outcome":"%s","compile_outcome":"%s","export_outcome":"%s","acceptance_credit":0}\n' "$CONTROLLER_SHA" "$GITHUB_RUN_ID" "$GITHUB_RUN_ATTEMPT" "$ACTUAL_CONSTRUCTOR_COMPILE" "$ACTUAL_CHECKOUT" "$ACTUAL_COMPILE" "$ACTUAL_EXPORT" > "$RUNNER_TEMP/native-bootstrap-boundary/outcome.json"
+      - name: Always upload bounded actual controller compile failure evidence
+        if: always() && steps.presence.outputs.exists == 'true'
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: native-controller-diagnostics-${{ github.event.pull_request.head.sha }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            ${{ runner.temp }}/native-bootstrap-boundary/outcome.json
+            ${{ runner.temp }}/native-controller-constructor-build.jsonl
+            ${{ runner.temp }}/native-controller-constructor-compile-exits.json
+            ${{ runner.temp }}/owned-request-bootstrap-checkout.json
+            ${{ runner.temp }}/native-controller-bootstrap-build.jsonl
+            ${{ runner.temp }}/native-controller-bootstrap-compile-exits.json
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 7
+
+  exact_source_native_artifact:
+    name: Exact source native runtime artifact
+    needs: select_exact_native_artifact
+    if: needs.select_exact_native_artifact.outputs.selected == 'true'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 180
+    env:
+      CARGO_INCREMENTAL: '0'
+      CARGO_PROFILE_DEV_DEBUG: '0'
+      CARGO_PROFILE_DEV_BUILD_OVERRIDE_DEBUG: '0'
+      CARGO_TERM_COLOR: always
+      RUST_BACKTRACE: '1'
+      CC: clang
+      CXX: clang++
+      ZED_COMMIT_SHA: ${{ needs.select_exact_native_artifact.outputs.source_sha }}
+      SOURCE_SHA: ${{ needs.select_exact_native_artifact.outputs.source_sha }}
+      SOURCE_TREE: ${{ needs.select_exact_native_artifact.outputs.source_tree }}
+      SOURCE_MANIFEST_SHA256: ${{ needs.select_exact_native_artifact.outputs.source_manifest_sha256 }}
+      REQUEST_SHA256: ${{ needs.select_exact_native_artifact.outputs.request_sha256 }}
+      NATIVE_CONTROLLER_SHA: ${{ github.event.pull_request.head.sha }}
+    steps:
+      - name: Set runner-local Cargo target directory
+        shell: bash
+        run: |
+          printf 'CARGO_TARGET_DIR=%s/native-artifact-target\n' "$RUNNER_TEMP" >> "$GITHUB_ENV"
+      - name: Checkout immutable controller
+        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          path: control
+          persist-credentials: false
+      - name: Checkout exact read-only Git object source
+        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd
+        with:
+          ref: ${{ needs.select_exact_native_artifact.outputs.source_sha }}
+          path: source-objects
+          fetch-depth: 1
+          persist-credentials: false
+          lfs: false
+          submodules: false
+      - name: Install controller-pinned Rust toolchain
+        working-directory: control
+        run: rustup show active-toolchain
+      - name: Restore controller portable Cargo sources
+        id: controller_sources
+        uses: actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830
+        with:
+          path: |
+            .ci-cache/cargo-sources/registry
+            .ci-cache/cargo-sources/git
+          enableCrossOsArchive: true
+          key: fork-ci-source-v3-shared-${{ hashFiles('control/rust-toolchain.toml') }}-${{ hashFiles('control/Cargo.lock', 'control/extensions/test-extension/Cargo.lock') }}
+          restore-keys: fork-ci-source-v3-shared-${{ hashFiles('control/rust-toolchain.toml') }}-
+      - name: Restore controller sources into original Cargo home
+        if: steps.controller_sources.outputs.cache-matched-key != ''
+        working-directory: control
+        run: python3 script/ci-source-cache restore --cache-dir ../.ci-cache/cargo-sources
+      - name: Compile unaccepted native-job checkout constructor only
+        id: native_constructor_compile
+        working-directory: control
+        env:
+          CARGO_PROFILE_DEV_OPT_LEVEL: 's'
+          CARGO_PROFILE_DEV_STRIP: symbols
+        run: |
+          set +e
+          cargo build --locked -p xtask --bin xtask --message-format=json-render-diagnostics | head -c 4194304 > "$RUNNER_TEMP/native-app-constructor-build.jsonl"
+          actual_status=("${PIPESTATUS[@]}")
+          set -e
+          printf '{"actual_cargo_exit":%s,"actual_capture_exit":%s,"maximum_log_bytes":4194304}\n' "${actual_status[0]}" "${actual_status[1]}" > "$RUNNER_TEMP/native-app-constructor-compile-exits.json"
+          test "${actual_status[0]}" -eq 0
+          test "${actual_status[1]}" -eq 0
+      - name: Bind native-job immutable controller tree
+        id: native_controller_tree
+        working-directory: control
+        run: printf 'tree=%s\n' "$(git rev-parse 'HEAD^{tree}')" >> "$GITHUB_OUTPUT"
+      - name: Construct new exact native-job controller with Rust
+        id: native_controller_checkout
+        env:
+          CONTROLLER_TREE: ${{ steps.native_controller_tree.outputs.tree }}
+        run: >-
+          "$CARGO_TARGET_DIR/debug/xtask" native-artifact prepare-bootstrap-checkout
+          --source "$GITHUB_WORKSPACE/control" --sha "$NATIVE_CONTROLLER_SHA" --tree "$CONTROLLER_TREE"
+          --output-dir "$RUNNER_TEMP/owned-native-controller"
+          --receipt "$RUNNER_TEMP/owned-native-controller-checkout.json"
+      - name: Compile genuine second native-job controller tool in owned checkout
+        id: controller_tool
+        working-directory: ${{ runner.temp }}/owned-native-controller
+        env:
+          CARGO_PROFILE_DEV_OPT_LEVEL: 's'
+          CARGO_PROFILE_DEV_STRIP: symbols
+        run: |
+          set +e
+          cargo build --locked -p xtask --bin xtask --message-format=json-render-diagnostics | head -c 4194304 > "$RUNNER_TEMP/native-app-controller-build.jsonl"
+          actual_status=("${PIPESTATUS[@]}")
+          set -e
+          printf '{"actual_cargo_exit":%s,"actual_capture_exit":%s,"maximum_log_bytes":4194304}\n' "${actual_status[0]}" "${actual_status[1]}" > "$RUNNER_TEMP/native-app-controller-compile-exits.json"
+          test "${actual_status[0]}" -eq 0
+          test "${actual_status[1]}" -eq 0
+      - name: Bind bounded second controller artifact to owned controller source
+        id: native_controller_export
+        env:
+          CARGO_PROFILE_DEV_OPT_LEVEL: 's'
+          CARGO_PROFILE_DEV_STRIP: symbols
+          CONTROLLER_TREE: ${{ steps.native_controller_tree.outputs.tree }}
+        run: >-
+          "$CARGO_TARGET_DIR/debug/xtask" native-artifact export-bootstrap
+          --source "$RUNNER_TEMP/owned-native-controller" --sha "$NATIVE_CONTROLLER_SHA" --tree "$CONTROLLER_TREE"
+          --cargo-build-log "$RUNNER_TEMP/native-app-controller-build.jsonl"
+          --run-id "$GITHUB_RUN_ID" --run-attempt "$GITHUB_RUN_ATTEMPT"
+          --output-dir "$RUNNER_TEMP/native-app-controller-bootstrap"
+      - name: Construct selected application source with Rust and preserve cold borrowed full13
+        id: native_source_checkout
+        run: >-
+          "$CARGO_TARGET_DIR/debug/xtask" native-artifact prepare-bootstrap-checkout
+          --source "$GITHUB_WORKSPACE/source-objects" --sha "$SOURCE_SHA" --tree "$SOURCE_TREE"
+          --output-dir "$RUNNER_TEMP/owned-native-source"
+          --receipt "$RUNNER_TEMP/owned-native-source-checkout.json"
+          --borrowed-physical-before "$RUNNER_TEMP/native-source-borrowed-before.json"
+          --borrowed-physical-after "$RUNNER_TEMP/native-source-borrowed-after.json"
+      - name: Run supplemental controller artifact-tooling tests
+        working-directory: ${{ runner.temp }}/owned-native-controller
+        run: >-
+          cargo test --locked -p xtask tasks::native_artifact:: -- --test-threads=1
+      - name: Verify full owned materialized source bytes modes blobs and tree
+        id: native_source_verify
+        run: >-
+          "$CARGO_TARGET_DIR/debug/xtask" native-artifact verify
+          --source "$RUNNER_TEMP/owned-native-source" --sha "$SOURCE_SHA" --tree "$SOURCE_TREE"
+          --manifest-sha256 "$SOURCE_MANIFEST_SHA256"
+          --receipt "$RUNNER_TEMP/native-initial-source-observation.json"
+      - name: Select unchanged bounded CI concurrency
+        working-directory: ${{ runner.temp }}/owned-native-source
+        run: python3 script/ci-run resources --github-env "$GITHUB_ENV"
+      - name: Install unchanged Linux native bootstrap
+        working-directory: ${{ runner.temp }}/owned-native-source
+        run: ./script/linux
+      - name: Install native GUI smoke runtime before package identity is captured
+        run: sudo apt-get update && sudo apt-get install -y xvfb mesa-vulkan-drivers xauth fontconfig fonts-dejavu-core
+      - name: Install source-pinned Rust toolchain
+        working-directory: ${{ runner.temp }}/owned-native-source
+        run: rustup show active-toolchain
+      - name: Restore selected-source portable Cargo sources
+        id: sources
+        uses: actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830
+        with:
+          path: |
+            .ci-cache/cargo-sources/registry
+            .ci-cache/cargo-sources/git
+          enableCrossOsArchive: true
+          # The canonical source digest binds both lockfiles and the toolchain;
+          # hashFiles cannot authenticate a checkout outside GITHUB_WORKSPACE.
+          key: fork-ci-native-source-v1-${{ runner.os }}-${{ runner.arch }}-${{ needs.select_exact_native_artifact.outputs.source_manifest_sha256 }}
+          restore-keys: fork-ci-source-v3-shared-
+      - name: Materialize portable sources in original Cargo home
+        if: steps.sources.outputs.cache-matched-key != ''
+        working-directory: ${{ runner.temp }}/owned-native-source
+        run: python3 script/ci-source-cache restore --cache-dir "$GITHUB_WORKSPACE/.ci-cache/cargo-sources"
+      - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e
+        with:
+          node-version: '24'
+          package-manager-cache: false
+      - name: Install unchanged WASI bootstrap
+        working-directory: ${{ runner.temp }}/owned-native-source
+        run: ./script/download-wasi-sdk
+      - name: Build default-feature application and observe actual Cargo wait with Rust
+        id: build
+        run: >-
+          "$CARGO_TARGET_DIR/debug/xtask" native-artifact build
+          --source "$RUNNER_TEMP/owned-native-source" --sha "$SOURCE_SHA" --tree "$SOURCE_TREE"
+          --request "$GITHUB_WORKSPACE/control/.ci/native-artifact-request.json"
+          --request-sha256 "$REQUEST_SHA256" --controller-sha "$NATIVE_CONTROLLER_SHA"
+          --run-id "$GITHUB_RUN_ID" --run-attempt "$GITHUB_RUN_ATTEMPT"
+          --output-dir "$RUNNER_TEMP/native-build-provenance" --github-output "$GITHUB_OUTPUT"
+      - name: Bind package and split actual native artifact with Rust
+        id: package
+        env:
+          BUILD_RECEIPT_SHA256: ${{ steps.build.outputs.native_build_receipt_sha256 }}
+        run: >-
+          sudo "$CARGO_TARGET_DIR/debug/xtask" native-artifact package-with-loader-policy
+          --loader-policy strip-embedded-search-paths
+          --source "$RUNNER_TEMP/owned-native-source" --sha "$SOURCE_SHA" --tree "$SOURCE_TREE"
+          --request "$GITHUB_WORKSPACE/control/.ci/native-artifact-request.json"
+          --request-sha256 "$REQUEST_SHA256"
+          --build-receipt "$RUNNER_TEMP/native-build-provenance/build-receipt.json"
+          --build-receipt-sha256 "$BUILD_RECEIPT_SHA256"
+          --output-dir "$RUNNER_TEMP/native-artifact"
+      - name: Exercise the exact delivered application with Rust XTEST and screenshots
+        id: gui_smoke
+        timeout-minutes: 3
+        run: >-
+          sudo --preserve-env=HOME "$CARGO_TARGET_DIR/debug/xtask" native-artifact gui-smoke
+          --request "$GITHUB_WORKSPACE/control/.ci/native-artifact-request.json"
+          --request-sha256 "$REQUEST_SHA256" --controller-sha "$NATIVE_CONTROLLER_SHA"
+          --package-dir "$RUNNER_TEMP/native-artifact"
+          --output-dir "$RUNNER_TEMP/native-gui-smoke"
+      - name: Retain actual full-app captures and cleanup outcomes
+        if: always() && steps.package.outcome == 'success'
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: native-gui-smoke-${{ needs.select_exact_native_artifact.outputs.source_sha }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            ${{ runner.temp }}/native-gui-smoke/*.png
+            ${{ runner.temp }}/native-gui-smoke/*.json
+            ${{ runner.temp }}/native-gui-smoke/*.log
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 7
+      - name: Upload metadata before payload for bounded download planning
+        if: always() && steps.package.outcome == 'success'
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: native-metadata-${{ needs.select_exact_native_artifact.outputs.source_sha }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            ${{ runner.temp }}/native-artifact/artifact-metadata.json
+            ${{ runner.temp }}/native-artifact/payload-manifest.json
+            ${{ runner.temp }}/native-artifact/piece-manifest.json
+            ${{ runner.temp }}/native-artifact/runtime/evidence/native-build.json
+            ${{ runner.temp }}/native-artifact/runtime/evidence/source-manifest.json
+          if-no-files-found: error
+          compression-level: 6
+          retention-days: 7
+      - name: Checkout immutable official artifact uploader
+        id: native_uploader_checkout
+        if: always() && steps.package.outcome == 'success'
+        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd
+        with:
+          repository: actions/upload-artifact
+          ref: ea165f8d65b6e75b540449e92b4886f43607fa02
+          path: uploader
+          persist-credentials: false
+      - name: Upload one bounded ZIP per native payload piece
+        if: always() && steps.package.outcome == 'success' && steps.native_uploader_checkout.outcome == 'success'
+        uses: ./control/.github/actions/native-upload-pieces
+        with:
+          artifact-directory: ${{ runner.temp }}/native-artifact
+          uploader-directory: ${{ github.workspace }}/uploader
+          source-sha: ${{ needs.select_exact_native_artifact.outputs.source_sha }}
+
+      - name: Retain actual application artifact boundary outcomes
+        if: always()
+        env:
+          ACTUAL_CONSTRUCTOR: ${{ steps.native_constructor_compile.outcome }}
+          ACTUAL_CONTROLLER_CHECKOUT: ${{ steps.native_controller_checkout.outcome }}
+          ACTUAL_CONTROLLER_COMPILE: ${{ steps.controller_tool.outcome }}
+          ACTUAL_CONTROLLER_EXPORT: ${{ steps.native_controller_export.outcome }}
+          ACTUAL_SOURCE_CHECKOUT: ${{ steps.native_source_checkout.outcome }}
+          ACTUAL_SOURCE_VERIFY: ${{ steps.native_source_verify.outcome }}
+          ACTUAL_BUILD: ${{ steps.build.outcome }}
+          ACTUAL_PACKAGE: ${{ steps.package.outcome }}
+        run: |
+          mkdir "$RUNNER_TEMP/native-failure-boundary"
+          printf '{"state":"ACTUAL_NATIVE_OWNED_SOURCE_LIFECYCLE_ZERO_ACCEPTANCE","constructor":"%s","controller_checkout":"%s","second_compile":"%s","second_export":"%s","source_checkout":"%s","source_verify":"%s","acceptance_credit":0}\n' "$ACTUAL_CONSTRUCTOR" "$ACTUAL_CONTROLLER_CHECKOUT" "$ACTUAL_CONTROLLER_COMPILE" "$ACTUAL_CONTROLLER_EXPORT" "$ACTUAL_SOURCE_CHECKOUT" "$ACTUAL_SOURCE_VERIFY" > "$RUNNER_TEMP/native-failure-boundary/owned-source-outcome.json"
+          printf '{"state":"ACTUAL_NATIVE_ARTIFACT_BOUNDARY_ZERO_ACCEPTANCE","source_sha":"%s","source_tree":"%s","controller_sha":"%s","run_id":"%s","run_attempt":"%s","build_outcome":"%s","package_outcome":"%s","acceptance_credit":0}\n' "$SOURCE_SHA" "$SOURCE_TREE" "$NATIVE_CONTROLLER_SHA" "$GITHUB_RUN_ID" "$GITHUB_RUN_ATTEMPT" "$ACTUAL_BUILD" "$ACTUAL_PACKAGE" > "$RUNNER_TEMP/native-failure-boundary/outcome.json"
+      - name: Export bounded actual source diagnostics and cleanup failures with Rust
+        if: always() && steps.native_controller_export.outcome == 'success' && steps.native_source_checkout.outcome == 'success'
+        env:
+          ACTUAL_BUILD: ${{ steps.build.outcome }}
+          ACTUAL_PACKAGE: ${{ steps.package.outcome }}
+        run: >-
+          sudo "$CARGO_TARGET_DIR/debug/xtask" native-artifact export-failure-evidence
+          --source "$RUNNER_TEMP/owned-native-source" --sha "$SOURCE_SHA" --tree "$SOURCE_TREE"
+          --request "$GITHUB_WORKSPACE/control/.ci/native-artifact-request.json" --request-sha256 "$REQUEST_SHA256"
+          --build-dir "$RUNNER_TEMP/native-build-provenance" --package-dir "$RUNNER_TEMP/native-artifact"
+          --run-id "$GITHUB_RUN_ID" --run-attempt "$GITHUB_RUN_ATTEMPT"
+          --observed-build-step-conclusion "$ACTUAL_BUILD" --observed-package-step-conclusion "$ACTUAL_PACKAGE"
+          --output-dir "$RUNNER_TEMP/native-failure-export"
+      - name: Always upload bounded actual failure evidence while retaining the failing job conclusion
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: native-failure-evidence-${{ needs.select_exact_native_artifact.outputs.source_sha }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            ${{ runner.temp }}/native-failure-boundary/outcome.json
+            ${{ runner.temp }}/native-failure-boundary/owned-source-outcome.json
+            ${{ runner.temp }}/native-app-constructor-build.jsonl
+            ${{ runner.temp }}/native-app-constructor-compile-exits.json
+            ${{ runner.temp }}/owned-native-controller-checkout.json
+            ${{ runner.temp }}/native-app-controller-build.jsonl
+            ${{ runner.temp }}/native-app-controller-compile-exits.json
+            ${{ runner.temp }}/native-app-controller-bootstrap/
+            ${{ runner.temp }}/owned-native-source-checkout.json
+            ${{ runner.temp }}/native-source-borrowed-before.json
+            ${{ runner.temp }}/native-source-borrowed-after.json
+            ${{ runner.temp }}/native-initial-source-observation.json
+            ${{ runner.temp }}/native-failure-export/
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 7

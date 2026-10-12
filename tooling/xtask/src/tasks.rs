@@ -5,6 +5,7 @@ pub mod clippy;
 pub mod compliance;
 pub mod gpui;
 pub mod licenses;
+pub mod native_artifact;
 pub mod package_conformity;
 pub mod sandbox_tests;
 pub mod setup_webrtc;
