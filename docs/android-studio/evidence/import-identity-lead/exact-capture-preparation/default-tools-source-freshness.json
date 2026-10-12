@@ -1,0 +1,163 @@
+{
+  "source_commit": "7e3f72ebfaef39d6e6630dd11fa7dc91c8985d4a",
+  "mtime_only": true,
+  "normal_features_and_flags": true,
+  "files": [
+    {
+      "path": "crates/android_tools/src/android_tools.rs",
+      "sha256": "df93abc2f4455ef81491856a6b3a0d9ea0581647006d9f8deb20610b30be5268",
+      "old_mtime_ns": 1791427885275180557,
+      "new_mtime_ns": 1791428988401076035
+    },
+    {
+      "path": "crates/android_tools/src/generated_artifacts.rs",
+      "sha256": "2d56897f92de26bed4f556e6a2bea2cb3a4220a1da5b8eb83231aa8317dd7a52",
+      "old_mtime_ns": 1791419649262061864,
+      "new_mtime_ns": 1791428988401076035
+    },
+    {
+      "path": "crates/android_tools/src/gradle_import.rs",
+      "sha256": "d94b0330b0f7687d7161af7c895252d31bb589fca7105e601703a30e0607067a",
+      "old_mtime_ns": 1791419649262061864,
+      "new_mtime_ns": 1791428988401076035
+    },
+    {
+      "path": "crates/android_tools/src/import_facts.rs",
+      "sha256": "817b9fa28240385e48fd68df1296619c6cb0ff4e6b219ef91b349ec563e3fafa",
+      "old_mtime_ns": 1791422301670299809,
+      "new_mtime_ns": 1791428988401076035
+    },
+    {
+      "path": "crates/android_tools/src/java.rs",
+      "sha256": "fac11c8e70bfef4542fff1ed410e9b9bff62850044c408f971084db7c6c97299",
+      "old_mtime_ns": 1791419649262061864,
+      "new_mtime_ns": 1791428988401076035
+    },
+    {
+      "path": "crates/android_tools/src/java_class_facts.rs",
+      "sha256": "5d941d6eaf53e17966ef20fe7ef334d5e8b817d0b6b6667c84ce05b0857da83d",
+      "old_mtime_ns": 1791419649262061864,
+      "new_mtime_ns": 1791428988401076035
+    },
+    {
+      "path": "crates/android_tools/src/kotlin.rs",
+      "sha256": "00c00118950caa7e894ff1c1b5b00ffef7282f5469c16d3a685f0d4dac785a8e",
+      "old_mtime_ns": 1791419649262061864,
+      "new_mtime_ns": 1791428988401076035
+    },
+    {
+      "path": "crates/android_tools/src/logcat.rs",
+      "sha256": "28262bf122a840ca61b0dba771b15f595243db3d046a08ccacbb531c2ec789d4",
+      "old_mtime_ns": 1791419649262061864,
+      "new_mtime_ns": 1791428988401076035
+    },
+    {
+      "path": "crates/android_tools/src/module_presentation.rs",
+      "sha256": "0a467aa8d96cb64dc93b23dd31526c75e4b5e2b4f8aad0c52c89025a2660208c",
+      "old_mtime_ns": 1791419649262061864,
+      "new_mtime_ns": 1791428988401076035
+    },
+    {
+      "path": "crates/android_tools/src/parallel_sync.rs",
+      "sha256": "943e61b9d6e3256275b38750a7f8595cc4aa270a099093f6df8404f6270998e7",
+      "old_mtime_ns": 1791423279143262856,
+      "new_mtime_ns": 1791428988401076035
+    },
+    {
+      "path": "crates/android_tools/src/preview.rs",
+      "sha256": "4e219bf3b5e4d015aeb4be561978fb92540340f3958318882a0fd16163764743",
+      "old_mtime_ns": 1791419649262061864,
+      "new_mtime_ns": 1791428988401076035
+    },
+    {
+      "path": "crates/android_tools/src/preview_bundle.rs",
+      "sha256": "9e917af6bffb741f0df3fcfdd1e375ca6fbf4fc842842c0c4fa269f9182fd91e",
+      "old_mtime_ns": 1791419649262061864,
+      "new_mtime_ns": 1791428988401076035
+    },
+    {
+      "path": "crates/android_tools/src/project_model.rs",
+      "sha256": "06c707d1553896b821b071e2a638e52a6923fa02ca6e24d670d67ca07e0a7a4c",
+      "old_mtime_ns": 1791419649262061864,
+      "new_mtime_ns": 1791428988401076035
+    },
+    {
+      "path": "crates/android_tools/src/project_tree.rs",
+      "sha256": "6ab35de418bd8d8f1951815b6774339462d2fec4f33bd2e3480c6f81e202b7eb",
+      "old_mtime_ns": 1791419649267341123,
+      "new_mtime_ns": 1791428988401076035
+    },
+    {
+      "path": "crates/android_tools/src/project_tree_adapter.rs",
+      "sha256": "d57ba8070321039cdd8b9749bc43df923e694a31c27299a1ec577b5974edfc3b",
+      "old_mtime_ns": 1791419649267341123,
+      "new_mtime_ns": 1791428988405076092
+    },
+    {
+      "path": "crates/android_tools/src/project_tree_facts.rs",
+      "sha256": "145233d0b061ba3ed47d013ada827219f49ad3a7cf217f01bdaaf7ba9e16ecd8",
+      "old_mtime_ns": 1791419649267341123,
+      "new_mtime_ns": 1791428988405076092
+    },
+    {
+      "path": "crates/android_tools/src/project_view_preferences.rs",
+      "sha256": "6a24eafaa9dba908ad5490f19600fc174fb03a453e807e606cd1b4a139881ac0",
+      "old_mtime_ns": 1791419649267341123,
+      "new_mtime_ns": 1791428988405076092
+    },
+    {
+      "path": "crates/android_tools/tests/generated_artifacts.rs",
+      "sha256": "0692a1860b01f5040f56799727ece650f77fbeb349600326e2ee5e214a56447c",
+      "old_mtime_ns": 1791425724702694942,
+      "new_mtime_ns": 1791428988405076092
+    },
+    {
+      "path": "crates/android_tools/tests/gradle_import_reference.rs",
+      "sha256": "b4bc4ae4d1949bf219484d5dd7f964e6d6e25a98ec8cdf0caf10bc70c6d7e5b1",
+      "old_mtime_ns": 1791425724702694942,
+      "new_mtime_ns": 1791428988405076092
+    },
+    {
+      "path": "crates/android_tools/tests/import_facts.rs",
+      "sha256": "13744dfb88d81b17fcba3bed9a1d07000d0d8f3cffa4e62232a6f733ca72f319",
+      "old_mtime_ns": 1791425724702694942,
+      "new_mtime_ns": 1791428988405076092
+    },
+    {
+      "path": "crates/android_tools/tests/module_presentation.rs",
+      "sha256": "9977946288fed36aa169c376c722872c86d01a265b76339ae2ec7c86e8c2d924",
+      "old_mtime_ns": 1791425724702694942,
+      "new_mtime_ns": 1791428988405076092
+    },
+    {
+      "path": "crates/android_tools/tests/parallel_sync.rs",
+      "sha256": "6e1571c51990e0bf8c23b42299a1a8f1c046838779368b7b21c1f18aa6deba77",
+      "old_mtime_ns": 1791425724702694942,
+      "new_mtime_ns": 1791428988405076092
+    },
+    {
+      "path": "crates/android_tools/tests/project_tree_adapter.rs",
+      "sha256": "5e5927568f42cdc1247d88d16f3fdf1dcbb7b427e24b4d6240928378b6e5f79e",
+      "old_mtime_ns": 1791425724702694942,
+      "new_mtime_ns": 1791428988405076092
+    },
+    {
+      "path": "crates/android_tools/tests/project_tree_component.rs",
+      "sha256": "6fedcb1c5fd0f9a56d0b925b82de839584eaa3a4db111d1ebad1f3106c93bf22",
+      "old_mtime_ns": 1791425724702694942,
+      "new_mtime_ns": 1791428988405076092
+    },
+    {
+      "path": "crates/android_tools/tests/project_tree_facts.rs",
+      "sha256": "7d032f41e790d19a7a3f2f7cb38ea91cf19181c3427c4531f3126d6a2b6542fc",
+      "old_mtime_ns": 1791425724702694942,
+      "new_mtime_ns": 1791428988405076092
+    },
+    {
+      "path": "crates/android_tools/tests/project_view_preferences_reference.rs",
+      "sha256": "6342ccfc05bcd1860a5a07a763d68601577b4ae0c114c16ef794fa15cdfa2d32",
+      "old_mtime_ns": 1791425724702694942,
+      "new_mtime_ns": 1791428988405076092
+    }
+  ]
+}

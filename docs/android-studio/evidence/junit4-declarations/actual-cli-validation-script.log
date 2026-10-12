@@ -1,0 +1,114 @@
+import argparse, datetime, hashlib, json, os, resource, subprocess, time
+from pathlib import Path
+
+parser=argparse.ArgumentParser()
+parser.add_argument("--executable", required=True)
+args=parser.parse_args()
+root=Path("/workspace/android-studio-junit4-declarations")
+artifacts=Path("/workspace/android-studio-artifacts/reference-census-next-task")
+cli=Path(args.executable).resolve(strict=True)
+fixtures=root/"tooling/xtask/test_data/reference_declarations"
+records=[]
+
+def sha(path):
+    h=hashlib.sha256()
+    with path.open("rb") as f:
+        for block in iter(lambda:f.read(1024*1024), b""):
+            h.update(block)
+    return h.hexdigest()
+
+def run(name, command, expected, contains=None):
+    log=artifacts/("cli-"+name+".log")
+    receipt=artifacts/("cli-"+name+".measurement.json")
+    if log.exists() or receipt.exists():
+        raise RuntimeError("Refuse to overwrite retained command evidence: "+name)
+    start=datetime.datetime.now(datetime.timezone.utc).isoformat()
+    before=time.monotonic()
+    with log.open("xb") as output:
+        process=subprocess.Popen(command, stdout=output, stderr=subprocess.STDOUT, cwd=root)
+        _,status,usage=os.wait4(process.pid,0)
+        code=os.waitstatus_to_exitcode(status)
+        process.returncode=code
+    record={"name":name,"command":[str(v) for v in command],"started_utc":start,
+        "wall_seconds":time.monotonic()-before,"exit_code":code,
+        "peak_rss_kib":usage.ru_maxrss,"measurement":"Linux wait4 per-process rusage; executable invocation only, no compilation",
+        "log":str(log),"log_sha256":sha(log),"expected_exit":expected}
+    receipt.write_text(json.dumps(record,indent=2)+"\n")
+    records.append(record)
+    assert code==expected,(name,code,expected,log.read_text(errors="replace"))
+    if contains: assert contains in log.read_text(errors="replace"),name
+    print(json.dumps(record),flush=True)
+    return record
+
+def command(output, selection=None, source_root=None, check=False):
+    result=[str(cli),"android-junit4-declarations","--repository",str(root),
+       "--source-root",str(source_root or fixtures/"sources"),
+       "--selection",str(selection or fixtures/"selection.json"),"--output",str(output)]
+    if check:result.append("--check")
+    return result
+
+def no_staging(directory):
+    assert not list(directory.glob(".*-staging-*")), directory
+
+run("help",[str(cli),"android-junit4-declarations","--help"],0,"Explicit, hash-bound source selection")
+output=artifacts/"declarations-candidate-68bfab0.json"
+run("original-generation",command(output),0,"effective test census remains incomplete")
+original=output.read_bytes()
+evidence=json.loads(original)
+assert len(evidence["files"])==16
+for key in ["effective_test_census_complete","declaration_coverage_complete","selected_archive_membership_reverified"]:assert evidence[key] is False,key
+assert evidence["new_behavioral_parity_credit"]==0
+assert evidence["effective_runtime_cases"] is None
+for file in evidence["files"]:
+    for method in file["source_facts"]["method_candidates"]:
+        assert method["effective_runtime_cases"] is None
+        assert method["applicability"]=="unreviewed"
+run("original-check",command(output,check=True),0)
+assert output.read_bytes()==original
+run("original-refuse-replacement",command(output),1,"create a new output file")
+assert output.read_bytes()==original
+changed=artifacts/"declarations-deliberately-changed.json"
+changed.write_bytes(original+b"changed evidence\n")
+changed_bytes=changed.read_bytes()
+run("changed-evidence",command(changed,check=True),1,"declaration evidence changed")
+assert changed.read_bytes()==changed_bytes
+invalid=artifacts/"selection-deliberately-invalid-hash.json"
+selected=json.loads((fixtures/"selection.json").read_text())
+selected["files"][0]["sha256"]="0"*64
+invalid.write_text(json.dumps(selected,indent=2)+"\n")
+rejected=artifacts/"rejected-invalid-provenance.json"
+run("changed-provenance",command(rejected,selection=invalid),1,"bytes/hash differ from provenance")
+assert not rejected.exists()
+
+stress=artifacts/"cli-metadata-stress"
+stress.mkdir(exist_ok=False)
+source_root=stress/"sources"
+source=source_root/"idea/synthetic/Suite.java"
+source.parent.mkdir(parents=True)
+text="package "+"a"*(1024*1024)+"; import org.junit.Test; class Suite { "+"".join("@Test void test"+str(i)+"() {} " for i in range(512))+" }"
+source.write_text(text)
+selection=json.loads((fixtures/"selection.json").read_text())
+template=next(item for item in selection["files"] if item["source"]=="idea")
+template.update(path="synthetic/Suite.java",fixture="idea/synthetic/Suite.java",bytes=source.stat().st_size,sha256=sha(source))
+selection["scope"]="Synthetic stress validation only; no upstream fixture or parity credit"
+selection["files"]=[template]
+selection_path=stress/"selection.json"
+selection_path.write_text(json.dumps(selection,indent=2)+"\n")
+rejected=stress/"rejected.json"
+r=run("actual-1MiB-package-512-methods",command(rejected,selection=selection_path,source_root=source_root),1,"metadata budget exhausted")
+assert not rejected.exists()
+assert r["peak_rss_kib"] < 128*1024, r
+run("metadata-failure-existing-check",command(output,selection=selection_path,source_root=source_root,check=True),1,"metadata budget exhausted")
+assert output.read_bytes()==original
+no_staging(artifacts)
+no_staging(stress)
+
+summary={"schema_version":1,"module_sha256":sha(root/"tooling/xtask/src/tasks/android_junit4_declarations.rs"),
+    "executable":str(cli),"executable_sha256":sha(cli),"executable_bytes":cli.stat().st_size,
+    "selection_sha256":sha(fixtures/"selection.json"),"output_sha256":sha(output),"output_bytes":len(original),
+    "actual_original_files":len(evidence["files"]),"confirmed_source_annotation_declarations":sum(sum(method["junit4_annotation_declared"] for method in file["source_facts"]["method_candidates"]) for file in evidence["files"]),
+    "retained_method_candidates":sum(len(file["source_facts"]["method_candidates"]) for file in evidence["files"]),
+    "commands":records,"original_output_preserved":True,"no_publication_staging_remains":True,
+    "effective_test_census_complete":False,"new_behavioral_parity_credit":0,"status":"PASS scoped actual CLI checks"}
+(artifacts/"cli-validation-summary.json").write_text(json.dumps(summary,indent=2)+"\n")
+print(json.dumps({key:value for key,value in summary.items() if key!="commands"},indent=2),flush=True)

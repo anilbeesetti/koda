@@ -1,0 +1,80 @@
+# Independent code-quality review, round 1
+
+Verdict: **PASS for the bounded static code-quality review.** No blocking findings.
+This verdict does not claim normal Cargo formatting, clippy, compilation, tests,
+full-app execution, or integration readiness. Those gates remain pending.
+
+## Reviewed identities
+
+- Worktree: `/workspace/android-studio-module-presentation`.
+- Task branch: `android-studio-task/1-module-presentation`.
+- Base: `0e15a3d2b6eff51451b5f30d4c62ab0edde608ab`.
+- Frozen production SHA-256:
+  `0a467aa8d96cb64dc93b23dd31526c75e4b5e2b4f8aad0c52c89025a2660208c`.
+- Frozen supplemental-test SHA-256:
+  `9977946288fed36aa169c376c722872c86d01a265b76339ae2ec7c86e8c2d924`.
+- Independently rehashed all 172 current frozen paths before completion.
+
+## Findings and supporting checks
+
+1. Public input/result types use borrowed strings with explicit lifetimes and
+   small `Copy` enums. The result borrows the captured strings rather than the
+   wrapper's lifetime. Internal, display, holder-group and sort identities stay
+   distinct. The pure resolver introduces no I/O, unsafe code, allocation,
+   dependency, async state, model mutation, or existing DTO field change.
+2. `Unavailable` produces a typed error implementing standard `Display` and
+   `Error`; it cannot silently become non-Gradle or a reported-null getter.
+   `Option<&str>` is documented as a reported-null value. Standard suffix
+   operations avoid unchecked indexing and production panics. `unwrap_or` here
+   is an infallible optional-label fallback, not an unchecked unwrap.
+3. Comments and rustdoc explain non-obvious fidelity boundaries: raw path
+   equality, observed nulls, imported/collision names, holder capture, empty
+   labels and separate Kotlin facts. The API is a distinct logical component
+   within the existing crate, matching repository layout conventions.
+4. All 20 test declarations match both provenance and task-port inventories.
+   Tests assert source-derived observable cases covering non-Gradle/unavailable,
+   source-set precedence, root/nonroot and missing IDs, null/empty distinction,
+   colon suffixes, raw/case-sensitive paths, Unicode/whitespace, separate
+   identities, holder fallback, and borrowed long names. No `ignore`, conditional
+   exclusion, expected-panic shortcut, or existing-test modification was found.
+   These are supplemental policy tests; they are not claimed as original ports.
+5. Independently verified the 159-path original-preservation inventory against
+   base Git bytes. 158 paths are byte-identical; the remaining path is exactly
+   the one additive `pub mod module_presentation;` export in `android_tools.rs`.
+   Existing crate metadata/build scripts, public DTOs, fixtures, canonical
+   reference manifest and parity matrix are preserved.
+6. All eight full reference source files match their declared sizes/SHA-256
+   values and independent local reference copies. Original Apache headers are
+   present. `LICENSE-APACHE` is byte-identical to the retained Apache 2.0 license
+   (SHA-256 `cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30`).
+   NOTICE retains AOSP/JetBrains attribution and explicitly states zero original
+   ports; the Rust policy/tests retain the relevant AOSP attribution.
+7. Task documentation and port/provenance JSON accurately retain zero original
+   test credit, `not_run`/pending runtime status, and incomplete original tree,
+   phase and IDE flags. They explicitly leave authoritative identity producers,
+   holder lookup, Kotlin facet import, revision publication, empty-label adapter
+   support, project-panel wiring and original generated-tree workflows unported.
+   The task notes do not claim UI or full-app fidelity. The docs automation
+   instructions' `docs/src/` scope does not require an unrelated mdBook rewrite
+   for these task records under `docs/android-studio/`.
+
+## Execution limits
+
+Read `.rules`, `docs/AGENTS.md` and `docs/.rules`. Per the assigned review scope,
+ran only read-only file/Git inspection and Python JSON/hash verification, plus
+`git diff --check` on the additive export (passed). No Cargo, Gradle, compiler,
+app, formatter or cache command was run, and no source, fixture, matrix, branch
+or protected repository state was changed. The task owner must still obtain
+actual normal locked all-feature tests, library build, repository `./script/clippy`
+and formatting results; Root must run the subsequent combined full app/live and
+full-workspace gates before protected merge.
+
+An initial reviewer inventory assertion incorrectly equated the 157 original
+paths included in the frozen source closure with the full 159-path preservation
+inventory. The two canonical metadata JSON paths are in the latter inventory;
+the corrected independent check verified both all 159 baseline paths and all
+172 frozen current paths. This was a reviewer audit setup error, not a product
+finding or source change. The note is retained in the verification receipt.
+
+Detailed byte/provenance verification:
+`/workspace/android-studio-artifacts/module-presentation-task/quality-review-round1-verification.json`.

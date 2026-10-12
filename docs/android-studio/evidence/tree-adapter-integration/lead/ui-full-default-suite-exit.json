@@ -1,0 +1,15 @@
+{
+  "command": [
+    "cargo",
+    "test",
+    "--locked",
+    "-p",
+    "android_ui",
+    "--lib"
+  ],
+  "tested_commit": "0e15a3d2b6eff51451b5f30d4c62ab0edde608ab",
+  "exit_code": 0,
+  "elapsed_seconds": 6.264706137000758,
+  "log_sha256": "171870ae75fdec9bf946daf3112d80e69affdcfaec4054db490af4b49c59aeb2",
+  "scope": "Complete normal default-feature UI suite; allfeature tooling separately201PASS; fullworkspace CI separate."
+}

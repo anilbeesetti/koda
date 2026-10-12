@@ -1,0 +1,73 @@
+# UX review — captured module display policy, round 1
+
+Verdict: **PASS for the bounded pure naming policy**. No blocking UX findings.
+This is a static review; it does not certify runtime checks, an authoritative
+import producer, tree publication, or Android Studio UI completion.
+
+Reviewed worktree: `/workspace/android-studio-module-presentation`.
+Base: `0e15a3d2b6eff51451b5f30d4c62ab0edde608ab`.
+Frozen snapshot: `review-source-round1.json`, SHA-256
+`eac4b0a2dbf80ad8efadbe91be09549c0470e786aa5d7d50fc2ccf9d84fa2041`.
+Production source SHA-256:
+`0a467aa8d96cb64dc93b23dd31526c75e4b5e2b4f8aad0c52c89025a2660208c`.
+Supplementary test source SHA-256:
+`9977946288fed36aa169c376c722872c86d01a265b76339ae2ec7c86e8c2d924`.
+
+## Behavior checked
+
+- `Unavailable` produces a typed error rather than inventing a non-Gradle
+  identity or interpreting an uncaptured getter as null. Captured `NotGradle`
+  follows the imported-name fallback. `None` inside a Gradle capture explicitly
+  means a getter reported null.
+- Source-set modules resolve the final colon suffix before the root/nonroot
+  project rule. Missing IDs and IDs without a colon use the imported name;
+  a trailing colon gives an empty label. This matches pinned
+  `GradleModuleSystem.kt:646–659` and
+  `GradleProjectResolverUtil.java:531–540`.
+- Other Gradle modules keep the entire reported external ID when project/root
+  paths compare equal; otherwise they use the final colon component. Two
+  reported null paths compare equal, one null does not, and no path, case,
+  whitespace, Unicode, or filesystem normalization is introduced. The behavior
+  matches `StringUtilRt.equal:21–40` and `getShortName:242–248`.
+- Missing IDs trigger the imported-name fallback. Empty IDs and empty suffixes
+  remain empty: the pinned Kotlin Elvis fallback replaces null, not empty.
+  The Rust policy does not silently turn these inputs into a folder or project
+  path label.
+- Display names, holder-group display names, and sort names remain separate.
+  The display policy matches the API used by `AndroidViewModuleNode` for visible
+  text. Holder-group naming matches
+  `GradleModuleSystem.getDisplayNameForModuleGroup:665`; sort identity matches
+  the internal module name in `AndroidModuleNode.getSortKey:66`. Names already
+  escaped or collision-suffixed by the importer are retained as supplied.
+  `LinkedAndroidModuleGroupUtils.getHolderModule:61` falls back to the original
+  module, and the DTO contract explicitly requires capturing that fallback name.
+- All 20 supplementary test declarations were inspected, including unknown
+  capture, source-set precedence, null equality, null/empty distinction,
+  delimiters, holder fallback, distinct identities, Unicode/whitespace, and
+  borrowed long names. Their names exactly match the attributed selection.
+  These are source-derived regression cases, not ports of original test methods.
+
+## Provenance and scope
+
+All 172 frozen source entries matched their recorded SHA-256 at review and
+again immediately before writing this report. All eight retained pinned source
+files matched their recorded hashes and byte counts. Original attribution and
+Apache 2.0 notice remain present. The 159 original tracked paths were checked:
+158 remain byte-identical, and the sole changed original file is the one-line
+additive `pub mod module_presentation;` export. The canonical parity matrix is
+unchanged (SHA-256
+`a8a9567ffa3c33762103f400fe626bb80dc1d2a51425a58ec761c3d88e755b21`).
+
+The task plan and port descriptor accurately state the integration still
+required: imported-name construction, qualified/collision naming, authoritative
+Gradle getter capture, holder lookup, Kotlin import/capability, revision binding,
+presentation publication, and the project panel. The existing tree adapter
+rejects empty/multiline labels; the new policy preserves applicable empty-label
+semantics and explicitly leaves adapter extension unported. The five original
+generated-tree flows and Kotlin original tests remain unported/not_run, with
+zero new canonical parity credit.
+
+No Cargo, Gradle, compiler, app, SDK probe, cache, repository source, fixture,
+matrix, main, or protected-branch mutation was performed in this review. Builds,
+test execution, and actual app checks remain owned by the task/lead runtime
+lease and must pass separately before task completion or protected merge.

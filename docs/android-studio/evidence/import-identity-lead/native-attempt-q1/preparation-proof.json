@@ -1,0 +1,337 @@
+{
+  "source_commit": "7e3f72ebfaef39d6e6630dd11fa7dc91c8985d4a",
+  "fixture_files": [
+    {
+      "source": "crates/android_tools/test_data/source_providers/gradle-smoke-generation/README.md",
+      "copy": "generation-project/README.md",
+      "sha256": "1cb9b07ab2aa3329998d7ff24de213f1830d2529b2c27024c00dbcec8cf6bd03"
+    },
+    {
+      "source": "crates/android_tools/test_data/source_providers/gradle-smoke-generation/app/build.gradle",
+      "copy": "generation-project/app/build.gradle",
+      "sha256": "522e77481cf8d0f3ef0d379373c665447aaa99d5f7b40ec43de3dfa601243564"
+    },
+    {
+      "source": "crates/android_tools/test_data/source_providers/gradle-smoke-generation/app/custom-manifest/AndroidManifest.xml",
+      "copy": "generation-project/app/custom-manifest/AndroidManifest.xml",
+      "sha256": "04b0035bfbb75cdf2e1ca08522a873ec17c57c7c4d504db5141791950a2fdd3e"
+    },
+    {
+      "source": "crates/android_tools/test_data/source_providers/gradle-smoke-generation/app/flavor-assets/demo.txt",
+      "copy": "generation-project/app/flavor-assets/demo.txt",
+      "sha256": "4c868ef8cdcb0a56d4abaaf91dd8d0a6a988d240f51bb1d66199a9878896abbd"
+    },
+    {
+      "source": "crates/android_tools/test_data/source_providers/gradle-smoke-generation/app/main/resources/resources.properties",
+      "copy": "generation-project/app/main/resources/resources.properties",
+      "sha256": "72d958098df4c5df21975090a9c0d3063ebdb8b4e442eee5382457debd8f739c"
+    },
+    {
+      "source": "crates/android_tools/test_data/source_providers/gradle-smoke-generation/app/provider-res/layout/sample.xml",
+      "copy": "generation-project/app/provider-res/layout/sample.xml",
+      "sha256": "b006e542fe5eb593b47fbbc4ca8fd62e2d40d099d6e18d60cfffe4747bed9208"
+    },
+    {
+      "source": "crates/android_tools/test_data/source_providers/gradle-smoke-generation/app/unrelated-assets/sample.txt",
+      "copy": "generation-project/app/unrelated-assets/sample.txt",
+      "sha256": "19ec6c66372d3e1bc08dd445af03d8008abea25d07fc7a6e30f24e21a7e78950"
+    },
+    {
+      "source": "crates/android_tools/test_data/source_providers/gradle-smoke-generation/build.gradle",
+      "copy": "generation-project/build.gradle",
+      "sha256": "921d89275ff70763fc2ce315d6a4d1e479bcd65e0ba1ed19b633073977a483c2"
+    },
+    {
+      "source": "crates/android_tools/test_data/source_providers/gradle-smoke-generation/gradle.properties",
+      "copy": "generation-project/gradle.properties",
+      "sha256": "0beaaf135e68180d14b3e75e227dbf0219361d835fdef5ee0a7e28e85b6e9fe2"
+    },
+    {
+      "source": "crates/android_tools/test_data/source_providers/gradle-smoke-generation/model.json",
+      "copy": "generation-project/model.json",
+      "sha256": "0aa94781d801b3b00b3d00e5e2bd7d6b0cb5e5c0c35eaae920b6cff16e9640f8"
+    },
+    {
+      "source": "crates/android_tools/test_data/source_providers/gradle-smoke-generation/provenance.json",
+      "copy": "generation-project/provenance.json",
+      "sha256": "73879ce3d81ef14bc4fd091a986f1ca785633ed35388dedc7e69ce43a0c39620"
+    },
+    {
+      "source": "crates/android_tools/test_data/source_providers/gradle-smoke-generation/settings.gradle",
+      "copy": "generation-project/settings.gradle",
+      "sha256": "759c155c8627fb4a4834ad79522d4de158d994363820e57b3d6d533d0068974c"
+    }
+  ],
+  "official_wrapper_sha256": "a5a5c199ba02189ae8c46a334223371a20599d9c298ef65e7540ede4a3f72d59",
+  "official_wrapper_files": [
+    {
+      "path": "wrapper/gradle-wrapper.jar",
+      "sha256": "497c8c2a7e5031f6aa847f88104aa80a93532ec32ee17bdb8d1d2f67a194a9c7"
+    },
+    {
+      "path": "wrapper/gradle-wrapper.properties",
+      "sha256": "89f62533208a72b7a8cc2892b6b3540c445fa6175508297d932dae57d653591a"
+    }
+  ],
+  "capture_wrapper_sha256": "2b406c6b8f8df183bcff80049dd15b5ca08ccd7bcce55c89297791711712fc2a",
+  "capture_recipe_sha256": "94b55843afae805ccf5b395e11e0622cad3d89a5274f23a5e7af960411fb87e8",
+  "fixture_only_sdk_properties": "/workspace/android-studio-artifacts/import-identity-native-7e3f72e-retry1/generation-project/local.properties",
+  "fresh_profile_no_databases_or_trust_copied": true,
+  "extension_assets": [
+    {
+      "path": "index.json",
+      "sha256": "e263a3e623c98738eaed30f0c753dd5b167f444512b7715fdf1b0af1a41a89ce"
+    },
+    {
+      "path": "installed/html/extension.toml",
+      "sha256": "ad6d90bcaaabfd56fce8ae1c7eae39d6a01765292ade699d7452161f6dd57862"
+    },
+    {
+      "path": "installed/html/extension.wasm",
+      "sha256": "cf6b564805e3897b26b7b26b0ba467eae05793e458cef849b9544010cc9d9fc7"
+    },
+    {
+      "path": "installed/html/grammars/html.wasm",
+      "sha256": "0343112df4cfb9054fccecd102a1f9f730f9985ceadf37cee33ba7afd4b0e036"
+    },
+    {
+      "path": "installed/html/languages/html/brackets.scm",
+      "sha256": "e176c43b8387554c8eab66ccad280e55ee22633eafe2585f683f05f555b48bc7"
+    },
+    {
+      "path": "installed/html/languages/html/config.toml",
+      "sha256": "935409b900e6a17268c1605d84fcb2e706a95a0547b2ecab90fc72e0f66ce3c6"
+    },
+    {
+      "path": "installed/html/languages/html/highlights.scm",
+      "sha256": "0782d4b73bf967e7245c85e1c585db81f4bd67b0f4c32bf4617ff0f094098b13"
+    },
+    {
+      "path": "installed/html/languages/html/indents.scm",
+      "sha256": "6719e0ba177f1a8187a94236e57121056a953472eb55198df53c09ccaf7c4ff4"
+    },
+    {
+      "path": "installed/html/languages/html/injections.scm",
+      "sha256": "e587aef935082be91d7f5d8f70c3432b352babbb151ffd2e0ab35b3cbf629ea1"
+    },
+    {
+      "path": "installed/html/languages/html/outline.scm",
+      "sha256": "b2ba29e9a92359bb50ec448b1321ff497ddf1288e1d14dd0b8aecae2709a580d"
+    },
+    {
+      "path": "installed/html/languages/html/overrides.scm",
+      "sha256": "7438fb446be2898d929e4e060942d9e790270c4232a4ffbff27574385576354e"
+    },
+    {
+      "path": "installed/java/debug_adapter_schemas/Java.json",
+      "sha256": "cf9371771e590f0c6a17713faf5965b81706bd2620e158eb97d28d1b70fd4742"
+    },
+    {
+      "path": "installed/java/extension.toml",
+      "sha256": "eca1da859606b77db3cc9129d7caa7885670422aa89ce303d8f0190e614e895b"
+    },
+    {
+      "path": "installed/java/extension.wasm",
+      "sha256": "a2cc620814954e60ee0d57bf02482908a6e8c9278117c4c9e603d0afeea4d7bd"
+    },
+    {
+      "path": "installed/java/grammars/groovy.wasm",
+      "sha256": "07dd526320a784a9859c6c396f95caa8e0eb456cf7b8cd9e1aa9dcd965d8449f"
+    },
+    {
+      "path": "installed/java/grammars/java.wasm",
+      "sha256": "366485d5b4f6fa97f3bc786828e1cfb253dc12f393cc80b1cc04c8c311dfdc19"
+    },
+    {
+      "path": "installed/java/grammars/kotlin.wasm",
+      "sha256": "e941f4b26db2d331f4c9349a9094e7e1e52469a8130627982df3f1050769815c"
+    },
+    {
+      "path": "installed/java/grammars/properties.wasm",
+      "sha256": "3e48e677fda5d8ef27ce8f1343990d366454b832c5e892d58384d2275ddbf891"
+    },
+    {
+      "path": "installed/java/languages/gradle/config.toml",
+      "sha256": "65d457ac4c98b1da8ee31f7bc9ec2abf2c7ce22e668a98801f85189e3ccab844"
+    },
+    {
+      "path": "installed/java/languages/gradle/highlights.scm",
+      "sha256": "b2993b7e99947b6ec9ec961ca46e71a463fff1f297efc95bea3efeeac2d452e6"
+    },
+    {
+      "path": "installed/java/languages/gradle/indents.scm",
+      "sha256": "fff0db02df15470940a2601b06d747c9181bd31ed4aecefd505980cabe312d81"
+    },
+    {
+      "path": "installed/java/languages/gradle/locals.scm",
+      "sha256": "986213a02608e5940c1a6fcbb2009fd33a82d626de013bab58be27c0b01dffb3"
+    },
+    {
+      "path": "installed/java/languages/gradle/outline.scm",
+      "sha256": "ad47edecb1a04cb3e4a641a062a3f8c0b1f9b4ba3fbd1031d4189c36a41127ba"
+    },
+    {
+      "path": "installed/java/languages/gradle-kts/brackets.scm",
+      "sha256": "17d19f56392319beb91f4e481a5501fee01078e0619c4a28240490cb32c5319e"
+    },
+    {
+      "path": "installed/java/languages/gradle-kts/config.toml",
+      "sha256": "01888d03f2e622ca0ae386840999f3a6c70471e808e1259a41724d8a839fbd8a"
+    },
+    {
+      "path": "installed/java/languages/gradle-kts/highlights.scm",
+      "sha256": "72f78aa9a23444c299fae259bd771ea4e44211350e15526f17492719f18bdd36"
+    },
+    {
+      "path": "installed/java/languages/gradle-kts/indents.scm",
+      "sha256": "f13d27c38d57c1920a3fc20a43b0ed59acdfa4c8e3f95edf9b5020d6b09a5a24"
+    },
+    {
+      "path": "installed/java/languages/gradle-kts/injections.scm",
+      "sha256": "4503ca201ddfdff6d22a7d9b0ab4520571fc4d03ef07de9b8d31dddd1df4db9d"
+    },
+    {
+      "path": "installed/java/languages/gradle-kts/outline.scm",
+      "sha256": "82ecb616e36f235a0e39e685d947d7b3a68a867fa901d123c870454ebf6c398c"
+    },
+    {
+      "path": "installed/java/languages/gradle-kts/overrides.scm",
+      "sha256": "a26d88853467e35590b05d1348abed31a957def86440c8e4b8ba6135a7c97bba"
+    },
+    {
+      "path": "installed/java/languages/java/brackets.scm",
+      "sha256": "a301f1463886ea28fcf63a0e8fd5abdad8e223393a1091f55b45c3f8a3d5faf4"
+    },
+    {
+      "path": "installed/java/languages/java/config.toml",
+      "sha256": "140ca23d4dccaf8cf234098525cf2b73ee36d6a6b93288196bf80e4a76a99624"
+    },
+    {
+      "path": "installed/java/languages/java/folds.scm",
+      "sha256": "864e5db99af181f37772ba62ef36fa98523cefa719ce91bcacbf4f63a18d4d88"
+    },
+    {
+      "path": "installed/java/languages/java/highlights.scm",
+      "sha256": "2edb02322ca1b4bf386a04e9381cee1528c330c6609446d4f215545ce5ff3057"
+    },
+    {
+      "path": "installed/java/languages/java/indents.scm",
+      "sha256": "9d09965ace94f516af584d6ac618b1099ef74abbad6f02ed290f385d9bae8dac"
+    },
+    {
+      "path": "installed/java/languages/java/injections.scm",
+      "sha256": "5e279e4929fce365e675b989d676fb4cee256d6b5c9fed2c29e9b4e0202196fa"
+    },
+    {
+      "path": "installed/java/languages/java/locals.scm",
+      "sha256": "8e0d7f8f8c26f42cffcae485ec308aae9ad980a646837759381a2b8ad85df3ca"
+    },
+    {
+      "path": "installed/java/languages/java/outline.scm",
+      "sha256": "b4be7b6818fddccc70063ae8caf75ffbaea78b9e9026d3398ca8cfc91ffa97df"
+    },
+    {
+      "path": "installed/java/languages/java/overrides.scm",
+      "sha256": "b76efebde4881a63ab232dae7480473498b6a165c7e46b3e2e3d662b3f9d5cc2"
+    },
+    {
+      "path": "installed/java/languages/java/runnables.scm",
+      "sha256": "90d8049c95ae88319506c41ca295e7674bfe6e222107366ac5bc2d43e8618896"
+    },
+    {
+      "path": "installed/java/languages/java/tasks.json",
+      "sha256": "881a83d8e5b4cb7fab4e85947523b31b566509823202996b33cd0f34296db4dc"
+    },
+    {
+      "path": "installed/java/languages/java/textobjects.scm",
+      "sha256": "de7ec98f8f18665ee88c7bb19a7c22b52d39d630a3e8cf3f48975d8b88769403"
+    },
+    {
+      "path": "installed/java/languages/properties/config.toml",
+      "sha256": "8b0972a9ad8ceafe1b49e5e3292cd96243b04883a7e35f7e0447d481de7d4eaf"
+    },
+    {
+      "path": "installed/java/languages/properties/highlights.scm",
+      "sha256": "f62696ce2ed4e1ceffdcd5c569fb34a228d9c3b18d6887d6b8215bff7b95004c"
+    },
+    {
+      "path": "installed/java/languages/properties/overrides.scm",
+      "sha256": "cfd4e298b0b23ff34cd99388cc5433b40139dfcae15c7d2d1814ca055bb738ef"
+    },
+    {
+      "path": "installed/kotlin/extension.toml",
+      "sha256": "041aff263783cf400e4266e8a1de4c5d79dd4cfeaa37a83f3c08a4d2575556c4"
+    },
+    {
+      "path": "installed/kotlin/extension.wasm",
+      "sha256": "69f7d02d4c35b73510e382ec0e09d573967945e20eb6d77abc9972d620345ccb"
+    },
+    {
+      "path": "installed/kotlin/grammars/kotlin.wasm",
+      "sha256": "6a29a5e9aed398bf2c98a032c5e8d22a0593461bd8588b821bf7e87624499746"
+    },
+    {
+      "path": "installed/kotlin/languages/kotlin/brackets.scm",
+      "sha256": "17d19f56392319beb91f4e481a5501fee01078e0619c4a28240490cb32c5319e"
+    },
+    {
+      "path": "installed/kotlin/languages/kotlin/config.toml",
+      "sha256": "1d2729bb425bcf4e1ad61c20209d3e8f4b920d47706641992306549e5a4f8e81"
+    },
+    {
+      "path": "installed/kotlin/languages/kotlin/highlights.scm",
+      "sha256": "208726a181a2c2d4b94fff98f61faa2f65c9a3c5a17fe240eacc94e1fc241e66"
+    },
+    {
+      "path": "installed/kotlin/languages/kotlin/indents.scm",
+      "sha256": "f13d27c38d57c1920a3fc20a43b0ed59acdfa4c8e3f95edf9b5020d6b09a5a24"
+    },
+    {
+      "path": "installed/kotlin/languages/kotlin/injections.scm",
+      "sha256": "4503ca201ddfdff6d22a7d9b0ab4520571fc4d03ef07de9b8d31dddd1df4db9d"
+    },
+    {
+      "path": "installed/kotlin/languages/kotlin/outline.scm",
+      "sha256": "8cc6ad1e64c08c4e6b422d76d990c5bb4340aadf112aa829f23606e4b261ff81"
+    },
+    {
+      "path": "installed/kotlin/languages/kotlin/overrides.scm",
+      "sha256": "a26d88853467e35590b05d1348abed31a957def86440c8e4b8ba6135a7c97bba"
+    },
+    {
+      "path": "installed/kotlin/languages/kotlin/runnables.scm",
+      "sha256": "f34a6b853020db26064fa5e27c48fc6d60e70e8bced32c1cccdbcee171beb34a"
+    },
+    {
+      "path": "installed/kotlin/languages/kotlin/tasks.json",
+      "sha256": "0bfd7c2d87888422b3bf9498d709cd04f5988df2d795027d898e7b2bdec63adf"
+    },
+    {
+      "path": "installed/xml/extension.toml",
+      "sha256": "69bae4939546cf0e5d8821d2f20f705a56d2cee3f016d3e040916e72279a5c69"
+    },
+    {
+      "path": "installed/xml/grammars/xml.wasm",
+      "sha256": "d9013be2d8da4ee54081affb1c599261cdf9df9aafad3be767b615025e7c47df"
+    },
+    {
+      "path": "installed/xml/languages/xml/config.toml",
+      "sha256": "4158709fe7495f414ce66832392d013bd5a933e3c49c08c186db71f784437759"
+    },
+    {
+      "path": "installed/xml/languages/xml/highlights.scm",
+      "sha256": "aa4a561c846928c3a4d885acbe690a60689661a45684babe16cf8b7a1509b610"
+    },
+    {
+      "path": "installed/xml/languages/xml/indents.scm",
+      "sha256": "5cbd6b719a4aa54ba12da9e2b00994a4331e4084408b3f2690f7af03cdf947eb"
+    },
+    {
+      "path": "installed/xml/languages/xml/outline.scm",
+      "sha256": "98dbe4620e0853d8627f24f7f36aecb7e82398531fb24cea404b60ba3b406c30"
+    }
+  ],
+  "source_guard_files": 4743,
+  "source_before_after_unchanged": true,
+  "launcher_or_sdk_processes_started": false
+}

@@ -1,0 +1,40 @@
+
+running 14 tests
+test tabbed_toolbar::tests::adding_tab_should_not_trigger_select_listener ... ok
+test tabbed_toolbar::tests::callbacks_can_rebuild_toolbar_after_selection_and_middle_close ... ok
+test tabbed_toolbar::tests::can_select_tab_by_index ... ok
+
+thread 'tabbed_toolbar::tests::appended_tabs_reveal_the_tail_on_initial_layout_and_after_rebuild' (157498) panicked at crates/android_ui/src/tabbed_toolbar.rs:1023:13:
+Last tab's trailing edge
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+test tabbed_toolbar::tests::appended_tabs_reveal_the_tail_on_initial_layout_and_after_rebuild ... FAILED
+test tabbed_toolbar::tests::closed_is_called_when_clicked ... ok
+test tabbed_toolbar::tests::component_is_added_element ... ok
+
+thread 'tabbed_toolbar::tests::clearing_before_frame_delivery_does_not_restore_old_scroll_arrows' (157501) panicked at crates/android_ui/src/tabbed_toolbar.rs:1054:9:
+assertion failed: cx.debug_bounds("tabbed-toolbar-scroll-right").is_none()
+test tabbed_toolbar::tests::clearing_before_frame_delivery_does_not_restore_old_scroll_arrows ... FAILED
+
+thread 'tabbed_toolbar::tests::fractional_scale_reveals_converge_for_tail_and_oversized_selection' (157504) panicked at crates/android_ui/src/tabbed_toolbar.rs:1074:9:
+assertion failed: last.right() <= viewport.right() + px(0.01)
+test tabbed_toolbar::tests::fractional_scale_reveals_converge_for_tail_and_oversized_selection ... FAILED
+test tabbed_toolbar::tests::icon_buttons_callback_when_clicked ... ok
+test tabbed_toolbar::tests::no_close_button_when_no_listener ... ok
+test tabbed_toolbar::tests::pointer_space_middle_close_and_invalid_selection_use_production_callbacks ... ok
+
+thread 'tabbed_toolbar::tests::overflow_scrolls_and_resizing_retains_title_actions_and_tabs' (157507) panicked at crates/android_ui/src/tabbed_toolbar.rs:988:9:
+Left arrow after resize; state (Point { x: -0px, y: 0px }, Point { x: 0px, y: 0px }, true, false)
+test tabbed_toolbar::tests::overflow_scrolls_and_resizing_retains_title_actions_and_tabs ... FAILED
+test tabbed_toolbar::tests::tab_is_added ... ok
+test tabbed_toolbar::tests::title_tabs_and_multiple_actions_retain_reference_geometry ... ok
+
+failures:
+
+failures:
+    tabbed_toolbar::tests::appended_tabs_reveal_the_tail_on_initial_layout_and_after_rebuild
+    tabbed_toolbar::tests::clearing_before_frame_delivery_does_not_restore_old_scroll_arrows
+    tabbed_toolbar::tests::fractional_scale_reveals_converge_for_tail_and_oversized_selection
+    tabbed_toolbar::tests::overflow_scrolls_and_resizing_retains_title_actions_and_tabs
+
+test result: FAILED. 10 passed; 4 failed; 0 ignored; 0 measured; 106 filtered out; finished in 0.20s
+

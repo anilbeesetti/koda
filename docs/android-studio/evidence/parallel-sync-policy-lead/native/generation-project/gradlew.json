@@ -1,0 +1,8 @@
+{
+  "original_path": "/workspace/android-studio-artifacts/parallel-sync-native-4fb7a80/generation-project/gradlew",
+  "original_bytes": 120,
+  "original_sha256": "f8ecffa7b8922a7cadb177f7365bc1aa647f048a1c135096b6be8daf7fc49957",
+  "content_preserved_byte_exact": true,
+  "encoding": "utf-8",
+  "utf8_content": "#!/bin/sh\nexec /usr/bin/python3 /workspace/android-studio-artifacts/parallel-sync-native-4fb7a80/capture-gradle.py \"$@\"\n"
+}

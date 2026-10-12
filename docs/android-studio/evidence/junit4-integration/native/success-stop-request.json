@@ -1,0 +1,7 @@
+{
+  "launcher_pid": 245594,
+  "app_pid": 245615,
+  "xvfb_pid": 245607,
+  "command": "bash .agents/skills/koda-app-validation/scripts/run-app.sh --headless /workspace/android-studio-artifacts/junit4-native-9315534/generation-project /workspace/android-studio-artifacts/junit4-native-9315534/generation-project/app/custom-manifest/AndroidManifest.xml ",
+  "stop": "Identity-verified TERM only toownedlauncher; officialtrapstopsownedapp/Xvfb"
+}

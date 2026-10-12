@@ -1,0 +1,30 @@
+{
+  "retired_generated_ELF": {
+    "path": "/tmp/android-studio-link-output/koda-v2-artifact-273741",
+    "bytes": 1359451320,
+    "sha256": "577814b594205348eab4869aef4f3d0dc0377bbd6fe4acc9bb40ca7788b89c3e",
+    "nlink": 1
+  },
+  "reason": "Completed Source9b V2 full app/tooling/UI/parity/native gates and all five runtime reviews preserved. New current905P1 normal full app independently verified and actual SDKsync successful. Retire only older generated physical app binary to free tmp space; old source, fixtures, build/raw SDK/model logs, captures, compiler/linker/probe and source guard records remain unchanged. FullCI9b already passed workspace step; final job pending.",
+  "new_verified_app": {
+    "path": "/tmp/android-studio-link-output/koda-module-presentation-290003",
+    "sha256": "9c018912f5622c4b991276a311a1f86bd3544de612537904d299cdc7f0b40891",
+    "source_commit": "905012f11885a86c9e8e18710ead07897d941d40"
+  },
+  "new_sdk_sync_capture": "/workspace/android-studio-artifacts/module-presentation-native-905012f/captures/sync1-settled.png",
+  "new_live_binding": {
+    "pid": 294564,
+    "window_id": 2097153,
+    "source_commit": "905012f11885a86c9e8e18710ead07897d941d40",
+    "executable": "/tmp/android-studio-link-output/koda-module-presentation-290003",
+    "executable_sha256": "9c018912f5622c4b991276a311a1f86bd3544de612537904d299cdc7f0b40891",
+    "command": "/workspace/android-studio-module-presentation/target/cloud-app/koda --user-data-dir /workspace/android-studio-artifacts/module-presentation-native-905012f/qa/user-data /workspace/android-studio-artifacts/module-presentation-native-905012f/generation-project /workspace/android-studio-artifacts/module-presentation-native-905012f/generation-project/app/custom-manifest/AndroidManifest.xml ",
+    "utc": "2026-10-07T23:32:01.347497+00:00",
+    "monotonic": 52561.417142434
+  },
+  "open_old_candidate_refs": [],
+  "source_fixtures_tests_or_logs_removed": false,
+  "available_tmp_bytes_before": 142737408,
+  "utc": "2026-10-07T23:33:16.271874+00:00",
+  "available_tmp_bytes_after": 1502191616
+}

@@ -1,0 +1,47 @@
+{
+  "utc": "2026-10-08T02:51:13.556475+00:00",
+  "source_commit": "7e3f72ebfaef39d6e6630dd11fa7dc91c8985d4a",
+  "five_final_owner_reviews": [
+    {
+      "area": "code",
+      "path": "/workspace/android-studio-artifacts/import-identity-getters/reviews/code-final-current-runtime.json",
+      "sha256": "df2b858299843e439a87ed185bfe9d7a8049ab1ccc98fbad82bae928c40c1e4f"
+    },
+    {
+      "area": "ui",
+      "path": "/workspace/android-studio-artifacts/import-identity-getters/reviews/ui-final-current-runtime.json",
+      "sha256": "26a403a7078f215f4547f1880642e624e88b7a431be589f84f13f053c17c1c1e"
+    },
+    {
+      "area": "ux",
+      "path": "/workspace/android-studio-artifacts/import-identity-getters/reviews/ux-final-current-runtime.json",
+      "sha256": "9564ee3ee560dfe4a668aef55f00bef079c89cb10b1ad4236636f747aed0de95"
+    },
+    {
+      "area": "performance",
+      "path": "/workspace/android-studio-artifacts/import-identity-getters/reviews/performance-final-current-runtime.json",
+      "sha256": "2d90da3370e3a4baaa82d59ed40d665b7951459c6f4c7018267f451b6cf6b868"
+    },
+    {
+      "area": "quality",
+      "path": "/workspace/android-studio-artifacts/import-identity-getters/reviews/quality-final-current-runtime.json",
+      "sha256": "16bbb1e8276a872aea3e527e829cf1a61a4ee53403263881669b14dbdccf79ef"
+    }
+  ],
+  "actual_remote_main_protected": "c1ce5ca16a26fd59984b50500ead45fbafafa5c8\trefs/heads/android-studio\n30fca99a7a015168dfe4f394f576fbe2955fb4ea\trefs/heads/main\n",
+  "free_before_bytes": {
+    "/workspace": 2109681664,
+    "/tmp": 1451790336
+  },
+  "normal_locked_command": [
+    "cargo",
+    "build",
+    "--locked",
+    "-p",
+    "zed",
+    "--bin",
+    "koda"
+  ],
+  "helper_binary_sha256": "e21ba9925188f76a5872b62fba400401d1e5832e94f158e231e2f7fddf563a43",
+  "main_protected_actual_remotes_unchanged": true
+}

@@ -1,0 +1,72 @@
+{
+  "schema": 1,
+  "reviewer": "/root/import_identity_getters_owner/identity_static_ux_review",
+  "area": "UX",
+  "verdict": "PASS",
+  "scope": "Current Source-only ownership-cleanup UX review; not runtime/app/native completion",
+  "reviewed_at_utc": "2026-10-08T02:05:06.022389+00:00",
+  "source_head": "7e3f72ebfaef39d6e6630dd11fa7dc91c8985d4a",
+  "previous_epoch": "a418947fcacd49c259a83cfc7c9a7c640552117c",
+  "last_ux_review_epoch": "6fb7f94173320326bd523a8af67db77916ac7da3",
+  "findings": [],
+  "sole_current_delta": {
+    "path": "crates/android_tools/tests/import_facts.rs",
+    "change": "Move fixture.value directly instead of cloning it in one supplemental round-trip test.",
+    "exact_one_replacement_verified": true,
+    "every_test_assertion_and_mutation_preserved": true,
+    "tests_declared": 30,
+    "production_API_UI_source_changed": false,
+    "before_sha256": "622dfb8c33596a9546583afefe0d65d21530e7fc933b87690c327616c4d976bc",
+    "after_sha256": "13744dfb88d81b17fcba3bed9a1d07000d0d8f3cffa4e62232a6f733ca72f319"
+  },
+  "UX_contract": "Existing raw identity fields, absent/failed/null/empty distinctions, model/selection freshness, included-build guards, late callback capture and unchanged Basic/V2 consumers remain as reviewed at 6fb7. Dependency merge adds pure parallel-sync policy without imported-name/facet/tree/LSP or shipping UI workflow changes.",
+  "whole_source_guard": {
+    "file_count": 4743,
+    "source_digest": "d64467aee29afb00a1a009cf94cdcdad10600160fc529dfcf3c91e9648e064f1",
+    "current_snapshot_sha256": "22c88471ad50da82ede705265412388dbca33f66f5967b9fc3641892cc63cec0",
+    "all_current_hashes_and_post_ENOSPC_hashes_match": true,
+    "index_and_status_match": true,
+    "fixed_seven_exclusions_unchanged": true
+  },
+  "authorization_observed": {
+    "receipt_sha256": "9231cc053d48d2b1942e641a0a20d8c16eb17f821ec13ca186cb19f3ee256db8",
+    "plan_sha256": "5d4a56f7e05e0075af415e2fe8c79f10643eef7806aec33536ed08af125894f3",
+    "scope": "Root-authorized exact nonsemantic ownership cleanup under prior continue after three-round escalation",
+    "new_user_reply_claimed": false
+  },
+  "recorded_historical_UI": {
+    "source": "a418947fcacd49c259a83cfc7c9a7c640552117c",
+    "passed": 125,
+    "failed": 0,
+    "pre_existing_ignored": 1,
+    "raw_log_sha256": "975daee4a7bf6947dd44835c67da717056a686f3e08c5a1cee4b50647803dab7",
+    "receipt_sha256": "8b7056c740ab509087f7f35ff4854e1aaa31098693c0a76ef1abf8af1dce7178",
+    "credit": "Historical a418 runtime evidence only; no current 7e3 UI rerun or native credit"
+  },
+  "current_runtime_failure": {
+    "source": "7e3f72ebfaef39d6e6630dd11fa7dc91c8985d4a",
+    "exit_code": 101,
+    "cause": "Infrastructure ENOSPC before tests ran",
+    "raw_log_sha256": "2a72471d299cf90d0a486aec435d49f4e5b6ff3cd66167fd4585d77295c413e1",
+    "receipt_sha256": "10fb383d320f938e6feb977db9dc61982d0c7082eea7592e0eed7d6154024d5d",
+    "tests_executed": 0,
+    "source_and_index_preserved": true,
+    "status": "Retained failure; current runtime checks remain pending"
+  },
+  "remaining_gates": [
+    "Root recovery hold must release before any further runtime or source/Git mutations",
+    "Current full tooling tests/library/strict Clippy/formatting/UI checks",
+    "Prepared official SDK/Gradle identity capture and late-configuration oracle: not run",
+    "Current full-app/native UX, full CI and final lead checks"
+  ],
+  "runtime_commands_executed_by_reviewer": 0,
+  "original_test_parity_credit": 0,
+  "task_completion": false,
+  "prior_reports_preserved": {
+    "ux-static.md": "20cd9ccd4981ec06fadef8c501d9286cd427c8e7a5d15fb94ba25e5fa9ea2e6f",
+    "ux-static-6fb.md": "dbc7640133e2afec2df761926e21fc8e2968b1f6708ea1a9d0f8e4ec3f32731d",
+    "ux-static.json": "2bbcb04adc4e04c2e920e6fe714b7782eee9c98ffc10d405d320d1fbbf6a9a10",
+    "ux-static-6fb.json": "821e3d110b50ad18679c8c1d84f9e0d42e14646f97074956970713b24e891242"
+  },
+  "storage": "Root explicitly authorized /tmp staging because overlay is full; later canonical copy must preserve exact bytes"
+}

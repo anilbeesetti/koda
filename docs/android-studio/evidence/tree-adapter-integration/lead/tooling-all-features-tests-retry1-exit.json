@@ -1,0 +1,17 @@
+{
+  "command": [
+    "cargo",
+    "test",
+    "--locked",
+    "-p",
+    "android_tools",
+    "--all-features",
+    "--message-format=json"
+  ],
+  "tested_commit": "0e15a3d2b6eff51451b5f30d4c62ab0edde608ab",
+  "exit_code": 0,
+  "elapsed_seconds": 10.620480074001534,
+  "log_sha256": "56086828148c23bff1b40aa24c4ae21f6bbc60640b5515948ce6e4b8a9c6d444",
+  "first_ENOSPC_attempt_retained": true,
+  "all_normal_flags_and_source_assertions_unchanged": true
+}

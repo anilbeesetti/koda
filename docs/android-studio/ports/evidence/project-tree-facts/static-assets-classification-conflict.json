@@ -1,0 +1,63 @@
+{
+  "scope": "Existing raw component generatedness conflict discovered by new supplemental fixture; active provider lookup correct; AndroidSourceType grouping remains unwired",
+  "source_model_sha256": "35833ae90abbf8f86af047c37954b125de0257f3af7a206f20309246eaf4df8c",
+  "data": [
+    {
+      "variant": "redWideDebug",
+      "component": "redWideDebug",
+      "component_source_generated": true,
+      "basic_variant_static_provider_contains_root": true,
+      "path": "/workspace/android-studio-artifacts/project-tree-facts/smoke-runtime-correction2/project/app/late-static-assets"
+    },
+    {
+      "variant": "redNarrowDebug",
+      "component": "redNarrowDebug",
+      "component_source_generated": true,
+      "basic_variant_static_provider_contains_root": true,
+      "path": "/workspace/android-studio-artifacts/project-tree-facts/smoke-runtime-correction2/project/app/late-static-assets"
+    },
+    {
+      "variant": "blueWideDebug",
+      "component": "blueWideDebug",
+      "component_source_generated": true,
+      "basic_variant_static_provider_contains_root": true,
+      "path": "/workspace/android-studio-artifacts/project-tree-facts/smoke-runtime-correction2/project/app/late-static-assets"
+    },
+    {
+      "variant": "blueNarrowDebug",
+      "component": "blueNarrowDebug",
+      "component_source_generated": true,
+      "basic_variant_static_provider_contains_root": true,
+      "path": "/workspace/android-studio-artifacts/project-tree-facts/smoke-runtime-correction2/project/app/late-static-assets"
+    },
+    {
+      "variant": "redWideRelease",
+      "component": "redWideRelease",
+      "component_source_generated": true,
+      "basic_variant_static_provider_contains_root": true,
+      "path": "/workspace/android-studio-artifacts/project-tree-facts/smoke-runtime-correction2/project/app/late-static-assets"
+    },
+    {
+      "variant": "redNarrowRelease",
+      "component": "redNarrowRelease",
+      "component_source_generated": true,
+      "basic_variant_static_provider_contains_root": true,
+      "path": "/workspace/android-studio-artifacts/project-tree-facts/smoke-runtime-correction2/project/app/late-static-assets"
+    },
+    {
+      "variant": "blueWideRelease",
+      "component": "blueWideRelease",
+      "component_source_generated": true,
+      "basic_variant_static_provider_contains_root": true,
+      "path": "/workspace/android-studio-artifacts/project-tree-facts/smoke-runtime-correction2/project/app/late-static-assets"
+    },
+    {
+      "variant": "blueNarrowRelease",
+      "component": "blueNarrowRelease",
+      "component_source_generated": true,
+      "basic_variant_static_provider_contains_root": true,
+      "path": "/workspace/android-studio-artifacts/project-tree-facts/smoke-runtime-correction2/project/app/late-static-assets"
+    }
+  ],
+  "next_step": "Reconcile real addStaticSourceDirectory roots before Android group/UI adapter; separate source-model correction, zero parity credit"
+}

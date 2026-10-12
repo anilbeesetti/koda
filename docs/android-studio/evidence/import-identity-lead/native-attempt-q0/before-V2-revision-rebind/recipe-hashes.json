@@ -1,0 +1,160 @@
+{
+  "prepared_only": true,
+  "runtime_executed": false,
+  "source_commit": "7e3f72ebfaef39d6e6630dd11fa7dc91c8985d4a",
+  "followup": "Source-only Build Tools tuple inspection; no recipe or private fixture change",
+  "files": [
+    {
+      "path": "bind-input-plan.py",
+      "bytes": 1221,
+      "sha256": "9e8217dbef5443c04e1718b887bdcc54f5c0f9a801a052cc64a2a349e2df4294"
+    },
+    {
+      "path": "build-tools-native-preflight.json",
+      "bytes": 8422,
+      "sha256": "3a3bcc25860e924a482aba8d2cce251c85d15e2b1a1988e1991188dcbb6910d1"
+    },
+    {
+      "path": "capture-gradle.py",
+      "bytes": 3125,
+      "sha256": "94b55843afae805ccf5b395e11e0622cad3d89a5274f23a5e7af960411fb87e8"
+    },
+    {
+      "path": "compile-decoder.py",
+      "bytes": 2417,
+      "sha256": "f185a668082a11e077c2f081c0ef30aebea0f744b7812e707550dc185094ec16"
+    },
+    {
+      "path": "decoder-addition.json",
+      "bytes": 2614,
+      "sha256": "530d36239cb9df1813f05b34a670baa927124700df10c273e332c16031e61629"
+    },
+    {
+      "path": "events.py",
+      "bytes": 5483,
+      "sha256": "39c3595af38b2b5b1f6fe7c92cd5bf3a46941140f28b3fc756f81a550773d1b8"
+    },
+    {
+      "path": "finalize-proof.py",
+      "bytes": 10294,
+      "sha256": "fd84ed9a78a9e96a8f79931a6abbcb7cef8a011bc8c05115a34a6d2209bc2223"
+    },
+    {
+      "path": "guard.py",
+      "bytes": 3517,
+      "sha256": "be40f7dae0ab44db6164b4130d18b51749ebd0005a2c46b3e9d1b5dea438bafd"
+    },
+    {
+      "path": "initial-unexecuted-preparation/recipe-hashes.json",
+      "bytes": 4234,
+      "sha256": "e4539393f4a4d191dcabb19e3230b8635bd0313d1b14478009473142c567a237"
+    },
+    {
+      "path": "initial-unexecuted-preparation/report.md",
+      "bytes": 7223,
+      "sha256": "5d51c3116fbe06aad0c6ee30a432885fed49e11fcd099bcd14dc091c211c09b8"
+    },
+    {
+      "path": "initial-unexecuted-preparation/static-preflight.json",
+      "bytes": 1844,
+      "sha256": "622a6053f1bd8b255acd96154085858ec5fb65376db47c35b252ff9aeb75fcf7"
+    },
+    {
+      "path": "input-replay-plan.json",
+      "bytes": 13101,
+      "sha256": "fe521ae9c53b13640a89c7d84e2fe2160d2543044a53a6969fab7398340702be"
+    },
+    {
+      "path": "prepare.py",
+      "bytes": 3765,
+      "sha256": "258aa9d80fa53c015e9807cc46e15206e3c2f34c5d7c156d56ed878f27c2c0e0"
+    },
+    {
+      "path": "previous-recipe-manifest.json",
+      "bytes": 3187,
+      "sha256": "a9f69d47351cccdecb681cee3bbc7b3cb5d066fe3f9521a4c99c6a66fcbdb0fd"
+    },
+    {
+      "path": "previous-recipes/capture-gradle.py",
+      "bytes": 1950,
+      "sha256": "2c71815a6addad3da116c1e8ed4924e2ea6a7b40960c413a12884cfbf6b0335e"
+    },
+    {
+      "path": "previous-recipes/events.py",
+      "bytes": 3833,
+      "sha256": "687e73bd962eeac9d87cdef1abd790b225e56bd56c640d1ad85802234d2a6ba0"
+    },
+    {
+      "path": "previous-recipes/finalize-proof.py",
+      "bytes": 11035,
+      "sha256": "dd7ae82e5fb3dccedc5431d37d122c29c45c533204fe88ce8e9f666f70fba64c"
+    },
+    {
+      "path": "previous-recipes/guard.py",
+      "bytes": 2181,
+      "sha256": "50325449b6005756e508a827c6b6f1818a2f668e7dc033f2bde7e6bb69fd36a4"
+    },
+    {
+      "path": "previous-recipes/input-replay-plan.json",
+      "bytes": 12343,
+      "sha256": "1200f28c64278a8c39c90eb6f795126842b79a74ecc9ffc64ae5dcfb35f039f2"
+    },
+    {
+      "path": "previous-recipes/prepare.py",
+      "bytes": 4985,
+      "sha256": "6b0c5a16f2182f342d11c6b925f792a27b08992809883b474f9fc1695c01babf"
+    },
+    {
+      "path": "previous-recipes/runtime-probe.rs",
+      "bytes": 9689,
+      "sha256": "0e6cb4ff731f9b228334e6dc19094d04b2e247dc1e93ebf709c0cbd7e6c1e5cc"
+    },
+    {
+      "path": "previous-recipes/stop-owned-app.py",
+      "bytes": 1970,
+      "sha256": "62d0df10364be8addc7fb8605148ce95ac0fe3827c6973f50cbfc4bd6675f3ce"
+    },
+    {
+      "path": "previous-recipes/verify-models.py",
+      "bytes": 4533,
+      "sha256": "08051c9733bdb074a7cf884815c4d2aaa057874fcafcc6381db6d4109e19ae0e"
+    },
+    {
+      "path": "report.md",
+      "bytes": 8936,
+      "sha256": "218d22153bbb36ee94a371af00f4577cd8c1cd4389b13bb8374ecc93f6ecb7aa"
+    },
+    {
+      "path": "runtime-probe.rs",
+      "bytes": 11763,
+      "sha256": "e20fb08e3632fdbf0acd1412ecadcbff37553eeaad999f080a2c13a594fae75e"
+    },
+    {
+      "path": "scope.json",
+      "bytes": 764,
+      "sha256": "43ab06faa81287eb9d0b5be021057743646ae4eab02fb670d95608abdffc1090"
+    },
+    {
+      "path": "static-preflight.json",
+      "bytes": 1844,
+      "sha256": "622a6053f1bd8b255acd96154085858ec5fb65376db47c35b252ff9aeb75fcf7"
+    },
+    {
+      "path": "stop-owned-app.py",
+      "bytes": 1712,
+      "sha256": "cfe30b275b4c305a8c386ecc2d41de49aa34deb3cf0c40e1289d1f0182680333"
+    },
+    {
+      "path": "verify-models.py",
+      "bytes": 8396,
+      "sha256": "4490d1ab184113a157472b41ff5beab4e6c53d3197065f0fcc69800d75356c75"
+    }
+  ],
+  "total_payload_bytes": 156381,
+  "payload_count": 29,
+  "fixture_profile_extension_copies": 0,
+  "new_reference_test_credit": 0,
+  "five_area_product_review_verdict": null,
+  "initial_manifest_preserved_path": "initial-unexecuted-preparation/recipe-hashes.json",
+  "initial_manifest_sha256": "e4539393f4a4d191dcabb19e3230b8635bd0313d1b14478009473142c567a237"
+}

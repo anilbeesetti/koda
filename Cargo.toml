@@ -11,6 +11,7 @@ members = [
     "crates/agent_skills",
     "crates/agent_ui",
     "crates/ai_onboarding",
+    "crates/android_debugger",
     "crates/android_tools",
     "crates/android_ui",
     "crates/anthropic",

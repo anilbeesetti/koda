@@ -4,10 +4,12 @@ Koda is an Android-focused IDE fork of [Zed](https://github.com/zed-industries/z
 It uses its own app identity (`dev.anilbeesetti.koda`), `koda` CLI, settings,
 extensions, databases, caches, logs, keychain entries, and `koda://` URL handler.
 The app uses an angular K monogram inspired by Zed’s outlined logo.
-Icon sources: `assets/branding/koda-icon.png` and `koda-icon-nightly.png`; regenerate
-platform assets with `script/generate-koda-icons` (requires ImageMagick).
+The vector monogram is `assets/images/koda_logo.svg`. Regenerate the UI icon,
+full-bleed stable/nightly/dev SVG and PNG artwork, and platform packaging assets with
+`script/generate-koda-icons` (requires Inkscape and ImageMagick).
 Koda Nightly uses a blue NIGHTLY icon and the bundle identifier
 `dev.anilbeesetti.koda-nightly`, so both apps can be installed together.
+Koda Dev uses an amber DEV icon and `dev.anilbeesetti.koda-dev`.
 
 Koda stores configuration in `~/.config/koda` on macOS and Linux, app data in
 `~/Library/Application Support/Koda` on macOS or `$XDG_DATA_HOME/koda` on Linux,
@@ -16,6 +18,9 @@ Nightly uses `~/.config/koda-nightly`, `~/Library/Application Support/Koda Night
 on macOS, `$XDG_DATA_HOME/koda-nightly` on Linux, and
 `%APPDATA%\Koda Nightly` / `%LOCALAPPDATA%\Koda Nightly` on Windows. Its caches
 and logs are also separate from stable.
+Dev uses `~/.config/koda-dev`, `~/Library/Application Support/Koda Dev` on macOS,
+`$XDG_DATA_HOME/koda-dev` on Linux, and `%APPDATA%\Koda Dev` /
+`%LOCALAPPDATA%\Koda Dev` on Windows, with its own caches and logs.
 Project settings, tasks, and Android tooling caches live in `.koda/`. Existing
 Zed settings and `.zed/` project files are left in place; copy selected settings
 into Koda's directories if you want to reuse them.
@@ -31,10 +36,13 @@ Unconfigured local development builds require manual installation.
 Remote servers also come from the matching fork release and require an asset for
 the target platform, or a custom server build during development.
 
-For the isolated macOS Android Nightly app, run `script/android-ide`. Its local
-bundle and profile live under `target/android-ide/nightly/`.
-For a direct debug build, run `cargo build --locked -p zed --bin koda` and
-launch `target/debug/koda`. Rust crate names and action namespaces remain
+For the isolated macOS Android development app, run `script/android-ide`. Its local
+bundle and profile live under `target/android-ide/dev/`.
+Run `cargo run --locked -p zed --bin koda` to launch Koda Dev, with its own app
+identity and profile so it can run alongside installed Stable and Nightly apps.
+Debug builds default to Dev; an explicit `ZED_RELEASE_CHANNEL` overrides that
+default. Release builds use the repository's release channel unless overridden.
+Rust crate names and action namespaces remain
 compatible with upstream Zed.
 Signed macOS builds require this fork's certificate and `MACOS_SIGNING_IDENTITY`
 (also configurable as a GitHub Actions secret); Koda bundles do not embed Zed's

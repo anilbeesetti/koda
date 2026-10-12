@@ -1,0 +1,10 @@
+{
+  "path": "/workspace/.cache/zed/target/debug/deps/android_tools-7334319486a8ebb2.android_tools.2180e8a756bf797d-cgu.10.rcgu.o",
+  "bytes": 290576408,
+  "sha256": "fe8fdd9f173553f760c6f5364993d194cf361606c874ddc0cbe416c6a1ae0670",
+  "mtime": "2026-10-07T21:20:35.794456+00:00",
+  "generated_compiler_object_only": true,
+  "reason": "Unpublished85-test codegen object in failed normal allfeature compilation; no live compiler. Originaltestsource/currentfullapp/frozenTree27/V2 28/decoder/rawfailurelogs retained.",
+  "source_or_tests_removed": false,
+  "failed_build_log": "tooling-all-features-tests.log"
+}

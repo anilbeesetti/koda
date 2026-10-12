@@ -1,0 +1,10 @@
+{
+  "command": [
+    "./script/clippy",
+    "--locked",
+    "-p",
+    "android_tools"
+  ],
+  "exit_code": 0,
+  "elapsed_seconds": 4.638718996000534
+}

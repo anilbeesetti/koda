@@ -1,0 +1,36 @@
+{
+  "scope": "External preparation only; snapshot and source after one-line quality cleanup, Cargo/runtime lease and alias review still required",
+  "files": [
+    {
+      "path": "/workspace/android-studio-artifacts/import-identity-integration/app-build/retry-app-build.py",
+      "original_path": "/workspace/android-studio-artifacts/parallel-sync-integration/app-build/retry-app-build.py",
+      "original_sha256": "766a67612018ae4b6168025214d807d0a94370869b7247bc54b1305e07dedea3",
+      "prepared_sha256": "221ac26f7560f6f7ad12bc2c6abb0dd69cddf5eff360c660dfc8a557b21ef320",
+      "executed": false
+    },
+    {
+      "path": "/workspace/android-studio-artifacts/import-identity-integration/app-build/guarded-app-build.py",
+      "original_path": "/workspace/android-studio-artifacts/parallel-sync-integration/app-build/guarded-app-build.py",
+      "original_sha256": "d66b54feaa259d7ec1586df3348d43f936f132f9f1beacd387cf604048915031",
+      "prepared_sha256": "49f5a79022897ed1c380d663c5c77c014075893c70013ed0cdbda513bcba32ab",
+      "executed": false
+    },
+    {
+      "path": "/workspace/android-studio-artifacts/import-identity-integration/app-build/prepare-aliases.py",
+      "original_path": "/workspace/android-studio-artifacts/parallel-sync-integration/app-build/prepare-aliases.py",
+      "original_sha256": "04a4568ac22d1381f68a39af155b460cd6bd08afd52d7b04e3f312238087d272",
+      "prepared_sha256": "5a8cb0daaf1ec6e3b0c567758f9412b4f720cbbc01ffdf1afd46ca4214c366b8",
+      "executed": false
+    }
+  ],
+  "normal_locked_app_command_unchanged": [
+    "cargo",
+    "build",
+    "--locked",
+    "-p",
+    "zed",
+    "--bin",
+    "koda"
+  ],
+  "whole_source4743_no_missing_file_omission": true
+}

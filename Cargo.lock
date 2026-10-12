@@ -723,6 +723,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "android_debugger"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "libc",
+ "quick-xml 0.41.0",
+ "serde_json",
+ "tempfile",
+]
+
+[[package]]
 name = "android_tools"
 version = "0.1.0"
 dependencies = [
@@ -22637,6 +22648,7 @@ dependencies = [
  "cargo_toml",
  "clap",
  "compliance",
+ "flate2",
  "gh-workflow",
  "guppy",
  "indexmap 2.14.0",
@@ -22646,7 +22658,9 @@ dependencies = [
  "serde",
  "serde_json",
  "serde_yaml",
+ "sha2",
  "strum 0.28.0",
+ "tar",
  "tempfile",
  "thiserror 2.0.17",
  "tokio",
@@ -22868,6 +22882,7 @@ dependencies = [
  "agent_settings",
  "agent_skills",
  "agent_ui",
+ "android_tools",
  "android_ui",
  "anyhow",
  "ashpd",

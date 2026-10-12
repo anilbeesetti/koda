@@ -1,0 +1,59 @@
+// AssetGenerator registration adapted from AndroidProjectViewTest.testGeneratedAssets,
+// Copyright (C) 2019 The Android Open Source Project, licensed under Apache-2.0.
+// The original source and license notice are identified in ../../README.md and the task report.
+apply plugin: 'com.android.application'
+android {
+    namespace 'dev.koda.sourceproviders'
+    compileSdk 37
+    buildToolsVersion '37.0.0'
+    defaultConfig {
+        applicationId 'dev.koda.sourceproviders'
+        minSdk 26
+        targetSdk 37
+        versionCode 1
+        versionName '1'
+    }
+    flavorDimensions += ['edition', 'width']
+    productFlavors {
+        red { dimension 'edition' }
+        blue { dimension 'edition' }
+        orphan { dimension 'edition' }
+        wide { dimension 'width' }
+        narrow { dimension 'width' }
+    }
+    sourceSets {
+        main {
+            manifest.srcFile 'custom-manifest/AndroidManifest.xml'
+            assets.setSrcDirs(['unrelated-assets'])
+            res.setSrcDirs(['provider-res', 'main/resources'])
+        }
+        debug { assets.setSrcDirs(['unrelated-assets', 'unrelated-assets/nested']) }
+        red { assets.setSrcDirs(['unrelated-assets/nested', 'red-assets']) }
+        wide { assets.setSrcDirs(['unrelated-assets/nested', 'wide-assets']) }
+        redWide { assets.setSrcDirs(['combined-assets']) }
+        orphan { assets.setSrcDirs(['inactive-assets']) }
+    }
+}
+abstract class AssetGenerator extends DefaultTask {
+    @OutputDirectory
+    abstract DirectoryProperty getOutputDirectory()
+    @TaskAction
+    void run() {
+        def raw = new File(getOutputDirectory().get().asFile, 'raw')
+        raw.mkdirs()
+        new File(raw, 'createAssets').write('source-provider smoke asset\n')
+    }
+}
+def writeAssetTask = tasks.register('createAssets', AssetGenerator)
+androidComponents {
+    beforeVariants(selector().all()) { variant ->
+        if (variant.productFlavors.any { it.second == 'orphan' }) variant.enable = false
+    }
+    beforeVariants(selector().withBuildType('release')) { variant ->
+        variant.hostTests[com.android.build.api.variant.HostTestBuilder.UNIT_TEST_TYPE].enable = false
+    }
+    onVariants(selector().all()) { variant ->
+        variant.sources.assets.addStaticSourceDirectory('late-static-assets')
+        variant.sources.assets.addGeneratedSourceDirectory(writeAssetTask, { it.outputDirectory })
+    }
+}

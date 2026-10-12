@@ -1,0 +1,26 @@
+{
+  "prepared_only": true,
+  "runtime_executed": false,
+  "source_commit": "7e3f72ebfaef39d6e6630dd11fa7dc91c8985d4a",
+  "changes": {
+    "N1": "Full untracked status and exact frozen 4743 tracked Source name set before hashing",
+    "N2": "Assert independently known current, old4fb, and legacy fixture root before exact private-root normalization"
+  },
+  "initial_failure_preserved": {
+    "path": "quality-static-initial.json",
+    "sha256": "0da0099686b82776ccbbdf6952bb7372272fb5963ac2c47a39677d0096e01df1"
+  },
+  "files": [
+    {
+      "path": "guard.py",
+      "initial_sha256": "be40f7dae0ab44db6164b4130d18b51749ebd0005a2c46b3e9d1b5dea438bafd",
+      "corrected_sha256": "a1ac2febcc8fcc9315fda6c8eac02af8f09d0618a16abb3a0bbba89ceaf24a2e"
+    },
+    {
+      "path": "verify-models.py",
+      "initial_sha256": "4490d1ab184113a157472b41ff5beab4e6c53d3197065f0fcc69800d75356c75",
+      "corrected_sha256": "8207d926495efeb9686842dac582c1046ebc3d956fe845868881be917352b24b"
+    }
+  ],
+  "product_source_or_tests_changed": false
+}

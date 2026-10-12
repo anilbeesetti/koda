@@ -1,0 +1,188 @@
+import groovy.json.JsonOutput
+
+def outerGradle = gradle
+while (outerGradle.getParent() != null) outerGradle = outerGradle.getParent()
+def extra = outerGradle.getExtensions().getExtraProperties()
+def provenanceKey = 'kodaProjectContextEvaluatedBuildProjects'
+if (!extra.has(provenanceKey)) extra.set(provenanceKey, Collections.synchronizedMap(new LinkedHashMap()))
+def buildProjects = extra.get(provenanceKey)
+gradle.beforeProject { project ->
+    synchronized (buildProjects) {
+        if (buildProjects.size() >= 4096) throw new GradleException('Too many evaluated build projects')
+        buildProjects[project.getProjectDir().getCanonicalPath()] = project
+    }
+}
+// Child builds contribute raw final layouts but never emit an independent
+// capability record or install an import task in buildSrc/included projects.
+if (gradle != outerGradle) return
+
+// Gradle owns these evaluated objects. This adapter transports getter results;
+// ecosystem membership, capabilities and operation ownership are Rust policy.
+def pluginIds = ['com.android.application', 'com.android.library',
+    'com.android.dynamic-feature', 'com.android.test',
+    'com.android.kotlin.multiplatform.library', 'org.jetbrains.kotlin.multiplatform',
+    'org.jetbrains.compose', 'org.jetbrains.kotlin.plugin.compose',
+    'org.jetbrains.kotlin.android']
+def observed = new LinkedHashMap()
+def emitted = false
+def collectionFailure = null
+def getterBytes = 0
+def text = { value ->
+    def result = value.toString()
+    def size = result.getBytes('UTF-8').length
+    getterBytes += size
+    if (result.isEmpty() || size > 4096 || getterBytes > 4 * 1024 * 1024 || result.indexOf('\u0000') >= 0) {
+        throw new GradleException('Invalid or oversized evaluated getter text')
+    }
+    result
+}
+def unavailable = { detail ->
+    [status: 'unavailable', value: [detail: detail.take(1024)]]
+}
+def getter = { action ->
+    try {
+        [status: 'available', value: action()]
+    } catch (Exception failure) {
+        unavailable(failure.class.name + ': ' + (failure.message ?: 'Getter failed'))
+    } catch (LinkageError failure) {
+        unavailable(failure.class.name + ': ' + (failure.message ?: 'Getter linkage failed'))
+    }
+}
+def targets = { project ->
+    def kotlin = project.extensions.findByName('kotlin')
+    if (kotlin == null) return unavailable('No evaluated Kotlin target extension')
+    getter {
+        def method = kotlin.class.methods.find { it.name == 'getTargets' && it.parameterCount == 0 }
+        if (method == null) throw new GradleException('Kotlin extension has no public getTargets() API')
+        def result = []
+        method.invoke(kotlin).each { target ->
+            if (result.size() >= 256) throw new GradleException('Too many evaluated Kotlin targets')
+            def name = text(target.getName())
+            def platform = text(target.getPlatformType())
+            if (!(platform in ['androidJvm', 'jvm', 'js', 'native', 'wasm', 'common'])) {
+                throw new GradleException('Unsupported Kotlin platform getter result: ' + platform)
+            }
+            result.add([name: name, platform: platform])
+        }
+        result
+    }
+}
+def androidApi = { project ->
+    getter {
+        def components = project.extensions.findByName('androidComponents')
+        if (components == null) throw new GradleException('No evaluated AndroidComponents extension')
+        // Public AGP AndroidComponentsExtension.getPluginVersion(), not a
+        // synthesized Kotlin target for Java-only Android projects.
+        [pluginVersion: text(components.getPluginVersion())]
+    }
+}
+def layouts = { projects ->
+    projects.collect { project ->
+        def sourceDirectories = new LinkedHashSet()
+        def addSource = { source ->
+            def directory = text(source.getCanonicalPath())
+            if (!sourceDirectories.contains(directory) && sourceDirectories.size() >= 256) throw new GradleException('Too many evaluated source directories')
+            sourceDirectories.add(directory)
+        }
+        def sources = project.extensions.findByName('sourceSets')
+        if (sources != null) sources.each { source -> source.getAllSource().getSrcDirs().each(addSource) }
+        def kotlin = project.extensions.findByName('kotlin')
+        def sourceGetter = kotlin?.class?.methods?.find { it.name == 'getSourceSets' && it.parameterCount == 0 }
+        if (sourceGetter != null) {
+            sourceGetter.invoke(kotlin).each { source -> source.getKotlin().getSrcDirs().each(addSource) }
+        }
+        [directory: text(project.getProjectDir().getCanonicalPath()),
+         buildDirectory: text(project.getLayout().getBuildDirectory().get().getAsFile().getCanonicalPath()),
+         sourceDirectories: new ArrayList(sourceDirectories)]
+    }
+}
+def emit = { phase ->
+    if (emitted) return
+    if (collectionFailure != null) throw new GradleException(collectionFailure)
+    getterBytes = 0
+    def root = gradle.rootProject
+    def rootDirectory = text(root.getRootDir().getCanonicalPath())
+    def evaluatedProjects
+    synchronized (buildProjects) { evaluatedProjects = new ArrayList(buildProjects.values()) }
+    def projects = phase == 'complete' ? root.getAllprojects() : observed.values().collect { it.project }
+    if (projects.size() > 4096) throw new GradleException('Too many evaluated projects')
+    def modules = projects.collect { project ->
+        def plugins = phase == 'complete'
+            ? pluginIds.collect { [plugin: it, applied: project.plugins.hasPlugin(it)] }
+            : (observed[project.path]?.plugins ?: []).collect { [plugin: it, applied: true] }
+        def module = [path: text(project.getPath()), directory: text(project.getProjectDir().getCanonicalPath()),
+            plugins: plugins,
+            targets: phase == 'complete' ? targets(project) : unavailable('Project evaluation did not complete')]
+        if (plugins.any { it.applied && it.plugin.startsWith('com.android.') }) {
+            module.android = phase == 'complete' ? androidApi(project) : unavailable('Project evaluation did not complete')
+        }
+        module
+    }
+    def buildLogicDirectories = new LinkedHashSet([root.getRootDir().toPath().resolve('buildSrc').toFile().getCanonicalPath()])
+    if (phase == 'complete') {
+        // Nested composite builds may live outside every top-level included
+        // build. Transport their actual owning build roots as input provenance.
+        evaluatedProjects.each { project ->
+            def directory = text(project.getRootProject().getProjectDir().getCanonicalPath())
+            if (directory != rootDirectory && !buildLogicDirectories.contains(directory)) {
+                if (buildLogicDirectories.size() >= 4096) throw new GradleException('Too many evaluated build roots')
+                buildLogicDirectories.add(directory)
+            }
+        }
+        gradle.getIncludedBuilds().each { build ->
+            def directory = text(build.getProjectDir().getCanonicalPath())
+            if (!buildLogicDirectories.contains(directory)) {
+                if (buildLogicDirectories.size() >= 4096) throw new GradleException('Too many included builds')
+                buildLogicDirectories.add(directory)
+            }
+        }
+    }
+    def buildLayouts
+    try {
+        buildLayouts = layouts(evaluatedProjects)
+    } catch (Exception failure) {
+        if (phase == 'complete') throw failure
+        buildLayouts = []
+    } catch (LinkageError failure) {
+        if (phase == 'complete') throw failure
+        buildLayouts = []
+    }
+    def payload = JsonOutput.toJson([schema: 1, root: rootDirectory,
+        gradleVersion: text(gradle.getGradleVersion()), phase: phase, modules: modules,
+        buildLogicDirectories: new ArrayList(buildLogicDirectories), buildLayouts: buildLayouts])
+    if (payload.getBytes('UTF-8').length > 1024 * 1024) {
+        throw new GradleException('Evaluated project context exceeds the byte limit')
+    }
+    emitted = true
+    println('KODA_PROJECT_CONTEXT=' + payload)
+}
+gradle.beforeProject { project ->
+    if (project.rootProject != project && project.rootProject != gradle.rootProject) return
+    if (observed.size() >= 4096 && !observed.containsKey(project.path)) {
+        collectionFailure = 'Too many evaluated projects'
+        return
+    }
+    def entry = [project: project, plugins: new LinkedHashSet()]
+    observed[project.path] = entry
+    pluginIds.each { plugin ->
+        project.plugins.withId(plugin) { entry.plugins.add(plugin) }
+    }
+}
+gradle.projectsEvaluated {
+    gradle.rootProject.tasks.register('kodaProjectContext') {
+        doLast { emit('complete') }
+    }
+}
+// Plugin callbacks collect O(projects) bounded state and never serialize a
+// growing catalogue. One failed-build record retains affirmative observations.
+gradle.buildFinished { result ->
+    if (result.failure != null && !emitted && observed.values().any { !it.plugins.isEmpty() }) {
+        try {
+            emit('partial')
+        } catch (Exception failure) {
+            logger.warn('Koda project context unavailable: ' + failure.message)
+        } catch (LinkageError failure) {
+            logger.warn('Koda project context unavailable: ' + failure.message)
+        }
+    }
+}

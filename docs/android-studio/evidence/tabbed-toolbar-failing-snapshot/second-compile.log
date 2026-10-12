@@ -1,0 +1,16 @@
+   Compiling android_ui v0.1.0 (/workspace/android-studio-tabbed-toolbar/crates/android_ui)
+error[E0282]: type annotations needed for `&_`
+   --> crates/android_ui/src/tabbed_toolbar.rs:347:77
+    |
+347 | ...                   .on_key_down(cx.listener(move |toolbar, event, window, cx| {
+    |                                                               ^^^^^
+348 | ...                       if event.keystroke.key == "space"
+    |                              --------------- type must be known at this point
+    |
+help: consider giving this closure parameter an explicit type, where the type for type parameter `E` is specified
+    |
+347 |                                     .on_key_down(cx.listener(move |toolbar, event: &E, window, cx| {
+    |                                                                                  ++++
+
+For more information about this error, try `rustc --explain E0282`.
+error: could not compile `android_ui` (lib test) due to 1 previous error

@@ -33,6 +33,7 @@ enum TestRow {
 #[derive(Clone)]
 pub(super) struct TestRequest {
     id: u64,
+    context: android_tools::project_context::ActiveProjectToken,
     root: PathBuf,
     target: AndroidTarget,
     kind: TestKind,
@@ -48,7 +49,10 @@ pub(super) struct TestRequest {
 
 impl TestRequest {
     fn context_matches(&self, panel: &AndroidPanel, cx: &App) -> bool {
-        panel.trusted_root(cx).is_ok_and(|root| root == self.root)
+        project_context::for_workspace(&panel.workspace, cx).is_some_and(|controller| {
+            controller.read(cx).project_is_current(&self.context, cx)
+                && project_surfaces::SurfaceState::for_panel(panel, cx).qualified()
+        }) && panel.trusted_root(cx).is_ok_and(|root| root == self.root)
             && panel.selected_target.as_ref().is_some_and(|target| {
                 target.module == self.target.module && target.variant == self.target.variant
             })
@@ -72,6 +76,7 @@ type TestOutcome = (
 );
 
 pub struct TestPanel {
+    workspace: Option<WeakEntity<Workspace>>,
     focus_handle: FocusHandle,
     root: Option<PathBuf>,
     target: Option<AndroidTarget>,
@@ -96,6 +101,7 @@ pub struct TestPanel {
 impl TestPanel {
     pub(super) fn new(cx: &mut Context<Self>) -> Self {
         Self {
+            workspace: None,
             focus_handle: cx.focus_handle(),
             root: None,
             target: None,
@@ -118,6 +124,31 @@ impl TestPanel {
             message: "Discover tests or run the selected variant's suite.".into(),
         }
     }
+    fn eligible(&self, cx: &App) -> bool {
+        self.workspace.as_ref().is_some_and(|workspace| {
+            workspace
+                .read_with(cx, |workspace, cx| {
+                    project_surfaces::SurfaceState::for_workspace(workspace, cx).qualified()
+                })
+                .unwrap_or(false)
+        })
+    }
+
+    fn ready(&self, cx: &App) -> bool {
+        self.workspace.as_ref().is_some_and(|workspace| {
+            workspace
+                .read_with(cx, |workspace, cx| {
+                    let state = project_surfaces::SurfaceState::for_workspace(workspace, cx);
+                    state.qualified()
+                        && state.build
+                        && workspace
+                            .panel::<AndroidPanel>(cx)
+                            .is_some_and(|panel| panel.read(cx).selected_target.is_some())
+                })
+                .unwrap_or(false)
+        })
+    }
+
     pub(super) fn invalidate(&mut self, cx: &mut Context<Self>) {
         if self.root.is_some() {
             self.revision += 1;
@@ -318,8 +349,11 @@ impl Panel for TestPanel {
     fn default_size(&self, _: &Window, _: &App) -> Pixels {
         px(320.)
     }
-    fn icon(&self, _: &Window, _: &App) -> Option<IconName> {
-        Some(IconName::Check)
+    fn enabled(&self, cx: &App) -> bool {
+        self.eligible(cx)
+    }
+    fn icon(&self, _: &Window, cx: &App) -> Option<IconName> {
+        self.eligible(cx).then_some(IconName::Check)
     }
     fn icon_tooltip(&self, _: &Window, _: &App) -> Option<&'static str> {
         Some("Android Tests")
@@ -333,6 +367,10 @@ impl Panel for TestPanel {
 }
 impl Render for TestPanel {
     fn render(&mut self, _: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
+        if !self.eligible(cx) {
+            return gpui::Empty.into_any_element();
+        }
+        let ready = self.ready(cx);
         let selected_source = self.selected_case().and_then(|case| case.source.clone());
         let details = self
             .selected_case()
@@ -464,13 +502,13 @@ impl Render for TestPanel {
                 Button::new(kind.label(), kind.label())
                     .tab_index(0isize)
                     .toggle_state(self.kind == kind)
-                    .disabled(busy)
+                    .disabled(busy || !ready)
                     .on_click(cx.listener(move |_, _, _, cx| cx.emit(TestEvent::Discover(kind))))
             }))
             .child(
                 Button::new("discover-tests", "Discover")
                     .tab_index(0isize)
-                    .disabled(busy)
+                    .disabled(busy || !ready)
                     .on_click(
                         cx.listener(|panel, _, _, cx| cx.emit(TestEvent::Discover(panel.kind))),
                     ),
@@ -478,7 +516,7 @@ impl Render for TestPanel {
             .child(
                 Button::new("run-selected-test", "Run selected")
                     .tab_index(0isize)
-                    .disabled(busy || self.stale)
+                    .disabled(busy || self.stale || !ready)
                     .on_click(cx.listener(|panel, _, _, cx| {
                         cx.emit(TestEvent::Run(panel.kind, panel.selectors()))
                     })),
@@ -486,7 +524,7 @@ impl Render for TestPanel {
             .child(
                 Button::new("run-test-suite", "Run suite")
                     .tab_index(0isize)
-                    .disabled(busy)
+                    .disabled(busy || !ready)
                     .on_click(cx.listener(|panel, _, _, cx| {
                         cx.emit(TestEvent::Run(panel.kind, Vec::new()))
                     })),
@@ -496,7 +534,7 @@ impl Render for TestPanel {
                     .tab_index(0isize)
                     .aria_label("Rerun last selection")
                     .tooltip(Tooltip::text("Rerun last selection"))
-                    .disabled(busy || self.stale || self.last_selectors.is_none())
+                    .disabled(busy || self.stale || !ready || self.last_selectors.is_none())
                     .on_click(cx.listener(|panel, _, _, cx| {
                         if let Some(selectors) = &panel.last_selectors {
                             cx.emit(TestEvent::Run(panel.kind, selectors.clone()));
@@ -508,6 +546,7 @@ impl Render for TestPanel {
                     .tab_index(0isize)
                     .disabled(
                         busy || self.stale
+                            || !ready
                             || !self
                                 .cases
                                 .iter()
@@ -534,6 +573,7 @@ impl Render for TestPanel {
             );
         v_flex()
             .id("android-test-panel")
+            .debug_selector(|| "android-test-panel".into())
             .key_context("AndroidTests")
             .on_key_down(
                 cx.listener(|panel, event: &gpui::KeyDownEvent, window, cx| {
@@ -552,6 +592,14 @@ impl Render for TestPanel {
             .min_h_0()
             .bg(cx.theme().colors().panel_background)
             .child(controls)
+            .when(!ready, |panel| {
+                panel.child(
+                    Label::new(
+                        "Sync and select an Android application variant to discover or run tests.",
+                    )
+                    .color(Color::Muted),
+                )
+            })
             .when_some(self.serial.clone(), |panel, serial| {
                 panel.child(Label::new(format!("Device: {serial}")).size(LabelSize::Small))
             })
@@ -619,6 +667,7 @@ impl Render for TestPanel {
                             ),
                     ),
             )
+            .into_any_element()
     }
 }
 
@@ -663,10 +712,11 @@ impl AndroidPanel {
                 })
             },
             |request| request.context_matches(self, cx),
-        ) && tests
-            .model_token
-            .as_ref()
-            .is_none_or(|token| self.project.read(cx).android_model().is_current(token));
+        ) && project_surfaces::SurfaceState::for_panel(self, cx).qualified()
+            && tests
+                .model_token
+                .as_ref()
+                .is_none_or(|token| self.project.read(cx).android_model().is_current(token));
         if !valid {
             if !tests.stale {
                 self.test_panel.update(cx, |tests, cx| tests.invalidate(cx));
@@ -716,7 +766,13 @@ impl AndroidPanel {
             return;
         }
         let prepared = (|| {
-            let root = self.trusted_root(cx)?;
+            let operation = if self.operation_permitted(AndroidOperation::Build, cx) {
+                AndroidOperation::Build
+            } else {
+                AndroidOperation::Sync
+            };
+            let owner = self.operation_owner(operation, cx)?;
+            let root = owner.root;
             let target = self
                 .selected_target
                 .clone()
@@ -732,9 +788,9 @@ impl AndroidPanel {
                 .as_ref()
                 .filter(|selected| selected.validate_target(&target).is_ok())
                 .map(|_| model.token());
-            Ok::<_, anyhow::Error>((root, target, serial, initial_token))
+            Ok::<_, anyhow::Error>((owner.context, root, target, serial, initial_token))
         })();
-        let (root, target, serial, initial_token) = match prepared {
+        let (context, root, target, serial, initial_token) = match prepared {
             Ok(prepared) => prepared,
             Err(error) => {
                 self.fail(error, window, cx);
@@ -745,6 +801,7 @@ impl AndroidPanel {
         let id = self.next_operation_id;
         self.pending_test = Some(TestRequest {
             id,
+            context,
             root: root.clone(),
             target: target.clone(),
             kind,
@@ -969,21 +1026,34 @@ impl AndroidPanel {
     }
 
     fn test_sources_dirty(&self, root: &Path, cx: &App) -> bool {
-        self.project
-            .read(cx)
-            .buffer_store()
-            .read(cx)
-            .buffers()
-            .any(|buffer| {
-                let buffer = buffer.read(cx);
-                buffer.is_dirty()
-                    && buffer.file().is_some_and(|file| {
-                        self.project
-                            .read(cx)
-                            .worktree_for_id(file.worktree_id(cx), cx)
-                            .is_some_and(|worktree| worktree.read(cx).abs_path().as_ref() == root)
-                    })
-            })
+        let project = self.project.read(cx);
+        let kind = self
+            .pending_test
+            .as_ref()
+            .map(|request| request.kind)
+            .unwrap_or(self.test_panel.read(cx).kind);
+        let sources = self
+            .selected_target
+            .as_ref()
+            .zip(project.android_model().selected.as_ref())
+            .and_then(|(target, selected)| testing::component_sources(selected, target, kind).ok())
+            .unwrap_or_default();
+        project.buffer_store().read(cx).buffers().any(|buffer| {
+            let buffer = buffer.read(cx);
+            buffer.is_dirty()
+                && buffer.file().is_some_and(|file| {
+                    project
+                        .worktree_for_id(file.worktree_id(cx), cx)
+                        .is_some_and(|worktree| {
+                            dirty_test_source(
+                                root,
+                                worktree.read(cx).abs_path().as_ref(),
+                                &file.abs_path(cx),
+                                &sources,
+                            )
+                        })
+                })
+        })
     }
 
     fn launch_tests(
@@ -1283,14 +1353,33 @@ async fn execute_tests(
     executor: BackgroundExecutor,
     output: futures::channel::mpsc::Sender<android_build::OutputLine>,
     mut cancelled: oneshot::Receiver<()>,
-    mut progress: futures::channel::mpsc::Sender<Vec<TestCase>>,
-) -> (
-    Vec<TestCase>,
-    Vec<TestCase>,
-    Result<ProcessOutput>,
-    Option<String>,
-) {
+    progress: futures::channel::mpsc::Sender<Vec<TestCase>>,
+) -> TestOutcome {
     if !matches!(cancelled.try_recv(), Ok(None)) {
+        return (Vec::new(), Vec::new(), Ok(ProcessOutput::Cancelled), None);
+    }
+    let control = testing::ScanControl::default();
+    let discovery_control = control.clone();
+    let directories = execution.sources.clone();
+    let discovery = executor
+        .spawn(async move { testing::discover_with_control(&directories, &discovery_control) });
+    execute_tests_with_discovery(
+        execution, executor, output, cancelled, progress, discovery, control,
+    )
+    .await
+}
+
+async fn execute_tests_with_discovery(
+    execution: TestExecution,
+    executor: BackgroundExecutor,
+    output: futures::channel::mpsc::Sender<android_build::OutputLine>,
+    mut cancelled: oneshot::Receiver<()>,
+    mut progress: futures::channel::mpsc::Sender<Vec<TestCase>>,
+    discovery: impl std::future::Future<Output = Result<Vec<TestCase>>> + Send,
+    control: testing::ScanControl,
+) -> TestOutcome {
+    if !matches!(cancelled.try_recv(), Ok(None)) {
+        control.cancel();
         return (Vec::new(), Vec::new(), Ok(ProcessOutput::Cancelled), None);
     }
     let command = |arguments: Vec<String>| {
@@ -1308,8 +1397,9 @@ async fn execute_tests(
         command
     };
     let mut sources = Vec::new();
+    let mut reports = testing::TestResults::default();
     let operation = async {
-        sources = testing::discover(&execution.sources)?;
+        sources = discovery.await?;
         if execution.discover_only {
             return Ok(ProcessOutput::Success(String::new()));
         }
@@ -1329,10 +1419,21 @@ async fn execute_tests(
                 Either::Left((result, _)) => return result,
                 Either::Right((_, pending)) => {
                     run = pending;
-                    let snapshot = testing::read_results(execution.directory.path(), &sources);
-                    if snapshot.cases.len() != last_count {
-                        let count = snapshot.cases.len();
-                        match progress.try_send(snapshot.cases) {
+                    let directory = execution.directory.path().to_path_buf();
+                    let source_locations = sources.clone();
+                    let scan_control = control.clone();
+                    reports = executor
+                        .spawn(async move {
+                            testing::read_results_with_control(
+                                &directory,
+                                &source_locations,
+                                &scan_control,
+                            )
+                        })
+                        .await;
+                    if reports.cases.len() != last_count {
+                        let count = reports.cases.len();
+                        match progress.try_send(reports.cases.clone()) {
                             Ok(()) => last_count = count,
                             Err(error) if error.is_full() => {}
                             Err(_) => log::debug!("Android test progress view closed"),
@@ -1343,24 +1444,178 @@ async fn execute_tests(
         }
     }
     .boxed();
-    let result = match select(operation, &mut cancelled).await {
-        Either::Left((result, _)) => result,
-        Either::Right((_, operation)) => {
+    let mut result = match select(&mut cancelled, operation).await {
+        Either::Left((_, operation)) => {
+            control.cancel();
             drop(operation);
             Ok(ProcessOutput::Cancelled)
         }
+        Either::Right((result, _)) => result,
     };
-    let reports = testing::read_results(execution.directory.path(), &sources);
+    // A completed discovery future can enqueue cancellation during its last poll.
+    if !matches!(&result, Ok(ProcessOutput::Cancelled)) && !matches!(cancelled.try_recv(), Ok(None))
+    {
+        control.cancel();
+        result = Ok(ProcessOutput::Cancelled);
+    }
+    if !execution.discover_only && !matches!(&result, Ok(ProcessOutput::Cancelled)) {
+        let directory = execution.directory.path().to_path_buf();
+        let source_locations = sources.clone();
+        let scan_control = control.clone();
+        let final_report = executor.spawn(async move {
+            testing::read_results_with_control(&directory, &source_locations, &scan_control)
+        });
+        match select(&mut cancelled, final_report).await {
+            Either::Left((_, pending_report)) => {
+                control.cancel();
+                drop(pending_report);
+                result = Ok(ProcessOutput::Cancelled);
+            }
+            Either::Right((complete, _)) => reports = complete,
+        }
+    }
     let report_error = (!reports.diagnostics.is_empty()).then(|| reports.diagnostics.join("\n"));
     (sources, reports.cases, result, report_error)
+}
+
+fn dirty_test_source(
+    owner_root: &Path,
+    worktree_root: &Path,
+    absolute: &Path,
+    selected_sources: &[PathBuf],
+) -> bool {
+    // Preserve the owner's existing save-all admission. Evaluated Java/Kotlin
+    // sources may also live in sibling worktrees; unrelated sibling edits do not
+    // invalidate the selected test snapshot.
+    worktree_root == owner_root
+        || absolute
+            .extension()
+            .is_some_and(|extension| matches!(extension.to_str(), Some("java" | "kt")))
+            && selected_sources
+                .iter()
+                .any(|source| absolute.starts_with(source))
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::project_surfaces::{
+        action_available,
+        tests::{initialize, publish_catalogue, trust},
+    };
+    use android_tools::project_context::PluginId;
+    use gpui::TestAppContext;
+    use project::FakeFs;
+    use serde_json::json;
+
+    #[test]
+    fn discovery_cancellation_during_the_final_poll_overrides_success() {
+        let executor = BackgroundExecutor::new(Arc::new(gpui::ThreadedDispatcher::new()));
+        let root = tempfile::tempdir().unwrap();
+        let directory = tempfile::tempdir().unwrap();
+        let execution = TestExecution {
+            root: root.path().into(),
+            environment: Default::default(),
+            directory,
+            sources: Vec::new(),
+            run: Vec::new(),
+            discover_only: true,
+        };
+        let (output, mut logs) = futures::channel::mpsc::channel(1);
+        let (progress, mut snapshots) = futures::channel::mpsc::channel(1);
+        let (cancel, cancelled) = oneshot::channel();
+        let control = testing::ScanControl::default();
+        let scan_control = control.clone();
+        let (completion, (), ()) = futures::executor::block_on(async {
+            futures::join!(
+                execute_tests_with_discovery(
+                    execution,
+                    executor,
+                    output,
+                    cancelled,
+                    progress,
+                    async move {
+                        cancel.send(()).unwrap();
+                        Ok(Vec::new())
+                    },
+                    scan_control
+                ),
+                async {
+                    assert!(snapshots.next().await.is_none());
+                },
+                async {
+                    assert!(logs.next().await.is_none());
+                },
+            )
+        });
+        assert!(matches!(completion.2, Ok(ProcessOutput::Cancelled)));
+        assert!(completion.0.is_empty());
+        assert!(testing::discover_with_control(&[], &control).is_err());
+    }
+
+    #[test]
+    fn cancellation_interrupts_pending_discovery_without_starting_gradle() {
+        let executor = BackgroundExecutor::new(Arc::new(gpui::ThreadedDispatcher::new()));
+        let root = tempfile::tempdir().unwrap();
+        let execution = TestExecution {
+            root: root.path().into(),
+            environment: Default::default(),
+            directory: tempfile::tempdir().unwrap(),
+            sources: Vec::new(),
+            run: Vec::new(),
+            discover_only: false,
+        };
+        let (output, mut logs) = futures::channel::mpsc::channel(1);
+        let (progress, mut snapshots) = futures::channel::mpsc::channel(1);
+        let (cancel, cancelled) = oneshot::channel();
+        let (entered, started) = oneshot::channel();
+        let control = testing::ScanControl::default();
+        let scan_control = control.clone();
+        let (completion, (), (), ()) = futures::executor::block_on(async {
+            futures::join!(
+                execute_tests_with_discovery(
+                    execution,
+                    executor,
+                    output,
+                    cancelled,
+                    progress,
+                    async move {
+                        entered.send(()).unwrap();
+                        futures::future::pending().await
+                    },
+                    scan_control
+                ),
+                async move {
+                    started.await.unwrap();
+                    cancel.send(()).unwrap();
+                },
+                async {
+                    assert!(snapshots.next().await.is_none());
+                },
+                async {
+                    assert!(logs.next().await.is_none());
+                },
+            )
+        });
+        assert!(matches!(completion.2, Ok(ProcessOutput::Cancelled)));
+        assert!(completion.0.is_empty());
+        assert!(completion.1.is_empty());
+        assert!(testing::discover_with_control(&[], &control).is_err());
+    }
 
     async fn runner_fixture(
         cx: &mut gpui::TestAppContext,
+    ) -> (
+        Arc<workspace::AppState>,
+        Entity<AndroidPanel>,
+        &mut gpui::VisualTestContext,
+    ) {
+        runner_fixture_with_siblings(cx, false).await
+    }
+
+    async fn runner_fixture_with_siblings(
+        cx: &mut gpui::TestAppContext,
+        siblings: bool,
     ) -> (
         Arc<workspace::AppState>,
         Entity<AndroidPanel>,
@@ -1373,10 +1628,23 @@ mod tests {
         });
         let filesystem = project::FakeFs::new(cx.executor());
         filesystem.insert_tree("/android", serde_json::json!({"settings.gradle.kts":"", "build.gradle.kts":"// original", "gradlew":"", "app":{"src":{"test":{"java":{"Tests.kt":"class Tests {}"}},"main":{"java":{"Content.kt":"package dev\n@androidx.compose.ui.tooling.preview.Preview @androidx.compose.runtime.Composable fun Content() {}"}}}}})).await;
-        let project = Project::test(filesystem, [Path::new("/android")], cx).await;
+        let roots = if siblings {
+            filesystem.insert_tree("/sibling",json!({"tests":{"Shared.kt":"class Shared {}"},"device":{"Instrumented.java":"class Instrumented {}"},"inactive":{"NotSelected.kt":"class NotSelected {}"}})).await;
+            filesystem
+                .insert_tree("/unrelated", json!({"main.py":"print('hello')"}))
+                .await;
+            vec![
+                Path::new("/android"),
+                Path::new("/sibling"),
+                Path::new("/unrelated"),
+            ]
+        } else {
+            vec![Path::new("/android")]
+        };
+        let project = Project::test(filesystem, roots, cx).await;
         let (workspace, cx) =
             cx.add_window_view(|window, cx| Workspace::test_new(project.clone(), window, cx));
-        let panel = cx.new(|cx| AndroidPanel::new(workspace.downgrade(), project, cx));
+        let panel = crate::tests::new_test_android_panel(&workspace, project, cx);
         panel.update(cx, |panel, _| {
             panel.root = Some("/android".into());
             let target = AndroidTarget {
@@ -1422,6 +1690,9 @@ mod tests {
     fn request(panel: &AndroidPanel, id: u64, cx: &App) -> TestRequest {
         TestRequest {
             id,
+            context: project_context::for_workspace(&panel.workspace, cx)
+                .and_then(|controller| controller.read(cx).project_token(cx))
+                .expect("Current test fixture owner"),
             root: panel.root.clone().unwrap(),
             target: panel.selected_target.clone().unwrap(),
             kind: TestKind::Unit,
@@ -2068,7 +2339,7 @@ mod tests {
         let project = Project::test(filesystem, [Path::new("/android")], cx).await;
         let (workspace, cx) =
             cx.add_window_view(|window, cx| Workspace::test_new(project.clone(), window, cx));
-        let panel = cx.new(|cx| AndroidPanel::new(workspace.downgrade(), project, cx));
+        let panel = crate::tests::new_test_android_panel(&workspace, project, cx);
         panel.update(cx, |panel, cx| {
             let target = AndroidTarget {
                 module: ":app".into(),
@@ -2289,5 +2560,415 @@ esac
             completion.3.is_some(),
             "Interrupted reports should be diagnosed"
         );
+    }
+
+    #[gpui::test]
+    async fn tests_waiting_for_model_reject_run_debug_and_deferred_builds(
+        cx: &mut gpui::TestAppContext,
+    ) {
+        let _state = cx.update(workspace::AppState::test);
+        let filesystem = project::FakeFs::new(cx.executor());
+        filesystem
+            .insert_tree("/android", serde_json::json!({"app": {}}))
+            .await;
+        let project = Project::test(filesystem, [Path::new("/android")], cx).await;
+        let (workspace, cx) =
+            cx.add_window_view(|window, cx| Workspace::test_new(project.clone(), window, cx));
+        let panel = crate::tests::new_test_android_panel(&workspace, project, cx);
+        panel.update_in(cx, |panel, window, cx| {
+            let root = PathBuf::from("/android");
+            let target = AndroidTarget {
+                module: ":app".into(),
+                variant: "debug".into(),
+                output_listing: root.join("output.json"),
+            };
+            panel.root = Some(root.clone());
+            panel.selected_target = Some(target.clone());
+            crate::tests::publish_test_android_model(panel, &target, cx);
+            panel.test_operation_id = Some(17);
+            let (cancel, mut cancellation) = futures::channel::oneshot::channel();
+            panel.test_cancel = Some(cancel);
+            panel.test_panel.update(cx, |tests, _| {
+                tests.busy = false;
+                tests.waiting_for_model = true;
+            });
+            panel.kotlin_refresh_task = Some(Task::ready(()));
+            let operation = panel.next_operation_id;
+            for _ in 0..2 {
+                for requested in [GradleOperation::Run, GradleOperation::Debug] {
+                    panel.gradle(requested, window, cx);
+                    assert!(panel.pending_gradle_operation.is_none());
+                    assert!(panel.error.is_none());
+                }
+            }
+            panel.kotlin_refresh_task = None;
+            panel.pending_gradle_operation = Some((root, GradleOperation::Debug));
+            for _ in 0..2 {
+                panel.resume_pending_gradle_operation(window, cx);
+                assert!(panel.pending_gradle_operation.is_some());
+                assert!(!panel.running);
+                assert!(panel.build_task.is_none());
+                assert!(panel.debug_task.is_none());
+                assert!(panel.debug_forward.is_none());
+                assert_eq!(panel.test_operation_id, Some(17));
+                assert_eq!(panel.next_operation_id, operation);
+                assert_eq!(
+                    cancellation.try_recv().expect("Test cancellation channel"),
+                    None
+                );
+            }
+            panel.pending_gradle_operation = None;
+            panel.test_operation_id = None;
+        });
+        cx.run_until_parked();
+    }
+    #[gpui::test]
+    async fn generic_python_and_html_keep_android_tests_hidden(cx: &mut TestAppContext) {
+        cx.update(initialize);
+        let fs = FakeFs::new(cx.executor());
+        fs.insert_tree(
+            "/generic-tests",
+            json!({"main.py":"print(1)","index.html":"<p>Hello</p>"}),
+        )
+        .await;
+        let project =
+            Project::test_with_worktree_trust(fs, [Path::new("/generic-tests")], cx).await;
+        cx.update(|cx| trust(&project, cx))
+            .expect("Generic fixture trust");
+        let (multi, visual) = cx.add_window_view(|window, cx| {
+            workspace::MultiWorkspace::test_new(project.clone(), window, cx)
+        });
+        let workspace = multi.read_with(visual, |multi, _| multi.workspace().clone());
+        for path in ["main.py", "index.html"] {
+            workspace
+                .update_in(visual, |workspace, window, cx| {
+                    workspace.open_abs_path(
+                        Path::new("/generic-tests").join(path),
+                        Default::default(),
+                        window,
+                        cx,
+                    )
+                })
+                .await
+                .expect("Open generic editor");
+            visual.run_until_parked();
+            let tests = workspace.read_with(visual, |workspace, cx| {
+                workspace
+                    .panel::<TestPanel>(cx)
+                    .expect("Registered tests metadata")
+            });
+            visual.update(|window, cx| {
+                assert!(!tests.read(cx).enabled(cx));
+                assert!(tests.read(cx).icon(window, cx).is_none());
+                assert!(
+                    !window
+                        .available_actions(cx)
+                        .iter()
+                        .any(|action| action.as_any().is::<ToggleTests>())
+                );
+                assert!(
+                    !window
+                        .available_actions(cx)
+                        .iter()
+                        .any(|action| action.as_any().is::<DiscoverTests>())
+                );
+                assert!(
+                    !window
+                        .available_actions(cx)
+                        .iter()
+                        .any(|action| action.as_any().is::<InstrumentationTest>())
+                );
+                assert!(
+                    window
+                        .available_actions(cx)
+                        .iter()
+                        .any(|action| action.as_any().is::<workspace::ToggleBottomDock>())
+                );
+            });
+            assert!(visual.debug_bounds("android-test-panel").is_none());
+        }
+    }
+
+    #[gpui::test]
+    async fn evaluated_kmp_and_cmp_show_test_metadata_without_enabling_android_execution(
+        cx: &mut TestAppContext,
+    ) {
+        cx.update(initialize);
+        let fs = FakeFs::new(cx.executor());
+        fs.insert_tree("/multiplatform-tests", json!({"Main.kt":"fun main() {}"}))
+            .await;
+        let project =
+            Project::test_with_worktree_trust(fs, [Path::new("/multiplatform-tests")], cx).await;
+        cx.update(|cx| trust(&project, cx))
+            .expect("Multiplatform fixture trust");
+        let (multi, visual) = cx.add_window_view(|window, cx| {
+            workspace::MultiWorkspace::test_new(project.clone(), window, cx)
+        });
+        let workspace = multi.read_with(visual, |multi, _| multi.workspace().clone());
+        for plugins in [
+            vec![PluginId::KotlinMultiplatform],
+            vec![
+                PluginId::KotlinMultiplatform,
+                PluginId::ComposeMultiplatform,
+                PluginId::ComposeCompiler,
+            ],
+        ] {
+            visual
+                .update(|_, cx| {
+                    publish_catalogue(
+                        &project,
+                        Path::new("/multiplatform-tests"),
+                        &plugins,
+                        &[("desktop", "jvm")],
+                        true,
+                        cx,
+                    )
+                })
+                .expect("Evaluated desktop catalogue");
+            visual.run_until_parked();
+            let tests = workspace.read_with(visual, |workspace, cx| {
+                workspace.panel::<TestPanel>(cx).expect("Test panel")
+            });
+            visual.update(|window, cx| {
+                assert!(tests.read(cx).enabled(cx));
+                assert!(tests.read(cx).icon(window, cx).is_some());
+                assert!(!tests.read(cx).ready(cx));
+                assert!(action_available(workspace.read(cx), &ToggleTests, cx));
+                assert!(!action_available(workspace.read(cx), &DiscoverTests, cx));
+                assert!(!action_available(
+                    workspace.read(cx),
+                    &InstrumentationTest,
+                    cx
+                ));
+            });
+            visual.dispatch_action(ToggleTests);
+            visual.run_until_parked();
+            assert!(visual.debug_bounds("android-test-panel").is_some());
+            visual.dispatch_action(ToggleTests);
+            visual.run_until_parked();
+        }
+    }
+
+    #[gpui::test]
+    async fn evaluated_context_loss_cancels_owned_tests_before_releasing_reservation_and_closes_the_panel(
+        cx: &mut TestAppContext,
+    ) {
+        cx.update(initialize);
+        let fs = FakeFs::new(cx.executor());
+        fs.insert_tree("/owned-tests", json!({"app":{},"main.py":"print(1)"}))
+            .await;
+        let project = Project::test_with_worktree_trust(fs, [Path::new("/owned-tests")], cx).await;
+        cx.update(|cx| trust(&project, cx))
+            .expect("Owned fixture trust");
+        let (multi, visual) = cx.add_window_view(|window, cx| {
+            workspace::MultiWorkspace::test_new(project.clone(), window, cx)
+        });
+        let workspace = multi.read_with(visual, |multi, _| multi.workspace().clone());
+        let panel = workspace.read_with(visual, |workspace, cx| {
+            workspace.panel::<AndroidPanel>(cx).expect("Project tools")
+        });
+        visual
+            .update(|_, cx| {
+                crate::tests::publish_test_android_catalogue(
+                    &project,
+                    Path::new("/owned-tests"),
+                    cx,
+                )
+            })
+            .expect("Evaluated Android catalogue");
+        visual.run_until_parked();
+        let (cancel, mut cancelled) = futures::channel::oneshot::channel();
+        panel.update(visual, |panel, cx| {
+            let target = android_tools::AndroidTarget {
+                module: ":app".into(),
+                variant: "debug".into(),
+                output_listing: Path::new("/owned-tests/output.json").into(),
+            };
+            panel.root = Some("/owned-tests".into());
+            panel.selected_target = Some(target.clone());
+            panel.targets = vec![target.clone()];
+            crate::tests::publish_test_android_model(panel, &target, cx);
+            let context = project_context::for_workspace(&panel.workspace, cx)
+                .and_then(|controller| controller.read(cx).project_token(cx))
+                .expect("Current test owner");
+            panel.backend_owner = Some(context.clone());
+            let revision = panel.test_panel.update(cx, |tests, cx| {
+                tests.begin(
+                    "/owned-tests".into(),
+                    target.clone(),
+                    android_tools::testing::TestKind::Unit,
+                    None,
+                    Some(vec!["example.Tests.method".into()]),
+                    cx,
+                )
+            });
+            panel.pending_test = Some(crate::android_tests::TestRequest {
+                id: 101,
+                context,
+                root: "/owned-tests".into(),
+                target,
+                kind: android_tools::testing::TestKind::Unit,
+                serial: None,
+                selectors: vec!["example.Tests.method".into()],
+                discover_only: false,
+                initial_token: Some(panel.project.read(cx).android_model().token()),
+                inputs_dirty: false,
+                waiting_for_model: false,
+                cancel_requested: false,
+                saved_revision: Some(revision),
+            });
+            panel.test_operation_id = Some(101);
+            panel.test_cancel = Some(cancel);
+            panel.running = true;
+            cx.notify();
+        });
+        visual.run_until_parked();
+        visual.dispatch_action(ToggleTests);
+        visual.run_until_parked();
+        assert!(visual.debug_bounds("android-test-panel").is_some());
+        visual
+            .update(|_, cx| {
+                publish_catalogue(&project, Path::new("/owned-tests"), &[], &[], true, cx)
+            })
+            .expect("Evaluated generic replacement");
+        visual.run_until_parked();
+        assert_eq!(
+            cancelled.try_recv().expect("Owned cancellation receipt"),
+            Some(())
+        );
+        panel.read_with(visual, |panel, cx| {
+            assert!(
+                panel
+                    .pending_test
+                    .as_ref()
+                    .is_some_and(|request| request.cancel_requested)
+            );
+            assert_eq!(panel.test_operation_id, Some(101));
+            assert!(panel.running);
+            assert!(!panel.test_panel.read(cx).enabled(cx));
+            assert!(panel.test_panel.read(cx).stale);
+        });
+        assert!(visual.debug_bounds("android-test-panel").is_none());
+        workspace.read_with(visual, |workspace, cx| {
+            assert!(!action_available(workspace, &ToggleTests, cx));
+            assert!(!action_available(workspace, &DiscoverTests, cx));
+            assert!(action_available(
+                workspace,
+                &workspace::ToggleBottomDock,
+                cx
+            ));
+        });
+        panel.update(visual, |panel, cx| {
+            panel.finish_pending_tests("Fixture owned command finished cancelling", cx)
+        });
+    }
+
+    #[test]
+    fn sibling_test_sources_share_freshness_while_unselected_and_generic_files_do_not() {
+        let sources = vec![
+            PathBuf::from("/sibling/tests"),
+            PathBuf::from("/sibling/device"),
+        ];
+        for path in [
+            "/sibling/tests/Shared.kt",
+            "/sibling/device/Instrumented.java",
+        ] {
+            assert!(dirty_test_source(
+                Path::new("/android"),
+                Path::new("/sibling"),
+                Path::new(path),
+                &sources
+            ));
+        }
+        for path in [
+            "/sibling/inactive/NotSelected.kt",
+            "/sibling/tests/readme.html",
+            "/unrelated/main.py",
+        ] {
+            assert!(!dirty_test_source(
+                Path::new("/android"),
+                Path::new("/sibling"),
+                Path::new(path),
+                &sources
+            ));
+        }
+        assert!(dirty_test_source(
+            Path::new("/android"),
+            Path::new("/android"),
+            Path::new("/android/main.py"),
+            &sources
+        ));
+    }
+
+    #[gpui::test]
+    async fn dirty_evaluated_sibling_test_sources_reject_post_save_launch(
+        cx: &mut gpui::TestAppContext,
+    ) {
+        let (_state, panel, cx) = runner_fixture_with_siblings(cx, true).await;
+        let project = panel.read_with(cx, |panel, _| panel.project.clone());
+        let unit = project
+            .update(cx, |project, cx| {
+                project.open_local_buffer("/sibling/tests/Shared.kt", cx)
+            })
+            .await
+            .unwrap();
+        let device = project
+            .update(cx, |project, cx| {
+                project.open_local_buffer("/sibling/device/Instrumented.java", cx)
+            })
+            .await
+            .unwrap();
+        let inactive = project
+            .update(cx, |project, cx| {
+                project.open_local_buffer("/sibling/inactive/NotSelected.kt", cx)
+            })
+            .await
+            .unwrap();
+        let python = project
+            .update(cx, |project, cx| {
+                project.open_local_buffer("/unrelated/main.py", cx)
+            })
+            .await
+            .unwrap();
+        panel.update_in(cx,|panel,window,cx| {
+            let root=panel.root.clone().unwrap();
+            let target=panel.selected_target.clone().unwrap();
+            let model=serde_json::from_value(json!({"version":1,"root":root,"diagnostics":[],"modules":[{
+                "path":":app","directory":"/android/app","kind":"application","variants":[{
+                    "name":"debug","outputListing":target.output_listing,"components":[
+                        {"name":"debug","scope":"main","sources":[],"dependencies":[]},
+                        {"name":"debugUnitTest","scope":"unitTest","sources":[{"path":"/sibling/tests","kind":"kotlin","generated":false}],"dependencies":[]},
+                        {"name":"debugAndroidTest","scope":"androidTest","sources":[{"path":"/sibling/device","kind":"java","generated":false}],"dependencies":[]}
+                    ]
+                }]
+            }]})).unwrap();
+            project.update(cx,|project,cx| {
+                let token=project.invalidate_android_model(Some(root.clone()),cx);
+                project.publish_android_model(&token,model,cx).unwrap();
+                project.select_android_variant(Some(android_tools::project_model::VariantId::from(&target)),cx).unwrap();
+            });
+            let mut request=request(panel,201,cx);
+            request.saved_revision=Some(panel.test_panel.update(cx,|tests,cx| tests.begin(root.clone(),target.clone(),TestKind::Unit,None,None,cx)));
+            request.waiting_for_model=true;
+            panel.pending_test=Some(request);
+            panel.test_operation_id=Some(201);
+            inactive.update(cx,|buffer,cx| buffer.edit([(0..0,"// inactive edit\n")],None,cx));
+            python.update(cx,|buffer,cx| buffer.edit([(0..0,"# generic edit\n")],None,cx));
+            assert!(!panel.test_sources_dirty(&root,cx));
+            device.update(cx,|buffer,cx| buffer.edit([(0..0,"// device edit\n")],None,cx));
+            assert!(!panel.test_sources_dirty(&root,cx),"Unselected device component does not dirty a unit-test snapshot");
+            panel.pending_test.as_mut().unwrap().kind=TestKind::Device;
+            assert!(panel.test_sources_dirty(&root,cx));
+            panel.pending_test.as_mut().unwrap().kind=TestKind::Unit;
+            unit.update(cx,|buffer,cx| buffer.edit([(0..0,"// late unit edit\n")],None,cx));
+            assert!(panel.test_sources_dirty(&root,cx));
+            panel.resume_pending_tests(window,cx);
+            assert!(panel.pending_test.is_none());
+            assert!(panel.test_operation_id.is_none());
+            assert!(panel.active_build_session.is_none());
+            assert!(panel.test_panel.read(cx).stale);
+            assert!(panel.test_panel.read(cx).message.starts_with("Files changed"));
+            assert_eq!(project.read(cx).visible_worktrees(cx).count(),3);
+        });
     }
 }

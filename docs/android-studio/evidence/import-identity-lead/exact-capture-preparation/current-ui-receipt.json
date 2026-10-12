@@ -1,0 +1,71 @@
+{
+  "source_commit": "7e3f72ebfaef39d6e6630dd11fa7dc91c8985d4a",
+  "command": [
+    "cargo",
+    "test",
+    "--locked",
+    "-p",
+    "android_ui",
+    "--lib",
+    "--message-format=json"
+  ],
+  "exit_code": 0,
+  "elapsed_seconds": 132.50914960400405,
+  "log": "/workspace/android-studio-artifacts/import-identity-getters/capacity-retry/runtime/ui-full-default-suite.log",
+  "log_sha256": "2488cdaa0fff210d42064ca571adcfdd236fa9afce17ee7a69edb831591491c5",
+  "whole_source_bindings": 4743,
+  "source_index_status_unchanged": true,
+  "canonical_environment": "/workspace/cloud-environment/env.sh",
+  "CARGO_BUILD_JOBS": 1,
+  "linker_output_redirection": false,
+  "passed": 125,
+  "failed": 0,
+  "pre_existing_ignored": 1,
+  "filtered": 0,
+  "groups": [
+    [
+      125,
+      0,
+      1,
+      0,
+      0
+    ]
+  ],
+  "normal_current_worktree_compiler_artifacts": [
+    {
+      "reason": "compiler-artifact",
+      "package_id": "path+file:///workspace/android-studio-import-identity-getters/crates/android_ui#0.1.0",
+      "manifest_path": "/workspace/android-studio-import-identity-getters/crates/android_ui/Cargo.toml",
+      "target": {
+        "kind": [
+          "lib"
+        ],
+        "crate_types": [
+          "lib"
+        ],
+        "name": "android_ui",
+        "src_path": "/workspace/android-studio-import-identity-getters/crates/android_ui/src/android_ui.rs",
+        "edition": "2024",
+        "doc": true,
+        "doctest": false,
+        "test": true
+      },
+      "profile": {
+        "opt_level": "0",
+        "debuginfo": 0,
+        "debug_assertions": true,
+        "overflow_checks": true,
+        "test": true
+      },
+      "features": [],
+      "filenames": [
+        "/workspace/.cache/zed/target/debug/deps/android_ui-0a1e421ffc75c4cf"
+      ],
+      "executable": "/workspace/.cache/zed/target/debug/deps/android_ui-0a1e421ffc75c4cf",
+      "fresh": false,
+      "executable_bytes": 451852448,
+      "executable_sha256": "d4c29f7eba6e7e4dd77165b8fd0670dc10c076b5012e26e6fc85d302f7f1be33"
+    }
+  ],
+  "ignored_native_test_unchanged": true
+}

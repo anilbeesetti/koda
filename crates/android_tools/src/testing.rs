@@ -17,6 +17,61 @@ const MAX_BYTES: usize = 8 * 1024 * 1024;
 const MAX_SOURCE_BYTES: usize = 2 * 1024 * 1024;
 const MAX_DETAIL_BYTES: usize = 16 * 1024;
 
+#[derive(Clone, Default)]
+pub struct ScanControl(std::sync::Arc<std::sync::atomic::AtomicBool>);
+
+impl ScanControl {
+    pub fn cancel(&self) {
+        self.0.store(true, std::sync::atomic::Ordering::Relaxed);
+    }
+
+    fn check(&self) -> Result<()> {
+        ensure!(
+            !self.0.load(std::sync::atomic::Ordering::Relaxed),
+            "Test scanning cancelled"
+        );
+        Ok(())
+    }
+}
+
+#[derive(Default)]
+struct WalkBudget {
+    directories: usize,
+    entries: usize,
+}
+
+#[derive(Default)]
+struct DiscoveryBudget {
+    cases: usize,
+    identity_bytes: usize,
+}
+
+fn push_discovered(
+    cases: &mut Vec<TestCase>,
+    case: TestCase,
+    budget: &mut DiscoveryBudget,
+) -> Result<()> {
+    ensure!(budget.cases < MAX_TESTS, "Test discovery limit exceeded");
+    ensure!(
+        case.id.class.len() <= 4096 && case.id.method.len() <= 4096,
+        "Test identity limit exceeded"
+    );
+    let identity_bytes = case.id.class.len()
+        + case.id.method.len()
+        + case
+            .source
+            .as_ref()
+            .map_or(0, |source| source.path.as_os_str().len());
+    ensure!(
+        identity_bytes <= MAX_BYTES.saturating_sub(budget.identity_bytes),
+        "Test source identity size limit exceeded"
+    );
+    budget.cases += 1;
+    budget.identity_bytes += identity_bytes;
+    cases.push(case);
+    Ok(())
+}
+
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
 pub enum TestKind {
     #[default]
@@ -255,11 +310,20 @@ pub fn arguments(
     Ok(arguments)
 }
 
-fn read_bounded(path: &Path, limit: usize) -> Result<String> {
+fn read_bounded(path: &Path, limit: usize, control: &ScanControl) -> Result<String> {
     let mut data = Vec::new();
-    fs::File::open(path)?
-        .take((limit + 1) as u64)
-        .read_to_end(&mut data)?;
+    control.check()?;
+    let mut file = fs::File::open(path)?.take((limit + 1) as u64);
+    let mut chunk = [0; 64 * 1024];
+    loop {
+        control.check()?;
+        let count = file.read(&mut chunk)?;
+        if count == 0 {
+            break;
+        }
+        data.extend_from_slice(&chunk[..count]);
+    }
+    control.check()?;
     ensure!(
         data.len() <= limit,
         "{} exceeds the {} byte test data limit",
@@ -270,23 +334,35 @@ fn read_bounded(path: &Path, limit: usize) -> Result<String> {
 }
 
 pub fn discover(directories: &[PathBuf]) -> Result<Vec<TestCase>> {
+    discover_with_control(directories, &ScanControl::default())
+}
+
+pub fn discover_with_control(
+    directories: &[PathBuf],
+    control: &ScanControl,
+) -> Result<Vec<TestCase>> {
     let mut cases = BTreeMap::new();
     let mut identity_bytes = 0;
     let mut files = 0;
     let mut bytes = 0;
+    let mut walk_budget = WalkBudget::default();
+    let mut discovery_budget = DiscoveryBudget::default();
     for directory in directories {
+        control.check()?;
         if directory.exists() {
-            walk(directory, 0, &mut |path| {
+            walk(directory, 0, &mut walk_budget, control, &mut |path| {
                 files += 1;
                 ensure!(files <= MAX_TESTS, "Test source file limit exceeded");
                 if matches!(
                     path.extension().and_then(|v| v.to_str()),
                     Some("kt" | "java")
                 ) {
-                    let text = read_bounded(path, MAX_SOURCE_BYTES)?;
+                    let text = read_bounded(path, MAX_SOURCE_BYTES, control)?;
                     bytes += text.len();
                     ensure!(bytes <= MAX_BYTES * 8, "Test source size limit exceeded");
-                    for case in discover_source(path, &text)? {
+                    for case in
+                        discover_source_with_budget(path, &text, &mut discovery_budget, control)?
+                    {
                         identity_bytes +=
                             case.id.class.len() + case.id.method.len() + path.as_os_str().len();
                         ensure!(
@@ -301,23 +377,44 @@ pub fn discover(directories: &[PathBuf]) -> Result<Vec<TestCase>> {
             })?;
         }
     }
+    control.check()?;
     Ok(cases.into_values().collect())
 }
 
-fn walk(path: &Path, depth: usize, visit: &mut impl FnMut(&Path) -> Result<()>) -> Result<()> {
+fn walk(
+    path: &Path,
+    depth: usize,
+    budget: &mut WalkBudget,
+    control: &ScanControl,
+    visit: &mut impl FnMut(&Path) -> Result<()>,
+) -> Result<()> {
+    control.check()?;
     ensure!(depth < 64, "Test directory nesting limit exceeded");
-    let mut entries = fs::read_dir(path)?
-        .take(MAX_TESTS + 1)
-        .collect::<std::io::Result<Vec<_>>>()?;
     ensure!(
-        entries.len() <= MAX_TESTS,
-        "Test directory entry limit exceeded"
+        budget.directories < MAX_TESTS,
+        "Test directory count limit exceeded"
     );
+    budget.directories += 1;
+    let mut entries = Vec::new();
+    for entry in fs::read_dir(path)? {
+        control.check()?;
+        ensure!(
+            budget.entries < MAX_TESTS * 2,
+            "Test directory traversal limit exceeded"
+        );
+        ensure!(
+            entries.len() < MAX_TESTS,
+            "Test directory entry limit exceeded"
+        );
+        budget.entries += 1;
+        entries.push(entry?);
+    }
     entries.sort_by_key(|entry| entry.file_name());
     for entry in entries {
+        control.check()?;
         let kind = entry.file_type()?;
         if kind.is_dir() {
-            walk(&entry.path(), depth + 1, visit)?;
+            walk(&entry.path(), depth + 1, budget, control, visit)?;
         } else if kind.is_file() {
             visit(&entry.path())?;
         }
@@ -326,6 +423,25 @@ fn walk(path: &Path, depth: usize, visit: &mut impl FnMut(&Path) -> Result<()>) 
 }
 
 pub fn discover_source(path: &Path, source: &str) -> Result<Vec<TestCase>> {
+    discover_source_with_budget(
+        path,
+        source,
+        &mut DiscoveryBudget::default(),
+        &ScanControl::default(),
+    )
+}
+
+fn discover_source_with_budget(
+    path: &Path,
+    source: &str,
+    budget: &mut DiscoveryBudget,
+    control: &ScanControl,
+) -> Result<Vec<TestCase>> {
+    control.check()?;
+    ensure!(
+        source.len() <= MAX_SOURCE_BYTES,
+        "Test source size limit exceeded"
+    );
     let clean = strip_comments(source);
     let package = Regex::new(r"(?m)^\s*package\s+([\w.]+)")?
         .captures(&clean)
@@ -343,8 +459,16 @@ pub fn discover_source(path: &Path, source: &str) -> Result<Vec<TestCase>> {
     let mut parameterized = false;
     let mut suite = false;
     let mut cases = Vec::new();
+    let mut line = 1;
+    let mut line_offset = 0;
     for captures in declarations.captures_iter(&clean) {
+        control.check()?;
         let token = captures.get(0).context("Missing source token")?;
+        line += clean[line_offset..token.start()]
+            .bytes()
+            .filter(|&byte| byte == b'\n')
+            .count() as u32;
+        line_offset = token.start();
         if let Some(name) = captures.get(2) {
             ensure!(
                 name.as_str().len() <= 1024,
@@ -357,28 +481,28 @@ pub fn discover_source(path: &Path, source: &str) -> Result<Vec<TestCase>> {
                     .chain(std::iter::once(name.as_str()))
                     .collect::<Vec<_>>()
                     .join("$");
-                cases.push(TestCase {
-                    id: TestId {
-                        class: if package.is_empty() {
-                            enclosing
-                        } else {
-                            format!("{package}.{enclosing}")
+                push_discovered(
+                    &mut cases,
+                    TestCase {
+                        id: TestId {
+                            class: if package.is_empty() {
+                                enclosing
+                            } else {
+                                format!("{package}.{enclosing}")
+                            },
+                            method: "<suite>".into(),
                         },
-                        method: "<suite>".into(),
+                        status: TestStatus::NotRun,
+                        duration_ms: 0,
+                        detail: String::new(),
+                        parameterized: false,
+                        source: Some(SourceLocation {
+                            path: path.into(),
+                            line,
+                        }),
                     },
-                    status: TestStatus::NotRun,
-                    duration_ms: 0,
-                    detail: String::new(),
-                    parameterized: false,
-                    source: Some(SourceLocation {
-                        path: path.into(),
-                        line: clean[..token.start()]
-                            .bytes()
-                            .filter(|&c| c == b'\n')
-                            .count() as u32
-                            + 1,
-                    }),
-                });
+                    budget,
+                )?;
                 suite = false;
             }
             pending_class = Some(name.as_str().to_owned());
@@ -412,29 +536,29 @@ pub fn discover_source(path: &Path, source: &str) -> Result<Vec<TestCase>> {
                     class.len() + package.len() <= 4096,
                     "Test class identity limit exceeded"
                 );
-                cases.push(TestCase {
-                    id: TestId {
-                        class: if package.is_empty() {
-                            class
-                        } else {
-                            format!("{package}.{class}")
+                push_discovered(
+                    &mut cases,
+                    TestCase {
+                        id: TestId {
+                            class: if package.is_empty() {
+                                class
+                            } else {
+                                format!("{package}.{class}")
+                            },
+                            method: method.as_str().trim_matches('`').into(),
                         },
-                        method: method.as_str().trim_matches('`').into(),
+                        status: TestStatus::NotRun,
+                        duration_ms: 0,
+                        detail: String::new(),
+                        parameterized: parameterized
+                            || classes.iter().any(|(_, _, parameterized)| *parameterized),
+                        source: Some(SourceLocation {
+                            path: path.to_path_buf(),
+                            line,
+                        }),
                     },
-                    status: TestStatus::NotRun,
-                    duration_ms: 0,
-                    detail: String::new(),
-                    parameterized: parameterized
-                        || classes.iter().any(|(_, _, parameterized)| *parameterized),
-                    source: Some(SourceLocation {
-                        path: path.to_path_buf(),
-                        line: clean[..token.start()]
-                            .bytes()
-                            .filter(|&c| c == b'\n')
-                            .count() as u32
-                            + 1,
-                    }),
-                });
+                    budget,
+                )?;
             }
             annotated = false;
             parameterized = false;
@@ -453,6 +577,7 @@ pub fn discover_source(path: &Path, source: &str) -> Result<Vec<TestCase>> {
             annotated = false;
         }
     }
+    control.check()?;
     Ok(cases)
 }
 
@@ -517,16 +642,34 @@ pub struct TestResults {
     pub diagnostics: Vec<String>,
 }
 pub fn read_results(output: &Path, sources: &[TestCase]) -> TestResults {
+    read_results_with_control(output, sources, &ScanControl::default())
+}
+
+pub fn read_results_with_control(
+    output: &Path,
+    sources: &[TestCase],
+    control: &ScanControl,
+) -> TestResults {
     let mut cases = BTreeMap::new();
     let mut diagnostics = Vec::new();
+    if let Err(error) = control.check() {
+        return TestResults {
+            cases: Vec::new(),
+            diagnostics: vec![error.to_string()],
+        };
+    }
     let events = output.join("events.jsonl");
     if events.is_file() {
-        match read_bounded(&events, MAX_BYTES) {
+        match read_bounded(&events, MAX_BYTES, control) {
             Ok(text) => {
                 for line in text
                     .split_inclusive('\n')
                     .filter(|line| line.ends_with('\n'))
                 {
+                    if let Err(error) = control.check() {
+                        diagnostics.push(error.to_string());
+                        break;
+                    }
                     match serde_json::from_str::<TestCase>(line) {
                         Ok(case)
                             if cases.len() < MAX_TESTS
@@ -551,20 +694,25 @@ pub fn read_results(output: &Path, sources: &[TestCase]) -> TestResults {
     }
     let mut bytes = 0;
     let mut count = 0;
+    let mut walk_budget = WalkBudget::default();
     for directory in ["unit", "device"] {
+        if let Err(error) = control.check() {
+            diagnostics.push(error.to_string());
+            break;
+        }
         let path = output.join(directory);
         if !path.exists() {
             continue;
         }
-        if let Err(error) = walk(&path, 0, &mut |path| {
+        if let Err(error) = walk(&path, 0, &mut walk_budget, control, &mut |path| {
             count += 1;
             ensure!(count <= MAX_TESTS, "Test report file limit exceeded");
             if path.extension().is_some_and(|value| value == "xml") {
                 let parsed = (|| {
-                    let text = read_bounded(path, MAX_BYTES)?;
+                    let text = read_bounded(path, MAX_BYTES, control)?;
                     bytes += text.len();
                     ensure!(bytes <= MAX_BYTES, "Test report size limit exceeded");
-                    parse_junit(&text)
+                    parse_junit_with_control(&text, control)
                 })();
                 match parsed {
                     Ok(reported) => {
@@ -597,6 +745,10 @@ pub fn read_results(output: &Path, sources: &[TestCase]) -> TestResults {
     let mut source_methods = BTreeMap::new();
     let mut source_classes = BTreeMap::new();
     for source in sources {
+        if let Err(error) = control.check() {
+            diagnostics.push(error.to_string());
+            break;
+        }
         source_methods.insert(
             (source.id.class.as_str(), source.id.method.as_str()),
             source,
@@ -607,6 +759,10 @@ pub fn read_results(output: &Path, sources: &[TestCase]) -> TestResults {
     }
     let mut detail_bytes = 0;
     for case in cases.values_mut() {
+        if let Err(error) = control.check() {
+            diagnostics.push(error.to_string());
+            break;
+        }
         truncate(&mut case.detail, MAX_DETAIL_BYTES);
         detail_bytes += case.detail.len();
         if detail_bytes > MAX_BYTES {
@@ -631,6 +787,11 @@ pub fn read_results(output: &Path, sources: &[TestCase]) -> TestResults {
 }
 
 pub fn parse_junit(xml: &str) -> Result<Vec<TestCase>> {
+    parse_junit_with_control(xml, &ScanControl::default())
+}
+
+fn parse_junit_with_control(xml: &str, control: &ScanControl) -> Result<Vec<TestCase>> {
+    control.check()?;
     ensure!(xml.len() <= MAX_BYTES, "Test report size limit exceeded");
     let document = roxmltree::Document::parse_with_options(
         xml,
@@ -646,6 +807,7 @@ pub fn parse_junit(xml: &str) -> Result<Vec<TestCase>> {
         .descendants()
         .filter(|node| node.has_tag_name("testcase"))
     {
+        control.check()?;
         ensure!(cases.len() < MAX_TESTS, "Test result limit exceeded");
         let failure = node
             .children()
@@ -916,5 +1078,113 @@ mod tests {
         let cases = discover_source(Path::new("Tests.kt"), "package dev\nclass Tests { @ParameterizedTest @ValueSource(strings = [\"a\"]) fun parameter(value: String) {} }").unwrap();
         assert_eq!(cases.len(), 1);
         assert_eq!(cases[0].selector(TestKind::Unit), "dev.Tests");
+    }
+
+    #[test]
+    fn directory_and_entry_budgets_are_shared_across_scan_roots() {
+        let first = tempfile::tempdir().unwrap();
+        let second = tempfile::tempdir().unwrap();
+        let control = ScanControl::default();
+        let mut budget = WalkBudget {
+            directories: MAX_TESTS - 1,
+            entries: 0,
+        };
+        walk(first.path(), 0, &mut budget, &control, &mut |_| Ok(())).unwrap();
+        assert!(
+            walk(second.path(), 0, &mut budget, &control, &mut |_| Ok(()))
+                .unwrap_err()
+                .to_string()
+                .contains("directory count")
+        );
+        fs::write(first.path().join("first.kt"), "").unwrap();
+        fs::write(second.path().join("second.kt"), "").unwrap();
+        let mut budget = WalkBudget {
+            directories: 0,
+            entries: MAX_TESTS * 2 - 1,
+        };
+        let mut visited = 0;
+        let mut visitor = |_: &Path| {
+            visited += 1;
+            Ok(())
+        };
+        walk(first.path(), 0, &mut budget, &control, &mut visitor).unwrap();
+        assert!(
+            walk(second.path(), 0, &mut budget, &control, &mut visitor)
+                .unwrap_err()
+                .to_string()
+                .contains("traversal")
+        );
+        assert_eq!(
+            visited, 1,
+            "No file beyond the aggregate budget may be visited"
+        );
+    }
+
+    #[test]
+    fn cancellation_stops_directory_visits_and_report_reads() {
+        let directory = tempfile::tempdir().unwrap();
+        fs::write(directory.path().join("one.kt"), "class One {}").unwrap();
+        fs::write(directory.path().join("two.kt"), "class Two {}").unwrap();
+        let control = ScanControl::default();
+        let mut visited = 0;
+        let result = walk(
+            directory.path(),
+            0,
+            &mut WalkBudget::default(),
+            &control,
+            &mut |_| {
+                visited += 1;
+                control.cancel();
+                Ok(())
+            },
+        );
+        assert!(result.unwrap_err().to_string().contains("cancelled"));
+        assert_eq!(visited, 1);
+        assert!(
+            discover_with_control(&[directory.path().into()], &control)
+                .unwrap_err()
+                .to_string()
+                .contains("cancelled")
+        );
+        fs::write(directory.path().join("events.jsonl"), "invalid report data").unwrap();
+        let reports = read_results_with_control(directory.path(), &[], &control);
+        assert!(reports.cases.is_empty());
+        assert_eq!(reports.diagnostics, vec!["Test scanning cancelled"]);
+    }
+
+    #[test]
+    fn large_source_preserves_every_test_line_and_bounds_case_allocation() {
+        let mut source = "class Bulk {\n".to_owned();
+        for index in 0..4096 {
+            source.push_str(&format!("// préserve\n@Test\nfun test{index}() {{}}\n"));
+        }
+        source.push_str("}\n");
+        let cases = discover_source(Path::new("Bulk.kt"), &source).unwrap();
+        assert_eq!(cases.len(), 4096);
+        for (index, case) in cases.iter().enumerate() {
+            assert_eq!(case.id.method, format!("test{index}"));
+            assert_eq!(case.source.as_ref().unwrap().line, 4 + index as u32 * 3);
+        }
+        let source = format!(
+            "class Many {{ {} }}",
+            "@Test fun method() {} ".repeat(MAX_TESTS + 1)
+        );
+        assert!(
+            discover_source(Path::new("Many.kt"), &source)
+                .unwrap_err()
+                .to_string()
+                .contains("discovery limit")
+        );
+        let source = format!(
+            "class {} {{ {} }}",
+            "C".repeat(900),
+            "@Test fun method() {} ".repeat(10_000)
+        );
+        assert!(
+            discover_source(Path::new("Identity.kt"), &source)
+                .unwrap_err()
+                .to_string()
+                .contains("identity size")
+        );
     }
 }

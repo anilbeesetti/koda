@@ -1,0 +1,1623 @@
+{
+  "version": 1,
+  "root": "${project_root}",
+  "modules": [
+    {
+      "path": ":app",
+      "directory": "${project_root}/app",
+      "namespace": "dev.koda.sourceproviders",
+      "kind": "application",
+      "sourceProviders": {
+        "order": "gradleSourceSetIteration",
+        "providers": [
+          {
+            "name": "androidTest",
+            "roots": [
+              {
+                "path": "${project_root}/app/src/androidTest/java",
+                "kind": "java"
+              },
+              {
+                "path": "${project_root}/app/src/androidTest/java",
+                "kind": "kotlin"
+              },
+              {
+                "path": "${project_root}/app/src/androidTest/kotlin",
+                "kind": "kotlin"
+              },
+              {
+                "path": "${project_root}/app/src/androidTest/res",
+                "kind": "resources"
+              },
+              {
+                "path": "${project_root}/app/src/androidTest/aidl",
+                "kind": "aidl"
+              },
+              {
+                "path": "${project_root}/app/src/androidTest/rs",
+                "kind": "renderscript"
+              },
+              {
+                "path": "${project_root}/app/src/androidTest/assets",
+                "kind": "assets"
+              },
+              {
+                "path": "${project_root}/app/src/androidTest/jniLibs",
+                "kind": "jniLibs"
+              },
+              {
+                "path": "${project_root}/app/src/androidTest/AndroidManifest.xml",
+                "kind": "manifest"
+              }
+            ]
+          },
+          {
+            "name": "androidTestDebug",
+            "roots": [
+              {
+                "path": "${project_root}/app/src/androidTestDebug/java",
+                "kind": "java"
+              },
+              {
+                "path": "${project_root}/app/src/androidTestDebug/java",
+                "kind": "kotlin"
+              },
+              {
+                "path": "${project_root}/app/src/androidTestDebug/kotlin",
+                "kind": "kotlin"
+              },
+              {
+                "path": "${project_root}/app/src/androidTestDebug/res",
+                "kind": "resources"
+              },
+              {
+                "path": "${project_root}/app/src/androidTestDebug/aidl",
+                "kind": "aidl"
+              },
+              {
+                "path": "${project_root}/app/src/androidTestDebug/rs",
+                "kind": "renderscript"
+              },
+              {
+                "path": "${project_root}/app/src/androidTestDebug/assets",
+                "kind": "assets"
+              },
+              {
+                "path": "${project_root}/app/src/androidTestDebug/jniLibs",
+                "kind": "jniLibs"
+              },
+              {
+                "path": "${project_root}/app/src/androidTestDebug/AndroidManifest.xml",
+                "kind": "manifest"
+              }
+            ]
+          },
+          {
+            "name": "androidTestDemo",
+            "roots": [
+              {
+                "path": "${project_root}/app/src/androidTestDemo/java",
+                "kind": "java"
+              },
+              {
+                "path": "${project_root}/app/src/androidTestDemo/java",
+                "kind": "kotlin"
+              },
+              {
+                "path": "${project_root}/app/src/androidTestDemo/kotlin",
+                "kind": "kotlin"
+              },
+              {
+                "path": "${project_root}/app/src/androidTestDemo/res",
+                "kind": "resources"
+              },
+              {
+                "path": "${project_root}/app/src/androidTestDemo/aidl",
+                "kind": "aidl"
+              },
+              {
+                "path": "${project_root}/app/src/androidTestDemo/rs",
+                "kind": "renderscript"
+              },
+              {
+                "path": "${project_root}/app/src/androidTestDemo/assets",
+                "kind": "assets"
+              },
+              {
+                "path": "${project_root}/app/src/androidTestDemo/jniLibs",
+                "kind": "jniLibs"
+              },
+              {
+                "path": "${project_root}/app/src/androidTestDemo/AndroidManifest.xml",
+                "kind": "manifest"
+              }
+            ]
+          },
+          {
+            "name": "androidTestDemoDebug",
+            "roots": [
+              {
+                "path": "${project_root}/app/src/androidTestDemoDebug/java",
+                "kind": "java"
+              },
+              {
+                "path": "${project_root}/app/src/androidTestDemoDebug/java",
+                "kind": "kotlin"
+              },
+              {
+                "path": "${project_root}/app/src/androidTestDemoDebug/kotlin",
+                "kind": "kotlin"
+              },
+              {
+                "path": "${project_root}/app/src/androidTestDemoDebug/res",
+                "kind": "resources"
+              },
+              {
+                "path": "${project_root}/app/src/androidTestDemoDebug/aidl",
+                "kind": "aidl"
+              },
+              {
+                "path": "${project_root}/app/src/androidTestDemoDebug/rs",
+                "kind": "renderscript"
+              },
+              {
+                "path": "${project_root}/app/src/androidTestDemoDebug/assets",
+                "kind": "assets"
+              },
+              {
+                "path": "${project_root}/app/src/androidTestDemoDebug/jniLibs",
+                "kind": "jniLibs"
+              },
+              {
+                "path": "${project_root}/app/src/androidTestDemoDebug/AndroidManifest.xml",
+                "kind": "manifest"
+              }
+            ]
+          },
+          {
+            "name": "androidTestInactive",
+            "roots": [
+              {
+                "path": "${project_root}/app/src/androidTestInactive/java",
+                "kind": "java"
+              },
+              {
+                "path": "${project_root}/app/src/androidTestInactive/java",
+                "kind": "kotlin"
+              },
+              {
+                "path": "${project_root}/app/src/androidTestInactive/kotlin",
+                "kind": "kotlin"
+              },
+              {
+                "path": "${project_root}/app/src/androidTestInactive/res",
+                "kind": "resources"
+              },
+              {
+                "path": "${project_root}/app/src/androidTestInactive/aidl",
+                "kind": "aidl"
+              },
+              {
+                "path": "${project_root}/app/src/androidTestInactive/rs",
+                "kind": "renderscript"
+              },
+              {
+                "path": "${project_root}/app/src/androidTestInactive/assets",
+                "kind": "assets"
+              },
+              {
+                "path": "${project_root}/app/src/androidTestInactive/jniLibs",
+                "kind": "jniLibs"
+              },
+              {
+                "path": "${project_root}/app/src/androidTestInactive/AndroidManifest.xml",
+                "kind": "manifest"
+              }
+            ]
+          },
+          {
+            "name": "androidTestRelease",
+            "roots": [
+              {
+                "path": "${project_root}/app/src/androidTestRelease/java",
+                "kind": "java"
+              },
+              {
+                "path": "${project_root}/app/src/androidTestRelease/java",
+                "kind": "kotlin"
+              },
+              {
+                "path": "${project_root}/app/src/androidTestRelease/kotlin",
+                "kind": "kotlin"
+              },
+              {
+                "path": "${project_root}/app/src/androidTestRelease/res",
+                "kind": "resources"
+              },
+              {
+                "path": "${project_root}/app/src/androidTestRelease/aidl",
+                "kind": "aidl"
+              },
+              {
+                "path": "${project_root}/app/src/androidTestRelease/rs",
+                "kind": "renderscript"
+              },
+              {
+                "path": "${project_root}/app/src/androidTestRelease/assets",
+                "kind": "assets"
+              },
+              {
+                "path": "${project_root}/app/src/androidTestRelease/jniLibs",
+                "kind": "jniLibs"
+              },
+              {
+                "path": "${project_root}/app/src/androidTestRelease/AndroidManifest.xml",
+                "kind": "manifest"
+              }
+            ]
+          },
+          {
+            "name": "debug",
+            "roots": [
+              {
+                "path": "${project_root}/app/src/debug/java",
+                "kind": "java"
+              },
+              {
+                "path": "${project_root}/app/src/debug/java",
+                "kind": "kotlin"
+              },
+              {
+                "path": "${project_root}/app/src/debug/kotlin",
+                "kind": "kotlin"
+              },
+              {
+                "path": "${project_root}/app/src/debug/res",
+                "kind": "resources"
+              },
+              {
+                "path": "${project_root}/app/src/debug/aidl",
+                "kind": "aidl"
+              },
+              {
+                "path": "${project_root}/app/src/debug/rs",
+                "kind": "renderscript"
+              },
+              {
+                "path": "${project_root}/app/unrelated-assets",
+                "kind": "assets"
+              },
+              {
+                "path": "${project_root}/app/unrelated-assets/nested",
+                "kind": "assets"
+              },
+              {
+                "path": "${project_root}/app/src/debug/jniLibs",
+                "kind": "jniLibs"
+              },
+              {
+                "path": "${project_root}/app/src/debug/AndroidManifest.xml",
+                "kind": "manifest"
+              }
+            ]
+          },
+          {
+            "name": "demo",
+            "roots": [
+              {
+                "path": "${project_root}/app/src/demo/java",
+                "kind": "java"
+              },
+              {
+                "path": "${project_root}/app/src/demo/java",
+                "kind": "kotlin"
+              },
+              {
+                "path": "${project_root}/app/src/demo/kotlin",
+                "kind": "kotlin"
+              },
+              {
+                "path": "${project_root}/app/src/demo/res",
+                "kind": "resources"
+              },
+              {
+                "path": "${project_root}/app/src/demo/aidl",
+                "kind": "aidl"
+              },
+              {
+                "path": "${project_root}/app/src/demo/rs",
+                "kind": "renderscript"
+              },
+              {
+                "path": "${project_root}/app/flavor-assets",
+                "kind": "assets"
+              },
+              {
+                "path": "${project_root}/app/src/demo/jniLibs",
+                "kind": "jniLibs"
+              },
+              {
+                "path": "${project_root}/app/src/demo/AndroidManifest.xml",
+                "kind": "manifest"
+              }
+            ]
+          },
+          {
+            "name": "demoDebug",
+            "roots": [
+              {
+                "path": "${project_root}/app/src/demoDebug/java",
+                "kind": "java"
+              },
+              {
+                "path": "${project_root}/app/src/demoDebug/java",
+                "kind": "kotlin"
+              },
+              {
+                "path": "${project_root}/app/src/demoDebug/kotlin",
+                "kind": "kotlin"
+              },
+              {
+                "path": "${project_root}/app/src/demoDebug/res",
+                "kind": "resources"
+              },
+              {
+                "path": "${project_root}/app/src/demoDebug/aidl",
+                "kind": "aidl"
+              },
+              {
+                "path": "${project_root}/app/src/demoDebug/rs",
+                "kind": "renderscript"
+              },
+              {
+                "path": "${project_root}/app/src/demoDebug/assets",
+                "kind": "assets"
+              },
+              {
+                "path": "${project_root}/app/src/demoDebug/jniLibs",
+                "kind": "jniLibs"
+              },
+              {
+                "path": "${project_root}/app/src/demoDebug/AndroidManifest.xml",
+                "kind": "manifest"
+              }
+            ]
+          },
+          {
+            "name": "demoRelease",
+            "roots": [
+              {
+                "path": "${project_root}/app/src/demoRelease/java",
+                "kind": "java"
+              },
+              {
+                "path": "${project_root}/app/src/demoRelease/java",
+                "kind": "kotlin"
+              },
+              {
+                "path": "${project_root}/app/src/demoRelease/kotlin",
+                "kind": "kotlin"
+              },
+              {
+                "path": "${project_root}/app/src/demoRelease/res",
+                "kind": "resources"
+              },
+              {
+                "path": "${project_root}/app/src/demoRelease/aidl",
+                "kind": "aidl"
+              },
+              {
+                "path": "${project_root}/app/src/demoRelease/rs",
+                "kind": "renderscript"
+              },
+              {
+                "path": "${project_root}/app/src/demoRelease/assets",
+                "kind": "assets"
+              },
+              {
+                "path": "${project_root}/app/src/demoRelease/jniLibs",
+                "kind": "jniLibs"
+              },
+              {
+                "path": "${project_root}/app/src/demoRelease/AndroidManifest.xml",
+                "kind": "manifest"
+              }
+            ]
+          },
+          {
+            "name": "inactive",
+            "roots": [
+              {
+                "path": "${project_root}/app/src/inactive/java",
+                "kind": "java"
+              },
+              {
+                "path": "${project_root}/app/src/inactive/java",
+                "kind": "kotlin"
+              },
+              {
+                "path": "${project_root}/app/src/inactive/kotlin",
+                "kind": "kotlin"
+              },
+              {
+                "path": "${project_root}/app/src/inactive/res",
+                "kind": "resources"
+              },
+              {
+                "path": "${project_root}/app/src/inactive/aidl",
+                "kind": "aidl"
+              },
+              {
+                "path": "${project_root}/app/src/inactive/rs",
+                "kind": "renderscript"
+              },
+              {
+                "path": "${project_root}/app/inactive-assets",
+                "kind": "assets"
+              },
+              {
+                "path": "${project_root}/app/src/inactive/jniLibs",
+                "kind": "jniLibs"
+              },
+              {
+                "path": "${project_root}/app/src/inactive/AndroidManifest.xml",
+                "kind": "manifest"
+              }
+            ]
+          },
+          {
+            "name": "main",
+            "roots": [
+              {
+                "path": "${project_root}/app/src/main/java",
+                "kind": "java"
+              },
+              {
+                "path": "${project_root}/app/src/main/java",
+                "kind": "kotlin"
+              },
+              {
+                "path": "${project_root}/app/src/main/kotlin",
+                "kind": "kotlin"
+              },
+              {
+                "path": "${project_root}/app/provider-res",
+                "kind": "resources"
+              },
+              {
+                "path": "${project_root}/app/main/resources",
+                "kind": "resources"
+              },
+              {
+                "path": "${project_root}/app/src/main/aidl",
+                "kind": "aidl"
+              },
+              {
+                "path": "${project_root}/app/src/main/rs",
+                "kind": "renderscript"
+              },
+              {
+                "path": "${project_root}/app/unrelated-assets",
+                "kind": "assets"
+              },
+              {
+                "path": "${project_root}/app/src/main/jniLibs",
+                "kind": "jniLibs"
+              },
+              {
+                "path": "${project_root}/app/custom-manifest/AndroidManifest.xml",
+                "kind": "manifest"
+              }
+            ]
+          },
+          {
+            "name": "release",
+            "roots": [
+              {
+                "path": "${project_root}/app/src/release/java",
+                "kind": "java"
+              },
+              {
+                "path": "${project_root}/app/src/release/java",
+                "kind": "kotlin"
+              },
+              {
+                "path": "${project_root}/app/src/release/kotlin",
+                "kind": "kotlin"
+              },
+              {
+                "path": "${project_root}/app/src/release/res",
+                "kind": "resources"
+              },
+              {
+                "path": "${project_root}/app/src/release/aidl",
+                "kind": "aidl"
+              },
+              {
+                "path": "${project_root}/app/src/release/rs",
+                "kind": "renderscript"
+              },
+              {
+                "path": "${project_root}/app/src/release/assets",
+                "kind": "assets"
+              },
+              {
+                "path": "${project_root}/app/src/release/jniLibs",
+                "kind": "jniLibs"
+              },
+              {
+                "path": "${project_root}/app/src/release/AndroidManifest.xml",
+                "kind": "manifest"
+              }
+            ]
+          },
+          {
+            "name": "test",
+            "roots": [
+              {
+                "path": "${project_root}/app/src/test/java",
+                "kind": "java"
+              },
+              {
+                "path": "${project_root}/app/src/test/java",
+                "kind": "kotlin"
+              },
+              {
+                "path": "${project_root}/app/src/test/kotlin",
+                "kind": "kotlin"
+              },
+              {
+                "path": "${project_root}/app/src/test/res",
+                "kind": "resources"
+              },
+              {
+                "path": "${project_root}/app/src/test/aidl",
+                "kind": "aidl"
+              },
+              {
+                "path": "${project_root}/app/src/test/rs",
+                "kind": "renderscript"
+              },
+              {
+                "path": "${project_root}/app/src/test/assets",
+                "kind": "assets"
+              },
+              {
+                "path": "${project_root}/app/src/test/jniLibs",
+                "kind": "jniLibs"
+              },
+              {
+                "path": "${project_root}/app/src/test/AndroidManifest.xml",
+                "kind": "manifest"
+              }
+            ]
+          },
+          {
+            "name": "testDebug",
+            "roots": [
+              {
+                "path": "${project_root}/app/src/testDebug/java",
+                "kind": "java"
+              },
+              {
+                "path": "${project_root}/app/src/testDebug/java",
+                "kind": "kotlin"
+              },
+              {
+                "path": "${project_root}/app/src/testDebug/kotlin",
+                "kind": "kotlin"
+              },
+              {
+                "path": "${project_root}/app/src/testDebug/res",
+                "kind": "resources"
+              },
+              {
+                "path": "${project_root}/app/src/testDebug/aidl",
+                "kind": "aidl"
+              },
+              {
+                "path": "${project_root}/app/src/testDebug/rs",
+                "kind": "renderscript"
+              },
+              {
+                "path": "${project_root}/app/src/testDebug/assets",
+                "kind": "assets"
+              },
+              {
+                "path": "${project_root}/app/src/testDebug/jniLibs",
+                "kind": "jniLibs"
+              },
+              {
+                "path": "${project_root}/app/src/testDebug/AndroidManifest.xml",
+                "kind": "manifest"
+              }
+            ]
+          },
+          {
+            "name": "testDemo",
+            "roots": [
+              {
+                "path": "${project_root}/app/src/testDemo/java",
+                "kind": "java"
+              },
+              {
+                "path": "${project_root}/app/src/testDemo/java",
+                "kind": "kotlin"
+              },
+              {
+                "path": "${project_root}/app/src/testDemo/kotlin",
+                "kind": "kotlin"
+              },
+              {
+                "path": "${project_root}/app/src/testDemo/res",
+                "kind": "resources"
+              },
+              {
+                "path": "${project_root}/app/src/testDemo/aidl",
+                "kind": "aidl"
+              },
+              {
+                "path": "${project_root}/app/src/testDemo/rs",
+                "kind": "renderscript"
+              },
+              {
+                "path": "${project_root}/app/src/testDemo/assets",
+                "kind": "assets"
+              },
+              {
+                "path": "${project_root}/app/src/testDemo/jniLibs",
+                "kind": "jniLibs"
+              },
+              {
+                "path": "${project_root}/app/src/testDemo/AndroidManifest.xml",
+                "kind": "manifest"
+              }
+            ]
+          },
+          {
+            "name": "testDemoDebug",
+            "roots": [
+              {
+                "path": "${project_root}/app/src/testDemoDebug/java",
+                "kind": "java"
+              },
+              {
+                "path": "${project_root}/app/src/testDemoDebug/java",
+                "kind": "kotlin"
+              },
+              {
+                "path": "${project_root}/app/src/testDemoDebug/kotlin",
+                "kind": "kotlin"
+              },
+              {
+                "path": "${project_root}/app/src/testDemoDebug/res",
+                "kind": "resources"
+              },
+              {
+                "path": "${project_root}/app/src/testDemoDebug/aidl",
+                "kind": "aidl"
+              },
+              {
+                "path": "${project_root}/app/src/testDemoDebug/rs",
+                "kind": "renderscript"
+              },
+              {
+                "path": "${project_root}/app/src/testDemoDebug/assets",
+                "kind": "assets"
+              },
+              {
+                "path": "${project_root}/app/src/testDemoDebug/jniLibs",
+                "kind": "jniLibs"
+              },
+              {
+                "path": "${project_root}/app/src/testDemoDebug/AndroidManifest.xml",
+                "kind": "manifest"
+              }
+            ]
+          },
+          {
+            "name": "testFixtures",
+            "roots": [
+              {
+                "path": "${project_root}/app/src/testFixtures/java",
+                "kind": "java"
+              },
+              {
+                "path": "${project_root}/app/src/testFixtures/java",
+                "kind": "kotlin"
+              },
+              {
+                "path": "${project_root}/app/src/testFixtures/kotlin",
+                "kind": "kotlin"
+              },
+              {
+                "path": "${project_root}/app/src/testFixtures/res",
+                "kind": "resources"
+              },
+              {
+                "path": "${project_root}/app/src/testFixtures/aidl",
+                "kind": "aidl"
+              },
+              {
+                "path": "${project_root}/app/src/testFixtures/rs",
+                "kind": "renderscript"
+              },
+              {
+                "path": "${project_root}/app/src/testFixtures/assets",
+                "kind": "assets"
+              },
+              {
+                "path": "${project_root}/app/src/testFixtures/jniLibs",
+                "kind": "jniLibs"
+              },
+              {
+                "path": "${project_root}/app/src/testFixtures/AndroidManifest.xml",
+                "kind": "manifest"
+              }
+            ]
+          },
+          {
+            "name": "testFixturesDebug",
+            "roots": [
+              {
+                "path": "${project_root}/app/src/testFixturesDebug/java",
+                "kind": "java"
+              },
+              {
+                "path": "${project_root}/app/src/testFixturesDebug/java",
+                "kind": "kotlin"
+              },
+              {
+                "path": "${project_root}/app/src/testFixturesDebug/kotlin",
+                "kind": "kotlin"
+              },
+              {
+                "path": "${project_root}/app/src/testFixturesDebug/res",
+                "kind": "resources"
+              },
+              {
+                "path": "${project_root}/app/src/testFixturesDebug/aidl",
+                "kind": "aidl"
+              },
+              {
+                "path": "${project_root}/app/src/testFixturesDebug/rs",
+                "kind": "renderscript"
+              },
+              {
+                "path": "${project_root}/app/src/testFixturesDebug/assets",
+                "kind": "assets"
+              },
+              {
+                "path": "${project_root}/app/src/testFixturesDebug/jniLibs",
+                "kind": "jniLibs"
+              },
+              {
+                "path": "${project_root}/app/src/testFixturesDebug/AndroidManifest.xml",
+                "kind": "manifest"
+              }
+            ]
+          },
+          {
+            "name": "testFixturesDemo",
+            "roots": [
+              {
+                "path": "${project_root}/app/src/testFixturesDemo/java",
+                "kind": "java"
+              },
+              {
+                "path": "${project_root}/app/src/testFixturesDemo/java",
+                "kind": "kotlin"
+              },
+              {
+                "path": "${project_root}/app/src/testFixturesDemo/kotlin",
+                "kind": "kotlin"
+              },
+              {
+                "path": "${project_root}/app/src/testFixturesDemo/res",
+                "kind": "resources"
+              },
+              {
+                "path": "${project_root}/app/src/testFixturesDemo/aidl",
+                "kind": "aidl"
+              },
+              {
+                "path": "${project_root}/app/src/testFixturesDemo/rs",
+                "kind": "renderscript"
+              },
+              {
+                "path": "${project_root}/app/src/testFixturesDemo/assets",
+                "kind": "assets"
+              },
+              {
+                "path": "${project_root}/app/src/testFixturesDemo/jniLibs",
+                "kind": "jniLibs"
+              },
+              {
+                "path": "${project_root}/app/src/testFixturesDemo/AndroidManifest.xml",
+                "kind": "manifest"
+              }
+            ]
+          },
+          {
+            "name": "testFixturesInactive",
+            "roots": [
+              {
+                "path": "${project_root}/app/src/testFixturesInactive/java",
+                "kind": "java"
+              },
+              {
+                "path": "${project_root}/app/src/testFixturesInactive/java",
+                "kind": "kotlin"
+              },
+              {
+                "path": "${project_root}/app/src/testFixturesInactive/kotlin",
+                "kind": "kotlin"
+              },
+              {
+                "path": "${project_root}/app/src/testFixturesInactive/res",
+                "kind": "resources"
+              },
+              {
+                "path": "${project_root}/app/src/testFixturesInactive/aidl",
+                "kind": "aidl"
+              },
+              {
+                "path": "${project_root}/app/src/testFixturesInactive/rs",
+                "kind": "renderscript"
+              },
+              {
+                "path": "${project_root}/app/src/testFixturesInactive/assets",
+                "kind": "assets"
+              },
+              {
+                "path": "${project_root}/app/src/testFixturesInactive/jniLibs",
+                "kind": "jniLibs"
+              },
+              {
+                "path": "${project_root}/app/src/testFixturesInactive/AndroidManifest.xml",
+                "kind": "manifest"
+              }
+            ]
+          },
+          {
+            "name": "testFixturesRelease",
+            "roots": [
+              {
+                "path": "${project_root}/app/src/testFixturesRelease/java",
+                "kind": "java"
+              },
+              {
+                "path": "${project_root}/app/src/testFixturesRelease/java",
+                "kind": "kotlin"
+              },
+              {
+                "path": "${project_root}/app/src/testFixturesRelease/kotlin",
+                "kind": "kotlin"
+              },
+              {
+                "path": "${project_root}/app/src/testFixturesRelease/res",
+                "kind": "resources"
+              },
+              {
+                "path": "${project_root}/app/src/testFixturesRelease/aidl",
+                "kind": "aidl"
+              },
+              {
+                "path": "${project_root}/app/src/testFixturesRelease/rs",
+                "kind": "renderscript"
+              },
+              {
+                "path": "${project_root}/app/src/testFixturesRelease/assets",
+                "kind": "assets"
+              },
+              {
+                "path": "${project_root}/app/src/testFixturesRelease/jniLibs",
+                "kind": "jniLibs"
+              },
+              {
+                "path": "${project_root}/app/src/testFixturesRelease/AndroidManifest.xml",
+                "kind": "manifest"
+              }
+            ]
+          },
+          {
+            "name": "testInactive",
+            "roots": [
+              {
+                "path": "${project_root}/app/src/testInactive/java",
+                "kind": "java"
+              },
+              {
+                "path": "${project_root}/app/src/testInactive/java",
+                "kind": "kotlin"
+              },
+              {
+                "path": "${project_root}/app/src/testInactive/kotlin",
+                "kind": "kotlin"
+              },
+              {
+                "path": "${project_root}/app/src/testInactive/res",
+                "kind": "resources"
+              },
+              {
+                "path": "${project_root}/app/src/testInactive/aidl",
+                "kind": "aidl"
+              },
+              {
+                "path": "${project_root}/app/src/testInactive/rs",
+                "kind": "renderscript"
+              },
+              {
+                "path": "${project_root}/app/src/testInactive/assets",
+                "kind": "assets"
+              },
+              {
+                "path": "${project_root}/app/src/testInactive/jniLibs",
+                "kind": "jniLibs"
+              },
+              {
+                "path": "${project_root}/app/src/testInactive/AndroidManifest.xml",
+                "kind": "manifest"
+              }
+            ]
+          },
+          {
+            "name": "testRelease",
+            "roots": [
+              {
+                "path": "${project_root}/app/src/testRelease/java",
+                "kind": "java"
+              },
+              {
+                "path": "${project_root}/app/src/testRelease/java",
+                "kind": "kotlin"
+              },
+              {
+                "path": "${project_root}/app/src/testRelease/kotlin",
+                "kind": "kotlin"
+              },
+              {
+                "path": "${project_root}/app/src/testRelease/res",
+                "kind": "resources"
+              },
+              {
+                "path": "${project_root}/app/src/testRelease/aidl",
+                "kind": "aidl"
+              },
+              {
+                "path": "${project_root}/app/src/testRelease/rs",
+                "kind": "renderscript"
+              },
+              {
+                "path": "${project_root}/app/src/testRelease/assets",
+                "kind": "assets"
+              },
+              {
+                "path": "${project_root}/app/src/testRelease/jniLibs",
+                "kind": "jniLibs"
+              },
+              {
+                "path": "${project_root}/app/src/testRelease/AndroidManifest.xml",
+                "kind": "manifest"
+              }
+            ]
+          }
+        ]
+      },
+      "defaultVariantSelection": {
+        "multiplatform": false,
+        "preferredBuildTypes": [],
+        "preferredProductFlavors": [],
+        "variants": [
+          {
+            "name": "demoDebug",
+            "buildType": "debug",
+            "productFlavors": [
+              "demo"
+            ]
+          },
+          {
+            "name": "demoRelease",
+            "buildType": "release",
+            "productFlavors": [
+              "demo"
+            ]
+          }
+        ]
+      },
+      "variants": [
+        {
+          "name": "demoDebug",
+          "outputListing": "${project_root}/app/build/outputs/apk/demo/debug/output-metadata.json",
+          "components": [
+            {
+              "name": "demoDebug",
+              "namespace": "dev.koda.sourceproviders",
+              "scope": "main",
+              "sources": [
+                {
+                  "path": "${project_root}/app/src/main/java",
+                  "kind": "java",
+                  "generated": false
+                },
+                {
+                  "path": "${project_root}/app/src/demo/java",
+                  "kind": "java",
+                  "generated": false
+                },
+                {
+                  "path": "${project_root}/app/src/debug/java",
+                  "kind": "java",
+                  "generated": false
+                },
+                {
+                  "path": "${project_root}/app/src/demoDebug/java",
+                  "kind": "java",
+                  "generated": false
+                },
+                {
+                  "path": "${project_root}/app/src/main/java",
+                  "kind": "kotlin",
+                  "generated": false
+                },
+                {
+                  "path": "${project_root}/app/src/main/kotlin",
+                  "kind": "kotlin",
+                  "generated": false
+                },
+                {
+                  "path": "${project_root}/app/src/demo/java",
+                  "kind": "kotlin",
+                  "generated": false
+                },
+                {
+                  "path": "${project_root}/app/src/demo/kotlin",
+                  "kind": "kotlin",
+                  "generated": false
+                },
+                {
+                  "path": "${project_root}/app/src/debug/java",
+                  "kind": "kotlin",
+                  "generated": false
+                },
+                {
+                  "path": "${project_root}/app/src/debug/kotlin",
+                  "kind": "kotlin",
+                  "generated": false
+                },
+                {
+                  "path": "${project_root}/app/src/demoDebug/java",
+                  "kind": "kotlin",
+                  "generated": false
+                },
+                {
+                  "path": "${project_root}/app/src/demoDebug/kotlin",
+                  "kind": "kotlin",
+                  "generated": false
+                },
+                {
+                  "path": "${project_root}/app/src/demoDebug/res",
+                  "kind": "resources",
+                  "generated": false
+                },
+                {
+                  "path": "${project_root}/app/src/debug/res",
+                  "kind": "resources",
+                  "generated": false
+                },
+                {
+                  "path": "${project_root}/app/src/demo/res",
+                  "kind": "resources",
+                  "generated": false
+                },
+                {
+                  "path": "${project_root}/app/provider-res",
+                  "kind": "resources",
+                  "generated": false
+                },
+                {
+                  "path": "${project_root}/app/main/resources",
+                  "kind": "resources",
+                  "generated": false
+                },
+                {
+                  "path": "${project_root}/app/generated-outside-build/demoDebug",
+                  "kind": "assets",
+                  "generated": true
+                },
+                {
+                  "path": "${project_root}/app/src/demoDebug/assets",
+                  "kind": "assets",
+                  "generated": false
+                },
+                {
+                  "path": "${project_root}/app/late-static-assets",
+                  "kind": "assets",
+                  "generated": false
+                },
+                {
+                  "path": "${project_root}/app/build/late-static-assets",
+                  "kind": "assets",
+                  "generated": false
+                },
+                {
+                  "path": "${project_root}/app/unrelated-assets",
+                  "kind": "assets",
+                  "generated": false
+                },
+                {
+                  "path": "${project_root}/app/unrelated-assets/nested",
+                  "kind": "assets",
+                  "generated": false
+                },
+                {
+                  "path": "${project_root}/app/flavor-assets",
+                  "kind": "assets",
+                  "generated": false
+                },
+                {
+                  "path": "${project_root}/app/src/demo/AndroidManifest.xml",
+                  "kind": "manifest",
+                  "generated": false
+                },
+                {
+                  "path": "${project_root}/app/src/debug/AndroidManifest.xml",
+                  "kind": "manifest",
+                  "generated": false
+                },
+                {
+                  "path": "${project_root}/app/src/demoDebug/AndroidManifest.xml",
+                  "kind": "manifest",
+                  "generated": false
+                },
+                {
+                  "path": "${project_root}/app/custom-manifest/AndroidManifest.xml",
+                  "kind": "manifest",
+                  "generated": false
+                }
+              ],
+              "dependencies": [
+                {
+                  "kind": "external",
+                  "coordinate": "org.jetbrains.kotlin:kotlin-stdlib:2.2.10"
+                },
+                {
+                  "kind": "external",
+                  "coordinate": "org.jetbrains:annotations:13.0"
+                }
+              ]
+            },
+            {
+              "name": "demoDebugUnitTest",
+              "namespace": "dev.koda.sourceproviders.test",
+              "scope": "unitTest",
+              "sources": [
+                {
+                  "path": "${project_root}/app/src/test/java",
+                  "kind": "java",
+                  "generated": false
+                },
+                {
+                  "path": "${project_root}/app/src/testDemo/java",
+                  "kind": "java",
+                  "generated": false
+                },
+                {
+                  "path": "${project_root}/app/src/testDebug/java",
+                  "kind": "java",
+                  "generated": false
+                },
+                {
+                  "path": "${project_root}/app/src/testDemoDebug/java",
+                  "kind": "java",
+                  "generated": false
+                },
+                {
+                  "path": "${project_root}/app/src/test/java",
+                  "kind": "kotlin",
+                  "generated": false
+                },
+                {
+                  "path": "${project_root}/app/src/test/kotlin",
+                  "kind": "kotlin",
+                  "generated": false
+                },
+                {
+                  "path": "${project_root}/app/src/testDemo/java",
+                  "kind": "kotlin",
+                  "generated": false
+                },
+                {
+                  "path": "${project_root}/app/src/testDemo/kotlin",
+                  "kind": "kotlin",
+                  "generated": false
+                },
+                {
+                  "path": "${project_root}/app/src/testDebug/java",
+                  "kind": "kotlin",
+                  "generated": false
+                },
+                {
+                  "path": "${project_root}/app/src/testDebug/kotlin",
+                  "kind": "kotlin",
+                  "generated": false
+                },
+                {
+                  "path": "${project_root}/app/src/testDemoDebug/java",
+                  "kind": "kotlin",
+                  "generated": false
+                },
+                {
+                  "path": "${project_root}/app/src/testDemoDebug/kotlin",
+                  "kind": "kotlin",
+                  "generated": false
+                },
+                {
+                  "path": "${project_root}/app/src/testDemoDebug/assets",
+                  "kind": "assets",
+                  "generated": false
+                },
+                {
+                  "path": "${project_root}/app/src/testDebug/assets",
+                  "kind": "assets",
+                  "generated": false
+                },
+                {
+                  "path": "${project_root}/app/src/testDemo/assets",
+                  "kind": "assets",
+                  "generated": false
+                },
+                {
+                  "path": "${project_root}/app/src/test/assets",
+                  "kind": "assets",
+                  "generated": false
+                },
+                {
+                  "path": "${project_root}/app/src/testDemo/AndroidManifest.xml",
+                  "kind": "manifest",
+                  "generated": false
+                },
+                {
+                  "path": "${project_root}/app/src/testDebug/AndroidManifest.xml",
+                  "kind": "manifest",
+                  "generated": false
+                },
+                {
+                  "path": "${project_root}/app/src/testDemoDebug/AndroidManifest.xml",
+                  "kind": "manifest",
+                  "generated": false
+                },
+                {
+                  "path": "${project_root}/app/src/test/AndroidManifest.xml",
+                  "kind": "manifest",
+                  "generated": false
+                }
+              ],
+              "dependencies": [
+                {
+                  "kind": "external",
+                  "coordinate": "org.jetbrains.kotlin:kotlin-stdlib:2.2.10"
+                },
+                {
+                  "kind": "external",
+                  "coordinate": "org.jetbrains:annotations:13.0"
+                },
+                {
+                  "kind": "project",
+                  "module": ":app",
+                  "variant": "demoDebug"
+                }
+              ]
+            },
+            {
+              "name": "demoDebugAndroidTest",
+              "namespace": "dev.koda.sourceproviders.test",
+              "scope": "androidTest",
+              "sources": [
+                {
+                  "path": "${project_root}/app/src/androidTest/java",
+                  "kind": "java",
+                  "generated": false
+                },
+                {
+                  "path": "${project_root}/app/src/androidTestDemo/java",
+                  "kind": "java",
+                  "generated": false
+                },
+                {
+                  "path": "${project_root}/app/src/androidTestDebug/java",
+                  "kind": "java",
+                  "generated": false
+                },
+                {
+                  "path": "${project_root}/app/src/androidTestDemoDebug/java",
+                  "kind": "java",
+                  "generated": false
+                },
+                {
+                  "path": "${project_root}/app/src/androidTest/java",
+                  "kind": "kotlin",
+                  "generated": false
+                },
+                {
+                  "path": "${project_root}/app/src/androidTest/kotlin",
+                  "kind": "kotlin",
+                  "generated": false
+                },
+                {
+                  "path": "${project_root}/app/src/androidTestDemo/java",
+                  "kind": "kotlin",
+                  "generated": false
+                },
+                {
+                  "path": "${project_root}/app/src/androidTestDemo/kotlin",
+                  "kind": "kotlin",
+                  "generated": false
+                },
+                {
+                  "path": "${project_root}/app/src/androidTestDebug/java",
+                  "kind": "kotlin",
+                  "generated": false
+                },
+                {
+                  "path": "${project_root}/app/src/androidTestDebug/kotlin",
+                  "kind": "kotlin",
+                  "generated": false
+                },
+                {
+                  "path": "${project_root}/app/src/androidTestDemoDebug/java",
+                  "kind": "kotlin",
+                  "generated": false
+                },
+                {
+                  "path": "${project_root}/app/src/androidTestDemoDebug/kotlin",
+                  "kind": "kotlin",
+                  "generated": false
+                },
+                {
+                  "path": "${project_root}/app/src/androidTestDemoDebug/res",
+                  "kind": "resources",
+                  "generated": false
+                },
+                {
+                  "path": "${project_root}/app/src/androidTestDebug/res",
+                  "kind": "resources",
+                  "generated": false
+                },
+                {
+                  "path": "${project_root}/app/src/androidTestDemo/res",
+                  "kind": "resources",
+                  "generated": false
+                },
+                {
+                  "path": "${project_root}/app/src/androidTest/res",
+                  "kind": "resources",
+                  "generated": false
+                },
+                {
+                  "path": "${project_root}/app/src/androidTestDemoDebug/assets",
+                  "kind": "assets",
+                  "generated": false
+                },
+                {
+                  "path": "${project_root}/app/src/androidTestDebug/assets",
+                  "kind": "assets",
+                  "generated": false
+                },
+                {
+                  "path": "${project_root}/app/src/androidTestDemo/assets",
+                  "kind": "assets",
+                  "generated": false
+                },
+                {
+                  "path": "${project_root}/app/src/androidTest/assets",
+                  "kind": "assets",
+                  "generated": false
+                },
+                {
+                  "path": "${project_root}/app/src/androidTestDemo/AndroidManifest.xml",
+                  "kind": "manifest",
+                  "generated": false
+                },
+                {
+                  "path": "${project_root}/app/src/androidTestDebug/AndroidManifest.xml",
+                  "kind": "manifest",
+                  "generated": false
+                },
+                {
+                  "path": "${project_root}/app/src/androidTestDemoDebug/AndroidManifest.xml",
+                  "kind": "manifest",
+                  "generated": false
+                },
+                {
+                  "path": "${project_root}/app/src/androidTest/AndroidManifest.xml",
+                  "kind": "manifest",
+                  "generated": false
+                }
+              ],
+              "dependencies": [
+                {
+                  "kind": "external",
+                  "coordinate": "org.jetbrains.kotlin:kotlin-stdlib:2.2.10"
+                },
+                {
+                  "kind": "external",
+                  "coordinate": "org.jetbrains:annotations:13.0"
+                },
+                {
+                  "kind": "project",
+                  "module": ":app",
+                  "variant": "demoDebug"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "demoRelease",
+          "outputListing": "${project_root}/app/build/outputs/apk/demo/release/output-metadata.json",
+          "components": [
+            {
+              "name": "demoRelease",
+              "namespace": "dev.koda.sourceproviders",
+              "scope": "main",
+              "sources": [
+                {
+                  "path": "${project_root}/app/src/main/java",
+                  "kind": "java",
+                  "generated": false
+                },
+                {
+                  "path": "${project_root}/app/src/demo/java",
+                  "kind": "java",
+                  "generated": false
+                },
+                {
+                  "path": "${project_root}/app/src/release/java",
+                  "kind": "java",
+                  "generated": false
+                },
+                {
+                  "path": "${project_root}/app/src/demoRelease/java",
+                  "kind": "java",
+                  "generated": false
+                },
+                {
+                  "path": "${project_root}/app/src/main/java",
+                  "kind": "kotlin",
+                  "generated": false
+                },
+                {
+                  "path": "${project_root}/app/src/main/kotlin",
+                  "kind": "kotlin",
+                  "generated": false
+                },
+                {
+                  "path": "${project_root}/app/src/demo/java",
+                  "kind": "kotlin",
+                  "generated": false
+                },
+                {
+                  "path": "${project_root}/app/src/demo/kotlin",
+                  "kind": "kotlin",
+                  "generated": false
+                },
+                {
+                  "path": "${project_root}/app/src/release/java",
+                  "kind": "kotlin",
+                  "generated": false
+                },
+                {
+                  "path": "${project_root}/app/src/release/kotlin",
+                  "kind": "kotlin",
+                  "generated": false
+                },
+                {
+                  "path": "${project_root}/app/src/demoRelease/java",
+                  "kind": "kotlin",
+                  "generated": false
+                },
+                {
+                  "path": "${project_root}/app/src/demoRelease/kotlin",
+                  "kind": "kotlin",
+                  "generated": false
+                },
+                {
+                  "path": "${project_root}/app/src/demoRelease/res",
+                  "kind": "resources",
+                  "generated": false
+                },
+                {
+                  "path": "${project_root}/app/src/release/res",
+                  "kind": "resources",
+                  "generated": false
+                },
+                {
+                  "path": "${project_root}/app/src/demo/res",
+                  "kind": "resources",
+                  "generated": false
+                },
+                {
+                  "path": "${project_root}/app/provider-res",
+                  "kind": "resources",
+                  "generated": false
+                },
+                {
+                  "path": "${project_root}/app/main/resources",
+                  "kind": "resources",
+                  "generated": false
+                },
+                {
+                  "path": "${project_root}/app/generated-outside-build/demoRelease",
+                  "kind": "assets",
+                  "generated": true
+                },
+                {
+                  "path": "${project_root}/app/src/demoRelease/assets",
+                  "kind": "assets",
+                  "generated": false
+                },
+                {
+                  "path": "${project_root}/app/late-static-assets",
+                  "kind": "assets",
+                  "generated": false
+                },
+                {
+                  "path": "${project_root}/app/build/late-static-assets",
+                  "kind": "assets",
+                  "generated": false
+                },
+                {
+                  "path": "${project_root}/app/src/release/assets",
+                  "kind": "assets",
+                  "generated": false
+                },
+                {
+                  "path": "${project_root}/app/flavor-assets",
+                  "kind": "assets",
+                  "generated": false
+                },
+                {
+                  "path": "${project_root}/app/unrelated-assets",
+                  "kind": "assets",
+                  "generated": false
+                },
+                {
+                  "path": "${project_root}/app/src/demo/AndroidManifest.xml",
+                  "kind": "manifest",
+                  "generated": false
+                },
+                {
+                  "path": "${project_root}/app/src/release/AndroidManifest.xml",
+                  "kind": "manifest",
+                  "generated": false
+                },
+                {
+                  "path": "${project_root}/app/src/demoRelease/AndroidManifest.xml",
+                  "kind": "manifest",
+                  "generated": false
+                },
+                {
+                  "path": "${project_root}/app/custom-manifest/AndroidManifest.xml",
+                  "kind": "manifest",
+                  "generated": false
+                }
+              ],
+              "dependencies": [
+                {
+                  "kind": "external",
+                  "coordinate": "org.jetbrains.kotlin:kotlin-stdlib:2.2.10"
+                },
+                {
+                  "kind": "external",
+                  "coordinate": "org.jetbrains:annotations:13.0"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "diagnostics": []
+}

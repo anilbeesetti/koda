@@ -1,0 +1,80 @@
+# Performance review — round 1
+
+Verdict: **PASS for the static, pure captured-module presentation policy only**.
+There are no blocking performance findings in the reviewed source. Runtime
+measurements, full application validation, startup, memory, responsiveness and
+large-project behavior remain pending; this verdict does not establish them.
+
+## Reviewed identity
+
+- Worktree: `/workspace/android-studio-module-presentation`.
+- Base: `0e15a3d2b6eff51451b5f30d4c62ab0edde608ab`.
+- Frozen record: `review-source-round1.json`; all 172 recorded path hashes
+  independently verified before and after review, with zero mismatches.
+- Production `crates/android_tools/src/module_presentation.rs` SHA-256:
+  `0a467aa8d96cb64dc93b23dd31526c75e4b5e2b4f8aad0c52c89025a2660208c`.
+- Supplemental `crates/android_tools/tests/module_presentation.rs` SHA-256:
+  `9977946288fed36aa169c376c722872c86d01a265b76339ae2ec7c86e8c2d924`.
+- Read repository `.rules` completely, the production policy, all 20 supplemental
+  test definitions, the module export, Cargo manifest/build script and the task
+  plan/provenance scope. Tests have not been executed by this reviewer.
+
+## Static findings
+
+1. **Allocation and retained memory: PASS.** The resolver returns four borrowed
+   `&str` values or a fixed typed error. The identity and result contain borrowed
+   slices and small enums; copying them does not copy string bytes. There is no
+   `String`, `Vec`, map, clone of owned data, allocation, cache or retained global
+   state on the resolver path. Prefix/suffix results are slices into the captured
+   external ID. Auxiliary memory is constant. Keeping the original captured
+   strings alive is the caller's existing lifetime requirement, not new storage
+   allocated by this policy. Debug/formatting performed by callers is outside
+   this analysis.
+2. **Per-module complexity and raw paths: PASS.** Non-Gradle, missing-capture and
+   missing-project-ID branches do constant work. A source-set name needs at most
+   one reverse search for the final ASCII colon. A project name compares the two
+   optional reported paths directly, then optionally performs that same reverse
+   search. In the worst case, work is O(P + I), where P is the path data compared
+   and I is the external-ID data searched; auxiliary memory remains O(1). There
+   is no repeated split collection, concatenation, filesystem normalization,
+   canonicalization or path I/O. Long equal paths and colon-free IDs require
+   linear inspection rather than constant time. UTF-8 metadata is borrowed and
+   ASCII delimiter splitting does not require re-encoding.
+3. **Startup and project scaling: PASS within scope.** The additive module export
+   introduces no initializer, task, subscriber, scanner, import call, SDK/JVM
+   invocation, UI work or startup hook. The resolver processes one captured
+   identity and never enumerates projects, modules, folders or classes. An
+   eventual caller applying it independently to N modules will spend work
+   proportional to the total compared/searched metadata, rather than making
+   this policy intrinsically quadratic. The future importer/controller and any
+   repeated presentation evaluation need their own measured review.
+4. **Crate, fixture and compile impact: PASS within scope.** Cargo dependencies,
+   feature configuration and the build script are unchanged. The retained eight
+   complete reference files total 264,942 bytes; the full new fixture/provenance
+   directory contains 11 files totaling 285,677 bytes. The new policy and tests
+   do not embed these fixtures with `include_str!`/`include_bytes!`, and the build
+   script does not process them. They add repository storage rather than a new
+   runtime payload or compiled JVM component. The source module and one new
+   integration-test target do add bounded Rust compilation work; actual build
+   time and resulting artifact sizes have not been measured here.
+5. **Supplemental long-metadata test: PASS as static coverage.** The long-name
+   case creates a 327,680-byte imported name in test setup and checks borrowed
+   internal/sort/group pointers, plus the exact display suffix. That setup's
+   allocations belong to the test. The colon near the end means this case does
+   not exercise the longest delimiter-search path; it is a borrowing regression
+   case, not a stress benchmark or allocation instrumentation. Existing short
+   cases cover IDs without a delimiter and raw path comparison. No performance
+   measurement or test pass is inferred from their definitions.
+
+## Scope and pending evidence
+
+No Cargo, Gradle, app, compiler, benchmark, cache mutation, SDK probe or native
+measurement was launched. Root owns the exclusive runtime lease. The owner must
+still record the required actual build/tests/clippy/format gates and applicable
+runtime evidence, with the compiled source and executable identities bound to
+this reviewed source. Whole-IDE and large-project performance are not rated by
+this static review. No UI publication, authoritative identity import, Kotlin
+capability detection or original reference-test parity credit is provided here.
+
+Only this external review artifact was written. Product sources, fixtures,
+canonical matrix and protected branches were not modified.

@@ -1,0 +1,11 @@
+{
+  "source_hashes": {
+    "crates/android_tools/src/project_tree_adapter.rs": "d57ba8070321039cdd8b9749bc43df923e694a31c27299a1ec577b5974edfc3b",
+    "crates/android_tools/tests/project_tree_adapter.rs": "5e5927568f42cdc1247d88d16f3fdf1dcbb7b427e24b4d6240928378b6e5f79e",
+    "crates/android_tools/src/android_tools.rs": "f4b033f8aa13b8141f706a1f24455c1d5500940ef5e4adffa46edd8baf1f2891"
+  },
+  "test_count": 27,
+  "source_fix_rounds": 3,
+  "historical_pre_fixture_state": "review-source-round3.json",
+  "actual_checked_source_closure": "all-features-tests-retry2.json"
+}

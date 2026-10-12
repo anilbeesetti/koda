@@ -1,0 +1,135 @@
+{
+  "schema_version": 1,
+  "task": "1-junit4-declarations",
+  "base_commit": "7b2bd3e7ffc07156c7193baf156c5041bef256c1",
+  "prior_task_history_preserved": true,
+  "owner_fix_rounds": 3,
+  "rounds": [
+    {
+      "code_review_round": 1,
+      "verdict": "fail",
+      "reviewed_module_sha256": "9977721ce60cd61ef52c055ac480058c36f321571a3db5eaa3c9f4b9f19f30c6",
+      "findings": [
+        "Java text-block escape semantics",
+        "Java enum type shadowing",
+        "effective aliased/static import name conflicts",
+        "incorrect new mirror-line expectation"
+      ],
+      "owner_fix_round": 1,
+      "fixed_module_sha256": "fb4fdef8c532c2fabde87464dfa71eced00809b45d490746f3d2ccca1fe84d32",
+      "new_negative_regressions_added": 4,
+      "authored_regression_tests": 32,
+      "runtime_checks": "not run; exclusive lease pending"
+    },
+    {
+      "code_review_round": 2,
+      "verdict": "fail",
+      "reviewed_module_sha256": "fb4fdef8c532c2fabde87464dfa71eced00809b45d490746f3d2ccca1fe84d32",
+      "previous_findings": "four round1 findings statically resolved",
+      "finding": "malformed Kotlin alias and unsupported Java as could retain confirmation",
+      "owner_fix_round": 2,
+      "fixed_module_sha256": "a4631e22d60be5b1e8488aa50ea5980462221c3eb4ca52c30c9810a6b991c8c3",
+      "new_negative_regression": "missing/reserved/dollar/empty-escaped Kotlin alias and Java alias syntax",
+      "authored_regression_tests": 33,
+      "runtime_checks": "not run; exclusive lease pending"
+    },
+    {
+      "code_review_round": 3,
+      "verdict": "fail",
+      "reviewed_module_sha256": "a4631e22d60be5b1e8488aa50ea5980462221c3eb4ca52c30c9810a6b991c8c3",
+      "previous_finding": "malformed aliases statically resolved",
+      "finding": "generic class type parameter org omitted from qualified annotation prefix shadows",
+      "owner_fix_round": 3,
+      "fixed_module_sha256": "dd66b94dd4936cb440559cd7b58b10c60f8de2509581d9ec59e107fa7d6b4fed",
+      "new_negative_regression": "Java/Kotlin class org type parameters plus unsupported Java generic-method/type-use annotation prefix",
+      "authored_regression_tests": 34,
+      "runtime_checks": "not run; exclusive lease pending"
+    }
+  ],
+  "test_expectation_audit": [
+    {
+      "test": "mirror_paths_keep_distinct_hash_bound_source_identity",
+      "category": "new Rust discovery regression, not an upstream behavioral test port",
+      "status": "wrong initial assertion flagged and corrected using exact original fixture evidence",
+      "reason": "Different file bytes do not imply different method line numbers. Original DefaultVariants.debugPreferred is33/38; original TabbedToolbar.tabIsAdded is41/41. Exact expected pairs retain source hashes, unequal byte content, names and declaration counts. No original source/assertion changes and no behavioral parity credit."
+    }
+  ],
+  "effective_test_census_complete": false,
+  "new_behavioral_parity_credit": 0,
+  "post_third_fix_rule": "Any remaining failure must be escalated to the lead/user before additional source/test changes.",
+  "lead_corrections_after_owner_rounds": [
+    {
+      "lead_correction": 1,
+      "category": "wrong new Rust regression expectation; not upstream behavior test",
+      "before_module_sha256": "dd66b94dd4936cb440559cd7b58b10c60f8de2509581d9ec59e107fa7d6b4fed",
+      "after_module_sha256": "739d29d71996845ac671ea870d266383cf3cba73b4c9b910537d515267ac3aec",
+      "change": "ONLY expected superclass literal GradleImportingTestCase to HeavyPlatformTestCase",
+      "original_source_line": 59,
+      "original_sha256": "e63aa8bcd300922c731ba1c27be470dcafd808021c8906082d62f8f0e7e6c762",
+      "failure_evidence": "runtime-failure-dd66b94.json",
+      "original_fixtures_and_assertions_retained": true
+    },
+    {
+      "lead_correction": 2,
+      "category": "new fixture setup strict Clippy",
+      "before_module_sha256": "dd66b94dd4936cb440559cd7b58b10c60f8de2509581d9ec59e107fa7d6b4fed",
+      "after_module_sha256": "739d29d71996845ac671ea870d266383cf3cba73b4c9b910537d515267ac3aec",
+      "change": "ONLY remove redundant selected.clone() in serde_json::json! macro",
+      "failure_evidence": "clippy-failure-dd66b94.json",
+      "assertions_and_selection_behavior_retained": true
+    }
+  ],
+  "actual_component_runs": [
+    {
+      "module_sha256": "dd66b94dd4936cb440559cd7b58b10c60f8de2509581d9ec59e107fa7d6b4fed",
+      "tests": "107 passed;1 failed;0 ignored;0 filtered",
+      "test_measurement": "xtask-tests-dd66b94.measurement.json",
+      "strict_clippy": "FAIL redundant clone",
+      "clippy_measurement": "xtask-clippy-dd66b94.measurement.json",
+      "full_workspace_fmt": "PASS",
+      "fmt_measurement": "workspace-fmt-dd66b94.measurement.json"
+    },
+    {
+      "module_sha256": "739d29d71996845ac671ea870d266383cf3cba73b4c9b910537d515267ac3aec",
+      "tests": "108 passed;0 failed;0 ignored;0 filtered",
+      "test_measurement": "xtask-tests-739d29d.measurement.json",
+      "strict_clippy": "PASS",
+      "clippy_measurement": "xtask-clippy-739d29d.measurement.json",
+      "CLI_build_invocation": "not run; performance gate pending"
+    }
+  ],
+  "current_pending_performance_finding": {
+    "status": "Corrected by separately reviewed/authorized lead production cycle1 on68bfab0; static code round5 and performance round2 PASS, actual114test/CLI gates pending",
+    "findings": [
+      "long package retained/copied into class and method owners before output budget",
+      "class annotation prefix can bypass full-header byte check"
+    ],
+    "withdrawn_preliminary_claim": "dotted import-chain suffixes do not cause claimed quadratic imports; reviewer corrected before final report",
+    "report": "reviews/new-junit4-performance-round1.md",
+    "runtime_claim": false,
+    "previous_recorded_status": "static finding escalated; no production correction applied"
+  },
+  "lead_production_corrective_cycles": [
+    {
+      "cycle": 1,
+      "trigger": "two P2 static performance findings after three owner rounds and two lead test corrections",
+      "source_failure_report": "reviews/new-junit4-performance-round1.md",
+      "design_report": "metadata-budget-design.md",
+      "design_sha256": "5413ca6c1a9eeb0002a43bb00622cb303bb7a3c88170d4e39e13db58dbbe0dd1",
+      "independent_design_review": "PASS reviews/new-junit4-performance-design-round1.md",
+      "lead_exact_design_authorization": true,
+      "before_module_sha256": "739d29d71996845ac671ea870d266383cf3cba73b4c9b910537d515267ac3aec",
+      "after_module_sha256": "68bfab04874226583230716ecbb59b7291ba73a4fc54ae62ee1ebc6f19f4700f",
+      "changes": [
+        "aggregate pre-allocation metadata string accounting shared across selected files",
+        "expanded annotation/modifier class-header guard before copying",
+        "bounded JSON writer before Vec growth including newline"
+      ],
+      "appended_stress_groups": 6,
+      "authored_component_tests": 40,
+      "existing34_test_helper_region_byte_identical": true,
+      "existing_test_region_sha256": "cf2d1d526e84f37be306586d0b0152ce1baf8e65e289f50519e191103b0d1781",
+      "runtime": "not run; root Cargo lease"
+    }
+  ]
+}

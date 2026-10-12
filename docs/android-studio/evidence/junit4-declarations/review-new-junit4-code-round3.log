@@ -1,0 +1,54 @@
+# JUnit4 declaration task: code review round 3
+
+Verdict: **FAIL** for one remaining qualified-prefix shadowing edge.
+Owner fix round 2 resolves the malformed-alias finding from code review round 2.
+
+Reviewed module SHA-256:
+a4631e22d60be5b1e8488aa50ea5980462221c3eb4ca52c30c9810a6b991c8c3
+
+## Blocking finding
+
+**P2 — Class type parameters named org do not prevent qualified annotation
+confirmation** (android_junit4_declarations.rs, line 1039; confirmation at
+line 1211). The class-header pass includes Test in its shadowing checks but
+omits org. Qualified confirmation checks declared/imported org names and
+inherited scope, but neither of the following owners has a declared supertype:
+
+~~~java
+class Suite<org> {
+  @org.junit.Test public void actual() {}
+}
+~~~
+
+~~~kotlin
+class Suite<org> {
+  @org.junit.Test fun actual() {}
+}
+~~~
+
+The known class type parameter shadows the leading qualifier. These declarations
+must retain their source/header/annotation/method facts while leaving that
+reference unresolved. Include org class type parameters in prefix-shadowing
+analysis, with Java and Kotlin regressions. Preserve the existing generic Test
+negative assertion.
+
+This is the new task's second owner fix already reviewed; the next consolidation
+is owner fix round 3. Its history remains separate from the prior reference
+archive discovery task.
+
+## Resolved checks
+
+- A missing or invalid Kotlin alias now disables confirmation instead of
+  re-entering the plain explicit-import path.
+- Java as imports disable confirmation, including exact qualified spelling.
+- Missing, reserved, dollar and empty escaped alias negatives retain import
+  evidence and unresolved method candidates.
+- The earlier text-block, enum/import-conflict and exact mirror-line fixes remain
+  intact. The fixture selection and canonical inputs remain unchanged.
+- Runtime counts remain null, applicability unreviewed, completeness false,
+  archive membership revalidation false and behavioral parity credit zero.
+
+Review was static and read-only. No Cargo, cache mutation, repository edit or
+execution occurred; only this requested external report was written. The 33
+authored regressions, required clippy, matching CLI, full workspace and full-app
+validation remain pending.

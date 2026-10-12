@@ -1,0 +1,15 @@
+{
+  "command": [
+    "gradle",
+    "--no-daemon",
+    "--console=plain",
+    "--rerun-tasks",
+    "--init-script",
+    "/workspace/android-studio-source-providers/crates/android_tools/src/project_model.gradle",
+    ":app:createAssetsDemoDebug",
+    ":app:createAssetsDemoRelease",
+    "kodaAndroidProjectModel"
+  ],
+  "exit_code": 0,
+  "elapsed_seconds": 13.069135603996983
+}

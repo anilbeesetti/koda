@@ -1,0 +1,207 @@
+{
+  "source_commit": "f763baebb6d0970b283f759967d7980084317e67",
+  "physical_executable": "/tmp/android-studio-sync-console-link-output/koda-sync-console-400429",
+  "bytes": 1359525048,
+  "sha256": "d062901fa63e80c1d442f8d12e8c5653ba42c54827c75ae830ba2743af36b11c",
+  "fresh_current_worktree_compiler_records": [
+    {
+      "reason": "compiler-artifact",
+      "package_id": "path+file:///workspace/android-studio-sync-console-filter/crates/android_tools#0.1.0",
+      "manifest_path": "/workspace/android-studio-sync-console-filter/crates/android_tools/Cargo.toml",
+      "target": {
+        "kind": [
+          "lib"
+        ],
+        "crate_types": [
+          "lib"
+        ],
+        "name": "android_tools",
+        "src_path": "/workspace/android-studio-sync-console-filter/crates/android_tools/src/android_tools.rs",
+        "edition": "2024",
+        "doc": true,
+        "doctest": false,
+        "test": true
+      },
+      "profile": {
+        "opt_level": "0",
+        "debuginfo": 0,
+        "debug_assertions": true,
+        "overflow_checks": true,
+        "test": false
+      },
+      "features": [
+        "bundled-preview"
+      ],
+      "filenames": [
+        "/workspace/.cache/zed/target/debug/deps/libandroid_tools-6d8abc02ff6a24e4.rlib",
+        "/workspace/.cache/zed/target/debug/deps/libandroid_tools-6d8abc02ff6a24e4.rmeta"
+      ],
+      "executable": null,
+      "fresh": false
+    },
+    {
+      "reason": "compiler-artifact",
+      "package_id": "path+file:///workspace/android-studio-sync-console-filter/crates/android_ui#0.1.0",
+      "manifest_path": "/workspace/android-studio-sync-console-filter/crates/android_ui/Cargo.toml",
+      "target": {
+        "kind": [
+          "lib"
+        ],
+        "crate_types": [
+          "lib"
+        ],
+        "name": "android_ui",
+        "src_path": "/workspace/android-studio-sync-console-filter/crates/android_ui/src/android_ui.rs",
+        "edition": "2024",
+        "doc": true,
+        "doctest": false,
+        "test": true
+      },
+      "profile": {
+        "opt_level": "0",
+        "debuginfo": 0,
+        "debug_assertions": true,
+        "overflow_checks": true,
+        "test": false
+      },
+      "features": [
+        "bundled-preview"
+      ],
+      "filenames": [
+        "/workspace/.cache/zed/target/debug/deps/libandroid_ui-97bc8498257a1d29.rlib",
+        "/workspace/.cache/zed/target/debug/deps/libandroid_ui-97bc8498257a1d29.rmeta"
+      ],
+      "executable": null,
+      "fresh": false
+    },
+    {
+      "reason": "compiler-artifact",
+      "package_id": "path+file:///workspace/android-studio-sync-console-filter/crates/icons#0.1.0",
+      "manifest_path": "/workspace/android-studio-sync-console-filter/crates/icons/Cargo.toml",
+      "target": {
+        "kind": [
+          "lib"
+        ],
+        "crate_types": [
+          "lib"
+        ],
+        "name": "icons",
+        "src_path": "/workspace/android-studio-sync-console-filter/crates/icons/src/icons.rs",
+        "edition": "2024",
+        "doc": true,
+        "doctest": false,
+        "test": true
+      },
+      "profile": {
+        "opt_level": "0",
+        "debuginfo": 0,
+        "debug_assertions": true,
+        "overflow_checks": true,
+        "test": false
+      },
+      "features": [],
+      "filenames": [
+        "/workspace/.cache/zed/target/debug/deps/libicons-592bac96a8e676b7.rlib",
+        "/workspace/.cache/zed/target/debug/deps/libicons-592bac96a8e676b7.rmeta"
+      ],
+      "executable": null,
+      "fresh": false
+    },
+    {
+      "reason": "compiler-artifact",
+      "package_id": "path+file:///workspace/android-studio-sync-console-filter/crates/zed#1.23.0",
+      "manifest_path": "/workspace/android-studio-sync-console-filter/crates/zed/Cargo.toml",
+      "target": {
+        "kind": [
+          "bin"
+        ],
+        "crate_types": [
+          "bin"
+        ],
+        "name": "koda",
+        "src_path": "/workspace/android-studio-sync-console-filter/crates/zed/src/main.rs",
+        "edition": "2024",
+        "doc": true,
+        "doctest": false,
+        "test": true
+      },
+      "profile": {
+        "opt_level": "0",
+        "debuginfo": 0,
+        "debug_assertions": true,
+        "overflow_checks": true,
+        "test": false
+      },
+      "features": [],
+      "filenames": [
+        "/workspace/.cache/zed/target/debug/koda"
+      ],
+      "executable": "/workspace/.cache/zed/target/debug/koda",
+      "fresh": false
+    },
+    {
+      "reason": "compiler-artifact",
+      "package_id": "path+file:///workspace/android-studio-sync-console-filter/crates/zed#1.23.0",
+      "manifest_path": "/workspace/android-studio-sync-console-filter/crates/zed/Cargo.toml",
+      "target": {
+        "kind": [
+          "custom-build"
+        ],
+        "crate_types": [
+          "bin"
+        ],
+        "name": "build-script-build",
+        "src_path": "/workspace/android-studio-sync-console-filter/crates/zed/build.rs",
+        "edition": "2024",
+        "doc": false,
+        "doctest": false,
+        "test": false
+      },
+      "profile": {
+        "opt_level": "0",
+        "debuginfo": 0,
+        "debug_assertions": true,
+        "overflow_checks": true,
+        "test": false
+      },
+      "features": [],
+      "filenames": [
+        "/workspace/.cache/zed/target/debug/build/zed-53eb77b9214738dd/build-script-build"
+      ],
+      "executable": null,
+      "fresh": false
+    }
+  ],
+  "actual_dynamic_currentGit_build_script_record": [
+    {
+      "reason": "build-script-executed",
+      "package_id": "path+file:///workspace/android-studio-sync-console-filter/crates/zed#1.23.0",
+      "linked_libs": [],
+      "linked_paths": [],
+      "cfgs": [],
+      "env": [
+        [
+          "TARGET",
+          "x86_64-unknown-linux-gnu"
+        ],
+        [
+          "ZED_COMMIT_SHA",
+          "f763baebb6d0970b283f759967d7980084317e67"
+        ]
+      ],
+      "out_dir": "/workspace/.cache/zed/target/debug/build/zed-32966e9318bcebc4/out"
+    }
+  ],
+  "terminal_Cargo_build_finished": {
+    "reason": "build-finished",
+    "success": true
+  },
+  "sole_output_value_changed": true,
+  "CC_receipt": "/workspace/android-studio-artifacts/sync-console-filter/fullapp-preparation/koda-sync-console-400429.json",
+  "CC_receipt_sha256": "28c4df76a1df2dc69cc8dcbfb0e38e15d502abd5b3420ef8d2a4e2e9ce7b98f0",
+  "publication_receipt": "/workspace/android-studio-artifacts/sync-console-filter/fullapp-preparation/koda-sync-console-400429-publication.json",
+  "publication_receipt_sha256": "3e8b1304156de7c8dd6a758893d569b33562681263ee357cfefb23c4427fe204",
+  "whole_Source_index_main_protected_oldapp_privatealias_frozen3CLIs": "PASS",
+  "native_UI_started": false,
+  "fullapp_workflow_review_and_merge_pending": true
+}

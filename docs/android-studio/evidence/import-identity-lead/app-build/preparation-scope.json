@@ -1,0 +1,11 @@
+{
+  "source_commit": "a418947fcacd49c259a83cfc7c9a7c640552117c",
+  "scope": "Preparation only; no compiler/Cargo/alias/link/runtime actions",
+  "original_helper": "/workspace/android-studio-artifacts/parallel-sync-integration/app-build/cc.rs",
+  "original_sha256": "986a3ee63a40b574ada793cf241a8db0cd640fadf8708cbc3bceec597bacfa09",
+  "new_helper": "/workspace/android-studio-artifacts/import-identity-integration/app-build/cc.rs",
+  "new_sha256": "1be51b477135a4be865650db1b09747fc9b0b20b4a31cddcd6d0e90d609daf9f",
+  "exact_inverse_constant_path_label_substitution": true,
+  "EXPECTED_output_unchanged": "/workspace/.cache/zed/target/debug/deps/koda-145bb81fa8b08935",
+  "Root_full_app_capacity_preflight_and_independent_probe_review": "pending"
+}

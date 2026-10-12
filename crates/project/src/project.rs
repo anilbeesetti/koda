@@ -1,5 +1,6 @@
 pub mod agent_registry_store;
 pub mod agent_server_store;
+mod android_context;
 mod android_resources;
 pub mod bookmark_store;
 pub mod buffer_store;
@@ -217,6 +218,11 @@ pub enum OpenedBufferEvent {
 /// Can be either local (for the project opened on the same host) or remote.(for collab projects, browsed by multiple remote users).
 pub struct Project {
     android_model: android_tools::project_model::ModelState,
+    android_context: android_tools::project_context::ContextStore,
+    android_context_observers: HashMap<
+        android_tools::project_context::RootHandle,
+        HashMap<PathBuf, android_context::InputObserver>,
+    >,
     active_entry: Option<ProjectEntryId>,
     buffer_ordered_messages_tx: mpsc::UnboundedSender<BufferOrderedMessage>,
     languages: Arc<LanguageRegistry>,
@@ -338,6 +344,7 @@ pub struct ToastLink {
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum Event {
+    AndroidProjectContextChanged,
     LanguageServerAdded(LanguageServerId, LanguageServerName, Option<WorktreeId>),
     SupplementaryLanguageServerAdded(LanguageServerId, LanguageServerName),
     LanguageServerRemoved(LanguageServerId),
@@ -1396,6 +1403,8 @@ impl Project {
 
             Self {
                 android_model: Default::default(),
+                android_context: Default::default(),
+                android_context_observers: Default::default(),
                 buffer_ordered_messages_tx: tx,
                 collaborators: Default::default(),
                 worktree_store,
@@ -1624,6 +1633,8 @@ impl Project {
 
             let this = Self {
                 android_model: Default::default(),
+                android_context: Default::default(),
+                android_context_observers: Default::default(),
                 buffer_ordered_messages_tx: tx,
                 collaborators: Default::default(),
                 worktree_store,
@@ -1931,6 +1942,8 @@ impl Project {
 
             let mut project = Self {
                 android_model: Default::default(),
+                android_context: Default::default(),
+                android_context_observers: Default::default(),
                 buffer_ordered_messages_tx: tx,
                 buffer_store: buffer_store.clone(),
                 image_store,
@@ -4008,15 +4021,18 @@ impl Project {
                 self.emit_group_key_changed_if_needed(cx);
             }
             WorktreeStoreEvent::WorktreeRemoved(_, id) => {
+                self.remove_android_context(*id, cx);
                 cx.emit(Event::WorktreeRemoved(*id));
                 self.emit_group_key_changed_if_needed(cx);
             }
             WorktreeStoreEvent::WorktreeReleased(_, id) => {
+                self.remove_android_context(*id, cx);
                 self.on_worktree_released(*id, cx);
             }
             WorktreeStoreEvent::WorktreeOrderChanged => cx.emit(Event::WorktreeOrderChanged),
             WorktreeStoreEvent::WorktreeUpdateSent(_) => {}
             WorktreeStoreEvent::WorktreeUpdatedEntries(worktree_id, changes) => {
+                self.invalidate_android_context_inputs(*worktree_id, changes, cx);
                 self.client()
                     .telemetry()
                     .report_discovered_project_type_events(*worktree_id, changes);

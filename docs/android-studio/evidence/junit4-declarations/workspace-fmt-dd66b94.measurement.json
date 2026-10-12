@@ -1,0 +1,15 @@
+{
+  "command": [
+    "cargo",
+    "fmt",
+    "--all",
+    "--",
+    "--check"
+  ],
+  "started_utc": "2026-10-07T16:57:40.034485+00:00",
+  "wall_seconds": 28.95244464999996,
+  "exit_code": 0,
+  "peak_child_rss_kib": 173856,
+  "measurement": "Linux RUSAGE_CHILDREN maxrss and monotonic wall time; full command including compilation for Cargo invocations",
+  "log": "/workspace/android-studio-artifacts/reference-census-next-task/workspace-fmt-dd66b94.log"
+}

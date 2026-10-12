@@ -1,0 +1,19 @@
+Auto-merging crates/android_tools/src/android_tools.rs
+[android-studio-task/1-module-presentation-integration 0c24dffbe2] android: preserve captured module display identities
+ Date: Wed Oct 7 22:08:23 2026 +0000
+ 16 files changed, 7755 insertions(+)
+ create mode 100644 crates/android_tools/src/module_presentation.rs
+ create mode 100644 crates/android_tools/test_data/module_presentation/LICENSE-APACHE
+ create mode 100644 crates/android_tools/test_data/module_presentation/NOTICE
+ create mode 100644 crates/android_tools/test_data/module_presentation/reference/idea/android-navigator/src/com/android/tools/idea/navigator/nodes/AndroidViewModuleNode.java
+ create mode 100644 crates/android_tools/test_data/module_presentation/reference/idea/android-navigator/src/com/android/tools/idea/navigator/nodes/android/AndroidModuleNode.kt
+ create mode 100644 crates/android_tools/test_data/module_presentation/reference/idea/project-system-gradle/src/com/android/tools/idea/projectsystem/gradle/GradleModuleSystem.kt
+ create mode 100644 crates/android_tools/test_data/module_presentation/reference/idea/project-system-gradle/src/com/android/tools/idea/projectsystem/gradle/LinkedAndroidModuleGroupUtils.kt
+ create mode 100644 crates/android_tools/test_data/module_presentation/reference/idea/project-system/src/com/android/tools/idea/projectsystem/AndroidModuleSystem.kt
+ create mode 100644 crates/android_tools/test_data/module_presentation/reference/intellij-core/platform/util-rt/src/com/intellij/openapi/util/text/StringUtilRt.java
+ create mode 100644 crates/android_tools/test_data/module_presentation/reference/intellij-core/platform/util/src/com/intellij/openapi/util/text/StringUtil.java
+ create mode 100644 crates/android_tools/test_data/module_presentation/reference/intellij-core/plugins/gradle/src/org/jetbrains/plugins/gradle/service/project/GradleProjectResolverUtil.java
+ create mode 100644 crates/android_tools/test_data/module_presentation/selection.json
+ create mode 100644 crates/android_tools/tests/module_presentation.rs
+ create mode 100644 docs/android-studio/module-presentation-task.md
+ create mode 100644 docs/android-studio/ports/module-presentation-policy.json

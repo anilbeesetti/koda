@@ -1,0 +1,25 @@
+{
+  "source_commit": "4fb7a80eacc598a786b4b98c809d1df24a1b02ee",
+  "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/navigator/testSrc/com/android/tools/idea/navigator/AndroidProjectViewTest.java#com.android.tools.idea.navigator.AndroidProjectViewTest.testAndroidViewIsDefaultCustomPropertyHandling",
+  "command": [
+    "cargo",
+    "test",
+    "--locked",
+    "--manifest-path",
+    "crates/android_tools/Cargo.toml",
+    "-p",
+    "android_tools",
+    "--test",
+    "project_view_preferences_reference",
+    "test_android_view_is_default_custom_property_handling",
+    "--",
+    "--exact",
+    "--show-output"
+  ],
+  "exit_code": 0,
+  "elapsed_seconds": 0.6772735530030332,
+  "log": {
+    "path": "docs/android-studio/evidence/parallel-sync-integration-AndroidProjectViewTest-testAndroidViewIsDefaultCustomPropertyHandling.log",
+    "sha256": "b20f5422e62a718d821592db910dab826561e1be73a75f345a88525911e6412e"
+  }
+}

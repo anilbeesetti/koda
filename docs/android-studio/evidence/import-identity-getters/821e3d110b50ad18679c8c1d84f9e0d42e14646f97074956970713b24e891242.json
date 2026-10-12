@@ -1,0 +1,117 @@
+{
+  "schema": 1,
+  "reviewer": "/root/import_identity_getters_owner/identity_static_ux_review",
+  "area": "UX",
+  "verdict": "PASS",
+  "scope": "Source-only UX addendum before ordinary dependency merge; recorded default runtime evidence inspected but no runtime commands executed by reviewer",
+  "reviewed_at_utc": "2026-10-08T01:33:59.692540+00:00",
+  "source_head": "6fb7f94173320326bd523a8af67db77916ac7da3",
+  "previous_source_head": "e0cfad266fce1a29e065ef016815f695ced9810b",
+  "prior_reports_preserved": {
+    "ux-static.md": "20cd9ccd4981ec06fadef8c501d9286cd427c8e7a5d15fb94ba25e5fa9ea2e6f",
+    "ux-static.json": "2bbcb04adc4e04c2e920e6fe714b7782eee9c98ffc10d405d320d1fbbf6a9a10"
+  },
+  "findings": [],
+  "delta": {
+    "source_files_changed": [
+      "crates/android_tools/src/import_facts.rs",
+      "crates/android_tools/tests/import_facts.rs"
+    ],
+    "production_change": "Two serde callbacks now invoke the Deserialize trait explicitly, preserving object-only wrapper/result decoding instead of bypassing it through remote inherent functions.",
+    "existing_supplemental_tests": 28,
+    "existing_expectations_preserved": true,
+    "diagnostic_only_test_change": "Positional rejection loop still requires Malformed at every same boundary and now prints the failing pointer.",
+    "additional_regressions": [
+      "nullable_observation_wrappers_reject_positional_arrays",
+      "unavailable_failure_payload_requires_an_object"
+    ],
+    "total_supplemental_tests": 30
+  },
+  "unchanged_ux_contracts": [
+    "Basic/V2, project selection and shipping UI consumers unchanged",
+    "No guessed imported names, Kotlin facets, logical tree or LSP state",
+    "Absent, unavailable, explicit-null and empty names remain distinct",
+    "Root name and folder remain independent; ordered raw holders, nested paths and name collisions preserved",
+    "Typed model/selection staleness and included-build rejection retained",
+    "Optional getter failures do not erase Basic model",
+    "taskGraph.whenReady timing and authored late-configuration oracle unchanged; actual Gradle verification remains pending"
+  ],
+  "whole_source_guard": {
+    "paths": 4738,
+    "fixed_seven_patterns": [
+      ".",
+      ":(glob,exclude)docs/android-studio/*.md",
+      ":(exclude)docs/android-studio/reference-manifest.json",
+      ":(exclude)docs/android-studio/test-parity.json",
+      ":(glob,exclude)docs/android-studio/ports/*.json",
+      ":(glob,exclude)docs/android-studio/evidence/**/*.log",
+      ":(glob,exclude)docs/android-studio/evidence/**/*.json"
+    ],
+    "current_source_digest": "65c59b01984c8243e6a1595ffbc577c5004d47dc66185b3f77c7faf3a176e91c",
+    "snapshot_sha256": "34d2424d84996fa63a899a6d7493458ccbe90317db1a55135c73c61c9e15a908",
+    "all_actual_hashes_match_snapshot_and_default_test_epoch": true,
+    "repo_clean": true
+  },
+  "current_source_hashes": {
+    "crates/android_tools/src/import_facts.rs": "817b9fa28240385e48fd68df1296619c6cb0ff4e6b219ef91b349ec563e3fafa",
+    "crates/android_tools/test_data/import_facts/wire-template.json": "2bb32d6bf635c000bfabcf0bb3c14834d0fc05e64c04524b2f402703a3da85fc",
+    "crates/android_tools/src/project_model.gradle": "887ddeb4ff9564792f648f4221f8b8738a31bc9434a876091ad012bd1defc2b9",
+    "crates/android_tools/src/project_model.rs": "06c707d1553896b821b071e2a638e52a6923fa02ca6e24d670d67ca07e0a7a4c",
+    ".rules": "99b5278fdebe4ec30dd9634f5f580f0086fdd8eb203e30eaeed55c4158f21d28",
+    "crates/android_tools/tests/import_facts.rs": "622dfb8c33596a9546583afefe0d65d21530e7fc933b87690c327616c4d976bc",
+    "crates/android_tools/src/android_tools.rs": "3f1c28a5d58541490a34efe8e0756cc1df6dc4069b58b387db0caa5393f7925b",
+    "crates/android_tools/src/generated_artifacts.rs": "2d56897f92de26bed4f556e6a2bea2cb3a4220a1da5b8eb83231aa8317dd7a52",
+    "crates/android_tools/test_data/import_facts/late_configuration.gradle": "c9f33742f6d0d5d9fcd26433f14d084593048597bd1030b17aec4fddcc249dac"
+  },
+  "reference_files_verified": 6,
+  "default_runtime_evidence": {
+    "status": "PASS_RECORDED_AND_HASH_VERIFIED",
+    "executed_by_reviewer": false,
+    "supplemental_tests": {
+      "passed": 30,
+      "failed": 0,
+      "ignored": 0,
+      "filtered": 0,
+      "all_current_test_names_match_raw_results": true
+    },
+    "library": "PASS",
+    "workspace_fmt": "PASS",
+    "receipts": [
+      {
+        "name": "tests",
+        "exit_code": 0,
+        "stdout_sha256": "daa8a4e3b07be60c545d74eaba47fd9282b69c7109ce164e08e569f8cafe55a9",
+        "stderr_sha256": "9de1258d4da04c4b2b0d20945f13a11f41d16debf5ede461a4a715f8c31088b3",
+        "receipt_sha256": "e5896aa713c88e6ea88c59feb6bd03bb9f5a9ed9624012a50f88121b5abd3888",
+        "independently_hash_verified": true
+      },
+      {
+        "name": "library",
+        "exit_code": 0,
+        "stdout_sha256": "3d9c1662eb6a17a8ac07e4aeb23a679cf65f28460f1cabd035e49f49e89ccd20",
+        "stderr_sha256": "35fc72bacfe065673ddba4b566b6467dc5b94a887c640891f8cbf1f5e1028448",
+        "receipt_sha256": "1c146a6879ffd28ea46a38ed0437146c0113d0f856fe752615aa2ba11c14f966",
+        "independently_hash_verified": true
+      },
+      {
+        "name": "format",
+        "exit_code": 0,
+        "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "receipt_sha256": "2c44dc79ced1e4cab11b65ee68e6ea6dc6ab16b83a91358058d84949dfeb3670",
+        "independently_hash_verified": true
+      }
+    ],
+    "summary_sha256": "9ddc3369b8a750b8a8727f4ceb4139b03fd25533d0143592dae61ce591a89226"
+  },
+  "pending": [
+    "Root current-source full app build/run and native UX validation",
+    "Owner/Root full tooling all-features tests and strict Clippy",
+    "Official Gradle/SDK captures and late-configuration oracle comparison",
+    "Current dependency-integrated full runtime/CI and final lead gates"
+  ],
+  "runtime_commands_executed_by_reviewer": 0,
+  "original_parity_credit": 0,
+  "global_ide_completion": false,
+  "dependency_merge": "Not performed or credited here; Root c1ce parallel-sync ordinary integration follows review closure"
+}

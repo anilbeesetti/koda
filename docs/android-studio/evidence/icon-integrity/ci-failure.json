@@ -1,0 +1,16 @@
+{
+  "ci_run": 37643890651,
+  "source_commit": "7b2bd3e7ffc07156c7193baf156c5041bef256c1",
+  "ci_url": "https://github.com/anilbeesetti/koda/actions/runs/37643890651",
+  "raw_bytes": 57207,
+  "raw_sha256": "ef9fcc21202e16519d293241d37727ec540f4880554c515269040fdbb74f9d40",
+  "compressed_bytes": 6905,
+  "compressed_sha256": "bb66b0a39774960006cdd508f28d40d38009edee4ba4f054084f57c599755f23",
+  "decompressed_bytes_identical": true,
+  "failed_test": "icons::tests::test_no_dangling_icons",
+  "error": "VariantNotFound",
+  "passed": 10348,
+  "failed": 1,
+  "existing_ignored": 23,
+  "current_source_retested": false
+}

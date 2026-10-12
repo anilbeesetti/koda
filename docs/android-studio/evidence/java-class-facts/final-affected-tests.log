@@ -1,0 +1,170 @@
+   Compiling android_tools v0.1.0 (/workspace/android-studio-java-class-facts/crates/android_tools)
+    Finished `test` profile [unoptimized] target(s) in 5.38s
+     Running unittests src/android_tools.rs (/workspace/.cache/zed/target/debug/deps/android_tools-7334319486a8ebb2)
+
+running 84 tests
+test java_class_facts::tests::annotated_package_and_static_or_wildcard_imports_preserve_package_facts ... ok
+test gradle_import::tests::changed_settings_are_rejected_before_publishing_copies ... ok
+test java_class_facts::tests::annotations_with_class_literals_arrays_and_nested_annotations_are_not_declarations ... ok
+test java_class_facts::tests::comments_and_escaped_literals_cannot_inject_class_facts ... ok
+test gradle_import::tests::publish_failure_rolls_back_copies_and_new_parent_directories ... ok
+test java::tests::java_model_preserves_user_files_and_validates_selected_variant ... ok
+test java_class_facts::tests::dollar_identifiers_are_actual_declarations ... ok
+test java_class_facts::tests::delimiter_nesting_is_bounded_without_recursion ... ok
+test java_class_facts::tests::empty_sources_and_empty_declarations_have_no_invented_classes ... ok
+test java_class_facts::tests::extracts_the_exact_original_generated_build_config_input ... ok
+test java_class_facts::tests::invalid_code_characters_inside_balanced_bodies_do_not_produce_facts ... ok
+test java_class_facts::tests::generic_supertypes_and_records_accept_type_annotations_and_wildcards ... ok
+test java_class_facts::tests::invalid_utf8_reports_the_first_invalid_byte ... ok
+test java_class_facts::tests::line_comments_end_at_cr_lf_or_crlf ... ok
+test java_class_facts::tests::malformed_declaration_headers_return_no_partial_facts ... ok
+test java_class_facts::tests::malformed_escapes_character_literals_and_text_block_openings_are_rejected ... ok
+test java_class_facts::tests::modifiers_generic_bounds_and_sealed_hierarchies_keep_declaration_names ... ok
+test java_class_facts::tests::nested_local_and_anonymous_types_do_not_become_top_level_facts ... ok
+test java_class_facts::tests::non_ascii_identifiers_do_not_get_truncated_to_ascii_names ... ok
+test java_class_facts::tests::annotation_and_array_delimiters_share_the_enclosing_generic_depth_budget ... ok
+test java_class_facts::tests::preserves_multiple_top_level_type_kinds_and_source_order ... ok
+test java_class_facts::tests::primitive_arrays_are_reference_type_arguments_including_annotated_dimensions ... ok
+test java_class_facts::tests::reads_the_unchanged_reference_activity_instead_of_a_filename ... ok
+test java_class_facts::tests::text_blocks_hide_type_keywords_and_delimiters_after_unicode_content ... ok
+test java_class_facts::tests::unbalanced_nested_delimiters_return_the_actual_failure_offset ... ok
+test java_class_facts::tests::unicode_comments_and_literals_keep_actual_utf8_navigation_offsets ... ok
+test java_class_facts::tests::unicode_escape_preprocessing_is_explicit_even_inside_comments_or_literals ... ok
+test java_class_facts::tests::unsupported_top_level_shapes_are_explicit_not_empty_successes ... ok
+test java_class_facts::tests::unterminated_comments_and_literals_are_explicit ... ok
+test kotlin::tests::java_home_honors_the_installer_override_and_validates_explicit_jdks ... ok
+test kotlin::tests::official_resource_guard_uses_managed_cache ... ok
+test kotlin::tests::official_server_requires_the_tested_importer ... ok
+test kotlin::tests::official_setup_needs_no_build_and_preserves_workspace_files ... ok
+test logcat::tests::binary_records_survive_every_chunk_boundary_and_preserve_multiline ... ok
+test logcat::tests::event_buffers_decode_nested_values_and_reject_truncation ... ok
+test logcat::tests::export_import_round_trip_and_threadtime ... ok
+test logcat::tests::package_actions_reject_shell_syntax_and_quoted_values_keep_backslashes ... ok
+test logcat::tests::process_names_keep_secondary_processes ... ok
+test logcat::tests::regex_search_highlights_unicode_and_validates_patterns ... ok
+test logcat::tests::ring_buffer_enforces_byte_budget_and_stable_identity ... ok
+test logcat::tests::studio_json_files_preserve_processes_and_multiline_timestamps ... ok
+test logcat::tests::studio_query_semantics_and_validation ... ok
+test preview::bundle::tests::failed_extraction_does_not_publish_a_cache_entry ... ok
+test java_class_facts::tests::large_multiple_declaration_inputs_keep_the_last_actual_navigation_target ... ok
+test preview::bundle::tests::refuses_cache_symlinks_and_preserves_java_permissions ... ok
+test preview::bundle::tests::simultaneous_first_use_publishes_one_complete_runtime ... ok
+test preview::bundle::tests::unpacked_runtime_is_reused_and_repaired ... ok
+test preview::tests::filters_by_bytecode_source_file_and_handles_kotlin_file_facades ... ok
+test preview::tests::gallery_keeps_parameter_values_and_individual_render_failures ... ok
+test preview::tests::render_directories_are_isolated_and_cleaned_up_without_project_files ... ok
+test preview::tests::renderer_configuration_omits_discovery_metadata ... ok
+test preview::tests::source_locations_disambiguate_packages_and_unsaved_overlays ... ok
+test preview::tests::temporary_source_overlays_preserve_files_and_duplicate_filenames ... ok
+test preview::tests::validates_preview_model_and_results ... ok
+test project_model::tests::default_variant_ties_null_types_and_lexical_fallbacks ... ok
+test project_model::tests::default_variants_debug_preferred ... ok
+test project_model::tests::default_variants_mismatched_product_flavour_length ... ok
+test project_model::tests::default_variants_on_empty ... ok
+test project_model::tests::default_variants_one_variant ... ok
+test project_model::tests::default_variants_preferred_build_type ... ok
+test project_model::tests::default_variants_preferred_flavor_in_second_dimension_only ... ok
+test project_model::tests::default_variants_preferred_flavors_in_two_dimensions ... ok
+test project_model::tests::default_variants_preferred_product_flavor_over_debug_build_type ... ok
+test project_model::tests::exported_default_variant_metadata_is_selected_in_rust_and_validated ... ok
+test project_model::tests::exporters_are_request_owned_and_selection_does_not_write_a_project_script ... ok
+test project_model::tests::flavor_fallbacks_tests_dynamic_features_and_missing_generated_roots ... ok
+test project_model::tests::java_and_preview_adapters_use_the_selected_graph_and_component_scopes ... ok
+test project_model::tests::legacy_provider_metadata_stays_unknown_and_assets_retain_missing_roots ... ok
+test project_model::tests::module_default_is_validated_and_selects_fresh_application_artifacts ... ok
+test project_model::tests::provider_candidates_preserve_names_order_and_shared_nested_ambiguity ... ok
+test project_model::tests::publish_model_for_a_symlink_opened_root ... ok
+test project_model::tests::rejects_conflicting_test_dependency_variants_and_removed_variants ... ok
+test project_model::tests::rejects_invalid_provider_names_duplicates_and_escaping_roots ... ok
+test project_model::tests::rejects_outdated_sync_variant_aba_failed_sync_and_project_aba ... ok
+test project_model::tests::validates_model_schema_duplicate_records_paths_and_owned_cache ... ok
+test tests::android_targets_devices_and_artifacts ... ok
+test tests::device_abis_preserve_preference_and_support_legacy_properties ... ok
+test tests::nextplayer_selects_one_apk_for_each_device_and_a_universal_for_preview ... ok
+test tests::rejects_ambiguous_and_unsupported_outputs ... ok
+test tests::selected_filtered_apk_retains_filesystem_and_variant_checks ... ok
+test tests::selection_matches_studio_version_code_and_abi_order ... ok
+test java_class_facts::tests::declaration_count_limit_never_exposes_partial_results ... ok
+test java_class_facts::tests::source_size_limit_is_checked_before_utf8_or_tokenization ... ok
+test preview::bundle::tests::real_embedded_runtime_runs_without_an_installer_or_local_jdk ... ok
+
+test result: ok. 84 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.92s
+
+     Running tests/gradle_import_reference.rs (/workspace/.cache/zed/target/debug/deps/gradle_import_reference-04456d8e242bc9e5)
+
+running 20 tests
+test already_registered_module_is_not_remapped_to_unrelated_sources ... ok
+test circular_dependencies ... ok
+test comments_are_not_dependencies_and_unterminated_input_is_rejected ... ok
+test destination_inside_source_is_rejected_without_recursive_copy ... ok
+test external_sources_are_copied_and_settings_content_is_preserved ... ok
+test import_simple_gradle_project ... ok
+test import_subproject_with_custom_location ... ok
+test import_subprojects ... ok
+test import_subprojects_with_missing_submodule ... ok
+test kotlin_literal_discovery_and_registration ... ok
+test missing_enclosing_project ... ok
+test missing_required_projects ... ok
+test missing_sources_and_destination_conflicts_leave_target_unchanged ... ok
+test required_projects ... ok
+test symlink_sources_and_destination_parents_are_rejected_without_mutation ... ok
+test transitive_dependencies ... ok
+test true_custom_location_is_registered_without_moving_sources ... ok
+test unix_custom_path_backslashes_are_preserved_and_control_characters_rejected ... ok
+test unsafe_or_overlapping_module_paths_are_rejected_before_copying ... ok
+test unsupported_settings_and_dependencies_do_not_modify_target ... ok
+
+test result: ok. 20 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+     Running tests/project_tree_component.rs (/workspace/.cache/zed/target/debug/deps/project_tree_component-5492bd7c5a79a950)
+
+running 21 tests
+test component_disabling_package_compaction_and_asset_hierarchy ... ok
+test component_conflicting_file_provider_and_module_facts_are_rejected ... ok
+test component_file_ancestor_contradictions_are_rejected ... ok
+test component_empty_resource_types_survive_and_unknown_folders_are_excluded ... ok
+test component_empty_and_missing_roots_are_distinct ... ok
+test component_fixture_package_manifest_and_class_navigation ... ok
+test component_fixture_resource_variants_preserve_every_file_target ... ok
+test component_generated_groups_keep_explicit_facts_and_literal_assets ... ok
+test component_identical_roots_follow_builtin_type_priority ... ok
+test component_google_services_requires_a_direct_module_file ... ok
+test component_input_reordering_preserves_snapshot_and_stable_keys ... ok
+test component_invalid_source_kind_and_unsafe_paths_are_rejected ... ok
+test component_missing_class_metadata_keeps_filename_and_given_offsets ... ok
+test component_original_sample_intentional_failure_is_preserved ... ok
+test component_obsolete_file_facts_and_unknown_provider_are_rejected ... ok
+test component_overlapping_roots_have_distinct_occurrence_keys ... ok
+test component_properties_do_not_infer_physical_main_from_provider_name ... ok
+test component_properties_main_annotation_is_separate_from_visual_text ... ok
+test component_properties_use_first_physical_main_root_without_fallback ... ok
+test component_deep_hierarchy_builds_and_drops_without_recursive_nodes ... ok
+test component_large_flat_project_preserves_targets_with_unique_keys ... ok
+
+test result: ok. 21 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.20s
+
+     Running tests/project_view_preferences_reference.rs (/workspace/.cache/zed/target/debug/deps/project_view_preferences_reference-920b46c1a9286394)
+
+running 19 tests
+test legacy_flag_preserves_property_fallback_without_migration ... ok
+test migration_follows_symlinks_and_retains_read_only_configuration ... ok
+test properties_migration_precedes_vm_options_and_preserves_file_permissions ... ok
+test preferences_round_trip_without_emitting_load_events ... ok
+test test_android_view_is_default ... ok
+test test_android_view_is_default_custom_property_handling ... ok
+test properties_migration_preserves_unrelated_bytes_and_removes_duplicate_escaped_keys ... ok
+test test_android_view_is_default_custom_property_handling_with_custom_properties_file ... ok
+test test_android_view_not_visible_in_non_android_project ... ok
+test test_android_view_is_default_metrics ... ok
+test test_android_view_is_default_custom_property_handling_with_custom_vm_properties_file ... ok
+test test_android_view_not_visible_in_unsupported_project_system ... ok
+test test_show_visibility_icons_when_option_is_selected ... ok
+test test_show_visibility_icons_when_option_is_unselected ... ok
+test unavailable_configuration_migrates_once_with_manual_removal_guidance ... ok
+test unsupported_and_other_identities_do_not_migrate ... ok
+test unreadable_platform_options_do_not_block_custom_options_migration ... ok
+test vm_options_use_last_value_and_remove_all_entries_only_when_exactly_true ... ok
+test long_continued_property_migrates_without_changing_other_entries ... ok
+
+test result: ok. 19 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+

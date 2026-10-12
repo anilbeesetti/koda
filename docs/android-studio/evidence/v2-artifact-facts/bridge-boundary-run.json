@@ -1,0 +1,17 @@
+{
+  "command": [
+    "java",
+    "-cp",
+    "/workspace/android-studio-artifacts/downloads/gradle-9.6.1-bin/gradle-9.6.1/lib/*",
+    "groovy.ui.GroovyMain",
+    "/workspace/android-studio-artifacts/v2-artifact-facts/bridge-boundary-probe.groovy"
+  ],
+  "pid": 254091,
+  "exitCode": 0,
+  "wallSeconds": 1.6061051699944073,
+  "processPeakRssKiB": 189856,
+  "productionBridgeSha256": "508ecc9987932f8d184983f551eca0cb1bc9efa6ed12806dcaff8a0a2f6880b7",
+  "supplementaryOnly": true,
+  "cases": 11,
+  "assertionsLanguage": "Rust driver"
+}

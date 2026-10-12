@@ -1,0 +1,39 @@
+{
+  "source_commit": "4fb7a80eacc598a786b4b98c809d1df24a1b02ee",
+  "original_helper": "/workspace/android-studio-artifacts/module-presentation-integration/app-build/cc.rs",
+  "original_helper_sha256": "4c1afa55f6bce97b187de02f0049e91004487d3a798eb198f1aa152f146909a9",
+  "prepared_helper": "/workspace/android-studio-artifacts/parallel-sync-integration/unit-link/cc.rs",
+  "helper_sha256": "042e58723429235b722a41c4b342ba0c054de734e00a58fcc45dbaea5c173918",
+  "substitutions": {
+    "/workspace/.cache/zed/target/debug/deps/koda-145bb81fa8b08935": "/workspace/.cache/zed/target/debug/deps/android_tools-7334319486a8ebb2",
+    "/workspace/android-studio-artifacts/module-presentation-integration/app-build": "/workspace/android-studio-artifacts/parallel-sync-integration/unit-link",
+    "koda-module-presentation": "android-tools-parallel-unit"
+  },
+  "reverse_substitutions_byte_identical": true,
+  "normal_real_cc": "/usr/bin/cc",
+  "only_redirected_argument": "single final -o output value, only exact unit733 or private Rust probe paths",
+  "output_directory_unchanged": "/tmp/android-studio-link-output",
+  "probe_source_sha256": "e2dcbcec7832d5d82c7e60757ddced1f3fe5db11a96d22091231cd14b68aa941",
+  "source_and_fixture_guard_count": 4730,
+  "static_quality_review": "pending Root independent reviewer",
+  "helper_compile_command": [
+    "rustc",
+    "--edition=2024",
+    "/workspace/android-studio-artifacts/parallel-sync-integration/unit-link/cc.rs",
+    "-o",
+    "/workspace/android-studio-artifacts/parallel-sync-integration/unit-link/cc"
+  ],
+  "real_probe_command": [
+    "rustc",
+    "--edition=2024",
+    "-C",
+    "linker=/workspace/android-studio-artifacts/parallel-sync-integration/unit-link/cc",
+    "/workspace/android-studio-artifacts/parallel-sync-integration/unit-link/probe.rs",
+    "-o",
+    "/workspace/android-studio-artifacts/parallel-sync-integration/unit-link/probe-output"
+  ],
+  "probe_expected_stdout": "real Rust linker probe passed\n",
+  "retry_environment": "source canonical env.sh; prepend only this helper directory to PATH; CARGO_BUILD_JOBS=1; normal Cargo test arguments unchanged",
+  "test_retry": "not started",
+  "UI_output": "not redirected by this helper; separate capacity assessment before UI compilation"
+}

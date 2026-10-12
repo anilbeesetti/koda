@@ -1,0 +1,30 @@
+{
+  "scope": "Corrected bounded-preflight inventory taskreport Markdown",
+  "commands": [
+    [
+      "npx",
+      "--offline",
+      "prettier",
+      "--write",
+      "docs/android-studio/module-presentation-task-report.md"
+    ],
+    [
+      "npx",
+      "--offline",
+      "prettier",
+      "--check",
+      "docs/android-studio/module-presentation-task-report.md"
+    ]
+  ],
+  "exit_codes": [
+    0,
+    0
+  ],
+  "formatter_version": "3.9.9",
+  "result": "PASS",
+  "raw_format_log_sha256": "72b5b746a0733c985b729c54fe5c451d7ca87ef14380905fee478c3543e741e3",
+  "raw_check_log_sha256": "17aa973d3f004560237d9a95171210b0671deff23d61628eecf7322ff5938f20",
+  "current_task_report_sha256": "5c4c6882c370cc89fe9950b93f3d0314eb0ebcb6760436452cbc6470ee89fd27",
+  "prior_format_receipts_preserved": true,
+  "baseline_broad_docs_check": "Earlier read-only check retains two unchanged baseline source violations, no baseline Source file formatted"
+}

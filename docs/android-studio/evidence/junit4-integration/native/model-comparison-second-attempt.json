@@ -1,0 +1,4 @@
+{
+  "status": "failed",
+  "reason": "Validation preparation used wrong JSON path variant.sources; actual schema variant.components[*].sources. Complete current native models already matched previous actual models. No product changes or credit."
+}

@@ -262,8 +262,11 @@ impl Panel for LogcatPanel {
     fn min_size(&self, _: &Window, _: &App) -> Option<Pixels> {
         Some(px(120.))
     }
-    fn icon(&self, _: &Window, _: &App) -> Option<IconName> {
-        Some(IconName::Logcat)
+    fn enabled(&self, cx: &App) -> bool {
+        crate::project_surfaces::context_capabilities(&self.workspace, cx).android_devices
+    }
+    fn icon(&self, _: &Window, cx: &App) -> Option<IconName> {
+        self.enabled(cx).then_some(IconName::Logcat)
     }
     fn icon_tooltip(&self, _: &Window, _: &App) -> Option<&'static str> {
         Some("Logcat")
@@ -331,8 +334,31 @@ mod tests {
         cx: &mut TestAppContext,
     ) {
         let (workspace, _, cx) = super::super::android_logcat::tests::viewer(cx, false).await;
+        let project = workspace.read_with(cx, |workspace, _| workspace.project().clone());
+        let buffer = project
+            .update(cx, |project, cx| {
+                project.open_local_buffer("/logcat/settings.gradle.kts", cx)
+            })
+            .await
+            .expect("Owning project editor buffer");
+        workspace.update_in(cx, |workspace, window, cx| {
+            let build = cx.new(|cx| crate::BuildPanel::new(workspace.weak_handle(), cx));
+            crate::project_context::register(workspace, build, window, cx);
+            crate::project_surfaces::tests::publish_catalogue(
+                &project,
+                std::path::Path::new("/logcat"),
+                &[android_tools::project_context::PluginId::AndroidApplication],
+                &[("android", "androidJvm")],
+                true,
+                cx,
+            )
+            .expect("Affirmative Android fixture facts");
+        });
+        cx.run_until_parked();
         let (panel, editor_pane, editor) = workspace.update_in(cx, |workspace, window, cx| {
-            let editor = cx.new(|cx| editor::Editor::single_line(window, cx));
+            let editor = cx.new(|cx| {
+                editor::Editor::for_buffer(buffer.clone(), Some(project.clone()), window, cx)
+            });
             workspace.add_item_to_active_pane(Box::new(editor.clone()), None, true, window, cx);
             let editor_pane = workspace.active_pane().clone();
             let panel = cx.new(|cx| LogcatPanel::new(workspace, window, cx));

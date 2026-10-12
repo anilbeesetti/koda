@@ -30,7 +30,11 @@ fn compile_time_release_channel_name() -> String {
 
 #[cfg(not(__do_not_set_zed_release_channel))]
 fn compile_time_release_channel_name() -> String {
-    include_str!("../../zed/RELEASE_CHANNEL").trim().to_string()
+    if cfg!(debug_assertions) {
+        "dev".to_string()
+    } else {
+        include_str!("../../zed/RELEASE_CHANNEL").trim().to_string()
+    }
 }
 
 #[doc(hidden)]
@@ -277,7 +281,28 @@ impl FromStr for ReleaseChannel {
 
 #[cfg(test)]
 mod tests {
-    use super::ReleaseChannel;
+    use super::{ReleaseChannel, compile_time_release_channel_name};
+
+    #[test]
+    fn test_compile_time_release_channel_matches_build_mode() {
+        let expected = option_env!("ZED_RELEASE_CHANNEL").unwrap_or_else(|| {
+            if cfg!(debug_assertions) {
+                "dev"
+            } else {
+                include_str!("../../zed/RELEASE_CHANNEL")
+            }
+        });
+        assert_eq!(compile_time_release_channel_name(), expected.trim());
+    }
+
+    #[test]
+    fn test_app_identifiers_are_distinct() {
+        for (index, channel) in ReleaseChannel::ALL.iter().enumerate() {
+            for other in &ReleaseChannel::ALL[index + 1..] {
+                assert_ne!(channel.app_id(), other.app_id());
+            }
+        }
+    }
 
     #[test]
     fn test_docs_url_for_release_channel() {

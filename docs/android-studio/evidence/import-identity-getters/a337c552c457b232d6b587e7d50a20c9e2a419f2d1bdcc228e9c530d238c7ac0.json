@@ -1,0 +1,22 @@
+{
+  "source_commit": "7e3f72ebfaef39d6e6630dd11fa7dc91c8985d4a",
+  "command": [
+    "/workspace/android-studio-artifacts/import-identity-getters/sdk-runtime-buildtools37-retry/official-private-project/gradlew",
+    "--init-script",
+    "/workspace/android-studio-artifacts/import-identity-getters/sdk-runtime-buildtools37-retry/current-official-export.gradle",
+    "kodaAndroidProjectModel",
+    "--no-configuration-cache",
+    "--console=plain",
+    "--no-daemon"
+  ],
+  "exit_code": 1,
+  "elapsed_seconds": 7.558150384000328,
+  "stdout_sha256": "883f9d57a981a692cdc0b5ae4a89cd37ff65f7b2f0e21fcc3aa943c20d9875f3",
+  "stderr_sha256": "86cd70aea0829024f6c6a034c127daf7b6bc0a111f62118d31dfc272d04681bc",
+  "whole_source_count": 4743,
+  "whole_source_and_index_unchanged": true,
+  "private_inputs_unchanged": true,
+  "supplementary_environment_only": true,
+  "canonical_original_test_credit": 0,
+  "expected_unsupported": true
+}

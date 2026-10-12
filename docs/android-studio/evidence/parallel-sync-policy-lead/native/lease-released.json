@@ -1,0 +1,9 @@
+{
+  "utc": "2026-10-08T00:57:40.939307+00:00",
+  "source_commit": "4fb7a80eacc598a786b4b98c809d1df24a1b02ee",
+  "owner": "module_presentation_native_validation",
+  "native_and_standalone_Rust_runtime_lease_released_to_root": true,
+  "released_after_actual_SDK_and_decoder_keyboard_cleanup_and_final_source_fixture_app_library_guards": true,
+  "no_more_compiler_JVM_Gradle_app_or_native_execution_by_this_task": true,
+  "subsequent_work": "Read-only evidence hashing and external report/manifest packaging only"
+}

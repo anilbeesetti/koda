@@ -1,0 +1,29 @@
+{
+  "mode": "disabled",
+  "command": [
+    "gradle",
+    "--offline",
+    "--no-daemon",
+    "--max-workers=2",
+    "--console=plain",
+    "-p",
+    "/workspace/android-studio-artifacts/v2-artifact-facts/runtime-project",
+    "-I",
+    "/workspace/android-studio-artifacts/v2-artifact-facts/runtime-project-model.gradle",
+    "-I",
+    "/workspace/android-studio-artifacts/v2-artifact-facts/runtime-inspection.gradle",
+    "-Dkoda.v2.inspection.output=/workspace/android-studio-artifacts/v2-artifact-facts/disabled-inspection.json",
+    "-Pandroid.enableBuildConfigAsBytecode=true",
+    "kodaV2ArtifactRuntimeInspection"
+  ],
+  "pid": 254724,
+  "exitCode": 0,
+  "wallSeconds": 11.27841972799797,
+  "launcherProcessPeakRssKiB": 536536,
+  "launcherRssDoesNotIncludeSeparateGradleDaemon": true,
+  "appConfigurationSha256": "643ef9addffd3a267764d0bb5aaabe180553a0cd4d3cf78998cf47d9544a2c74",
+  "productionBridgeSha256": "508ecc9987932f8d184983f551eca0cb1bc9efa6ed12806dcaff8a0a2f6880b7",
+  "sourceCommit": "830ff53de76dbecd5fc3761f1c5f5bae164763c2",
+  "supplementaryOnly": true,
+  "originalReferenceRuntimeTestCredit": 0
+}

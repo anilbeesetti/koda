@@ -1,0 +1,39 @@
+{
+  "source_commit": "7e3f72ebfaef39d6e6630dd11fa7dc91c8985d4a",
+  "compiler_artifact": {
+    "reason": "compiler-artifact",
+    "package_id": "path+file:///workspace/android-studio-import-identity-getters/crates/android_tools#0.1.0",
+    "manifest_path": "/workspace/android-studio-import-identity-getters/crates/android_tools/Cargo.toml",
+    "target": {
+      "kind": [
+        "test"
+      ],
+      "crate_types": [
+        "bin"
+      ],
+      "name": "generated_artifacts",
+      "src_path": "/workspace/android-studio-import-identity-getters/crates/android_tools/tests/generated_artifacts.rs",
+      "edition": "2024",
+      "doc": false,
+      "doctest": false,
+      "test": true
+    },
+    "profile": {
+      "opt_level": "0",
+      "debuginfo": 0,
+      "debug_assertions": true,
+      "overflow_checks": true,
+      "test": true
+    },
+    "features": [],
+    "filenames": [
+      "/workspace/.cache/zed/target/debug/deps/generated_artifacts-a8cb0ab117142344"
+    ],
+    "executable": "/workspace/.cache/zed/target/debug/deps/generated_artifacts-a8cb0ab117142344",
+    "fresh": false,
+    "executable_bytes": 6111432,
+    "executable_sha256": "b19a81c9c727ce03a3d571e284d8773bb44957da40fde8b2cae93c3ec10ee670"
+  },
+  "normal_exact_Cargo_execution": true,
+  "source_files": 4743
+}

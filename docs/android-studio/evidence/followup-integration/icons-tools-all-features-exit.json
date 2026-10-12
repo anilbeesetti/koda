@@ -1,0 +1,75 @@
+{
+  "command": [
+    "cargo",
+    "test",
+    "--locked",
+    "-p",
+    "icons",
+    "-p",
+    "android_tools",
+    "--all-features",
+    "--message-format=json"
+  ],
+  "tested_commit": "371e79d3dd29f94db1b1cc2d01aff85327630065",
+  "exit_code": 0,
+  "elapsed_seconds": 12.651362656000856,
+  "log_sha256": "896cc84aef4a264b91ca6e0c6940f6ae21f61c4c5cdf1f85d05acca7ddd564e0",
+  "artifacts": [
+    {
+      "package": "path+file:///workspace/android-studio-integration/crates/icons#0.1.0",
+      "target": "icons",
+      "executable": "/workspace/.cache/zed/target/debug/deps/icons-02a170ad20ac7963",
+      "sha256": "098ec61baea038fd45b3edbf5a9a09014b1e24ea216152298a3e786c33c7391f",
+      "bytes": 1173248
+    },
+    {
+      "package": "path+file:///workspace/android-studio-integration/crates/android_tools#0.1.0",
+      "target": "project_view_preferences_reference",
+      "executable": "/workspace/.cache/zed/target/debug/deps/project_view_preferences_reference-920b46c1a9286394",
+      "sha256": "0aef75181e80f02591a8771acc3df065e006e8eb6cb6680071975202b636ec10",
+      "bytes": 2627496
+    },
+    {
+      "package": "path+file:///workspace/android-studio-integration/crates/android_tools#0.1.0",
+      "target": "project_tree_facts_probe",
+      "executable": "/workspace/.cache/zed/target/debug/examples/project_tree_facts_probe",
+      "sha256": "95ae9889389f8f4ef60afd9e114c00604ea6368b74e2502c4f0fbb674d0c293d",
+      "bytes": 4333336
+    },
+    {
+      "package": "path+file:///workspace/android-studio-integration/crates/android_tools#0.1.0",
+      "target": "project_tree_component",
+      "executable": "/workspace/.cache/zed/target/debug/deps/project_tree_component-5492bd7c5a79a950",
+      "sha256": "62b5d1763d915af771001500d9d172fa9ea5e250281e7d3cab7b2f4a7a1308e3",
+      "bytes": 4318552
+    },
+    {
+      "package": "path+file:///workspace/android-studio-integration/crates/android_tools#0.1.0",
+      "target": "gradle_import_reference",
+      "executable": "/workspace/.cache/zed/target/debug/deps/gradle_import_reference-04456d8e242bc9e5",
+      "sha256": "c6aa9f7b3b8bfd6bc6a7736e566a3239657a4429db796b288237bdfbda64f9c2",
+      "bytes": 3002576
+    },
+    {
+      "package": "path+file:///workspace/android-studio-integration/crates/android_tools#0.1.0",
+      "target": "project_model_probe",
+      "executable": "/workspace/.cache/zed/target/debug/examples/project_model_probe",
+      "sha256": "1aaf0afbe9cffda384b7d916de8f68de92bf9cd2d445abc7a2fce87f532010cb",
+      "bytes": 4284696
+    },
+    {
+      "package": "path+file:///workspace/android-studio-integration/crates/android_tools#0.1.0",
+      "target": "project_tree_facts",
+      "executable": "/workspace/.cache/zed/target/debug/deps/project_tree_facts-d85b15a481942004",
+      "sha256": "222582150b53046a407f21b39dc038a4963ba9f6cfb35c48e042c537c4b808a1",
+      "bytes": 6401632
+    },
+    {
+      "package": "path+file:///workspace/android-studio-integration/crates/android_tools#0.1.0",
+      "target": "android_tools",
+      "executable": "/workspace/.cache/zed/target/debug/deps/android_tools-7334319486a8ebb2",
+      "sha256": "6d09e5edd3d018592fb7b140f1b0f49bb8b4a1c63819223dd99a14bb4b9b66aa",
+      "bytes": 303978976
+    }
+  ]
+}

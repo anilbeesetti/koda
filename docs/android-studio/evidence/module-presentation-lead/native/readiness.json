@@ -1,0 +1,13 @@
+{
+  "source_commit": "905012f11885a86c9e8e18710ead07897d941d40",
+  "source_files_verified": 4725,
+  "app_sha256": "9c018912f5622c4b991276a311a1f86bd3544de612537904d299cdc7f0b40891",
+  "app_bytes": 1359451424,
+  "original_fixture_files_verified": 12,
+  "historical_fixture_manifest_commit": "9b9cbbc78e2ee035fe3f48f447f0072bd3aa17e2",
+  "runtime_launched": false,
+  "fixture_or_profile_created": false,
+  "waiting_explicit_root_lease": true,
+  "recipe_syntax_verified": true,
+  "original_metadata_exclusions_unchanged": true
+}

@@ -1,0 +1,11 @@
+{
+  "schema_version": 1,
+  "archive_kind": "reversible_single_file",
+  "original_path": "/workspace/android-studio-artifacts/import-identity-native-7e3f72e-retry2/generation-project/settings.gradle",
+  "recovery_relative_path": "native-current-q2/generation-project/settings.gradle",
+  "original_bytes": 57,
+  "original_sha256": "759c155c8627fb4a4834ad79522d4de158d994363820e57b3d6d533d0068974c",
+  "content_preserved_byte_exact": true,
+  "encoding": "base64",
+  "base64_content": "cm9vdFByb2plY3QubmFtZSA9ICdTb3VyY2VQcm92aWRlcnNTbW9rZScKaW5jbHVkZSAnOmFwcCcK"
+}

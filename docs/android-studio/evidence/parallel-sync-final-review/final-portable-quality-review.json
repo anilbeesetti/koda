@@ -1,0 +1,151 @@
+{
+  "verdict": "PASS",
+  "scope": "Independent final PR63 portable metadata/source/evidence quality audit; final commit, protected dependency merge, main/ref/conflict checks and push remain Root operations",
+  "reviewed_at_utc": "2026-10-08T01:25:00.772028+00:00",
+  "source_commit": "4fb7a80eacc598a786b4b98c809d1df24a1b02ee",
+  "source_tree": "9659baeb98fcf7111435169eb04490ba3952989d",
+  "whole_source_paths_rehashed": 4730,
+  "nested_ports_source_paths_rehashed": 103,
+  "fixed_source_pathspec": [
+    ".",
+    ":(glob,exclude)docs/android-studio/*.md",
+    ":(exclude)docs/android-studio/reference-manifest.json",
+    ":(exclude)docs/android-studio/test-parity.json",
+    ":(glob,exclude)docs/android-studio/ports/*.json",
+    ":(glob,exclude)docs/android-studio/evidence/**/*.log",
+    ":(glob,exclude)docs/android-studio/evidence/**/*.json"
+  ],
+  "owner_policy_five_new_source_files_unchanged_from_63c88dcf": true,
+  "prior_P1_4725_source_paths_retained_except_single_parallel_export": true,
+  "lead_manifest_payloads_verified": 215,
+  "lead_manifest_bytes": 28112051,
+  "lead_manifest_sha256": "395177461b4004bed9f89cf6e4835eafc4b46f60aa9193727cd0fefe013847e6",
+  "portable_original_checks": {
+    "byte_exact_copies": 140,
+    "reversible_UTF8_wrappers": 56,
+    "reversible_base64_wrappers": 18,
+    "generated_summary_reconciled_to_original_actual_gate_receipts": 1
+  },
+  "owner45_and_exact133_payloads_and_manifests_unchanged": true,
+  "all10_owner_static_and_runtime_review_original_byte_hashes_and_PASS_verdicts_verified": true,
+  "all_nine_original_assertions_order_labels_signed_MIN_components_empty_description_null_consumer_preserved": true,
+  "canonical_parity": {
+    "selected": 95,
+    "ported": 20,
+    "adapted": 16,
+    "unported": 59,
+    "passing": 36,
+    "failing": 0,
+    "not_applicable": 0,
+    "global_census_complete": false,
+    "new_original_case_credit": 1
+  },
+  "prior35_statuses_reasons_targets_and_exact_command_mappings_preserved": true,
+  "all36_exact_logs_current_Source_bound_and_actual_one_test_passed": true,
+  "normal_full_app_receipt_and_independent_actual_link_review_pass": true,
+  "app_SHA256": "eac18f9a4c2ed6499406ba79b38a1ea6c290c903f7faa9c47472855aa3211e34",
+  "CI": {
+    "run_id": 37703317253,
+    "all_three_jobs": "success",
+    "actual_workspace_passed": 10510,
+    "failed": 0,
+    "pre_existing_skipped": 23,
+    "execution_seconds": 1542.726,
+    "raw_log_bytes": 430953,
+    "raw_log_SHA256": "15a2ad1d1fe1b9a388d9e05d9309640573de2c80c2657e247c2bae4ce1338fe4",
+    "synthetic_merge": "8b4f48cbe5905baef4610a4d52732bf152e565bc",
+    "synthetic_tree_exactly_Source": true
+  },
+  "native": {
+    "full_manifest_files_independently_rehashed": 677,
+    "full_manifest_bytes": 54689888,
+    "full_manifest_SHA256": "ca258cdf7b9a4f802daece0955e8877dccfe568877e854bc3404155843b957cb",
+    "durable_exact_paired_exit_zero_commands": 51,
+    "SDK_syncs": 2,
+    "current_complete_models_and_Rust_roundtrip_verified": 2,
+    "previous905_full_model_independent_comparisons": 2,
+    "complete_legacy_independent_comparisons": 7,
+    "normalization_only_exact_known_private_root_prefix": true,
+    "capture_original_hashes_preserved": 17,
+    "Root_visual_receipts_original_hashes_preserved": 3,
+    "owned_PIDs_and_X119_current_absence_checked": true,
+    "12_original_and_private_fixture_byte_pairs_verified": true,
+    "official_original_wrapper_bytes_preserved": true,
+    "new_original_reference_credit": 0,
+    "actual_parallel_scheduler_credit": false
+  },
+  "schema_reconciliation": "PASS: exact51 paired-command checks retained under actual field name; both prior905 full-model checks retained; all7 legacy checks added; cleanup three-PID list includes captured app PID; 4730 source and12 fixture guards retained; native manifest and current policy/visual guards added. No assertions weakened.",
+  "documentation_formatting": {
+    "targeted_report_PR_body_and_scoped_port": "PASS",
+    "mutable_port_JSON_values_after_format_preserved": true,
+    "normal_repository_prettier_exit": 1,
+    "warnings_classified": 207,
+    "unchanged_tracked_payloads": 133,
+    "byte_preserved_new_audit_payloads": 73,
+    "mutable_scoped_port_before_format": 1,
+    "original_deliberately_tampered_negative_fixture_unchanged": true,
+    "broad_repository_formatter_not_claimed_passed": true
+  },
+  "scope_claims_checked": {
+    "new_non_Rust_exceptions": [],
+    "global_census_complete": false,
+    "phase1_complete": false,
+    "IDE_complete": false,
+    "scheduler_logical_tree_LSP_facet_or_hardware_performance_credit": false,
+    "230px_stress_below360px_minimum_explicit": true,
+    "first_trust_prompt_capture_zero_loading_credit": true,
+    "current_SDK_error_state_no_credit": true,
+    "677_native_files_not_claimed_all_portable": true
+  },
+  "final_report_PR_body_port_summary_and_owner_handoff_reconciled": true,
+  "reviewer_Cargo_compiler_Gradle_SDK_native_cache_source_and_Git_mutations": false,
+  "blocking_findings": [],
+  "remaining_Root_operations": [
+    "Metadata-only commit and source equivalence guard",
+    "Ordinary protected dependency merge in task branch and conflict resolution with current36 captures preserved",
+    "Final main/ref/conflict/source guards",
+    "Ordinary task/protected push and GitHub state verification"
+  ],
+  "calculation_and_handoff_bindings": [
+    {
+      "path": "/workspace/android-studio-artifacts/parallel-sync-integration/final-quality-audit-calculations.json",
+      "bytes": 61233,
+      "sha256": "2fda1a245818d972fbc732f7ec43e426c2839151564719319b1bbbe93784a49d"
+    },
+    {
+      "path": "/workspace/android-studio-artifacts/parallel-sync-integration/final-quality-native-ci-calculations.json",
+      "bytes": 1087,
+      "sha256": "952d8108f02ad219bc2f8bab8db2bde40ea6121250d8f224074b7c6de331c24e"
+    },
+    {
+      "path": "/workspace/android-studio-artifacts/parallel-sync-integration/final-quality-format-metadata-calculations.json",
+      "bytes": 655,
+      "sha256": "5c6a7edd3c2766a7e54af6a46c78dbc84e8f478231d36be752a4d6df022a2aa2"
+    },
+    {
+      "path": "/workspace/android-studio-artifacts/parallel-sync-integration/final-quality-audit.py",
+      "bytes": 9612,
+      "sha256": "fccafff594740ea1f3bf93555c4a52cd8604d8f04bcd7255f602d55bba81addf"
+    },
+    {
+      "path": "/workspace/android-studio-artifacts/parallel-sync-integration/final-quality-native-ci-audit.py",
+      "bytes": 6290,
+      "sha256": "5c2a14c9a29f545acc06aa5f32ff41512e14fb284834c68e8b71db01367577ed"
+    },
+    {
+      "path": "/workspace/android-studio-artifacts/parallel-sync-integration/metadata-preparation/final-metadata-apply-handoff.json",
+      "bytes": 8215,
+      "sha256": "ec86a1bec4f6183a4dca23e929ed98c747b139686c17414119cd9bd3e83725bd"
+    },
+    {
+      "path": "/workspace/android-studio-artifacts/parallel-sync-integration/metadata-preparation/actual-schema-reconciliation.json",
+      "bytes": 934,
+      "sha256": "e8a38bbc9820a2ea07c818032b6e4b79d77254c2196330419d42730722001f67"
+    },
+    {
+      "path": "/workspace/android-studio-artifacts/parallel-sync-integration/metadata-preparation/actual-schema-reconciliation.diff",
+      "bytes": 10863,
+      "sha256": "1ea04bb0734874e55321ce3bab3dafbf4cc8b4631e9ff922dde73233877f80dc"
+    }
+  ]
+}

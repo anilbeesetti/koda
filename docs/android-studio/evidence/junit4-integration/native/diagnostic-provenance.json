@@ -1,0 +1,18 @@
+{
+  "warning": "missing required capture(s) in Gradle indents TreeSitter query: indent",
+  "external_installed_extension": "Java6.8.27",
+  "same_extension_manifest_and_query_as_previous_371_profile": [
+    {
+      "path": "/workspace/android-studio-artifacts/junit4-native-9315534/qa-success/user-data/extensions/installed/java/extension.toml",
+      "sha256": "eca1da859606b77db3cc9129d7caa7885670422aa89ce303d8f0190e614e895b",
+      "byte_identical_previous_371_profile": true
+    },
+    {
+      "path": "/workspace/android-studio-artifacts/junit4-native-9315534/qa-success/user-data/extensions/installed/java/languages/gradle/indents.scm",
+      "sha256": "fff0db02df15470940a2601b06d747c9181bd31ed4aecefd505980cabe312d81",
+      "byte_identical_previous_371_profile": true
+    }
+  ],
+  "implementation_scope": "JUnit4 tooling change does not modify language_core grammar or external extension. XML and Gradle files open and highlight; Gradle indentation fidelity unverified and needs editingphase tracking.",
+  "app_crash_observed": false
+}

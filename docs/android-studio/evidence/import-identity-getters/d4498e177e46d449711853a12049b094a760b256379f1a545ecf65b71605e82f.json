@@ -1,0 +1,27 @@
+{
+  "source_commit": "e0cfad266fce1a29e065ef016815f695ced9810b",
+  "command": [
+    "cargo",
+    "test",
+    "--locked",
+    "-p",
+    "android_tools",
+    "--test",
+    "import_facts",
+    "--message-format=json"
+  ],
+  "exit_code": 101,
+  "elapsed_seconds": 7.002354224001465,
+  "stdout_sha256": "d3f91fb7e50499d9148414b9a3352c0fe07657b392fe1ddc9d7321dd3376f80d",
+  "stderr_sha256": "fca33d75755d9c0e4420ffe5bef1fe029b3aa39e67c037aa9aabf3fdc1e38331",
+  "all_source_files_unchanged": 4738,
+  "actual_target_bindings": [
+    {
+      "source_path": "/workspace/android-studio-import-identity-getters/crates/android_tools/tests/import_facts.rs",
+      "fresh": false,
+      "executable": "/workspace/.cache/zed/target/debug/deps/import_facts-15da250992a95fc0",
+      "sha256": "f78ba65e6086bd61aa3003d5676b235c52bbad1da3d611b34ab778c89f818ad5",
+      "bytes": 6021104
+    }
+  ]
+}

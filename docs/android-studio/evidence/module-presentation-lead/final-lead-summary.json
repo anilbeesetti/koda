@@ -1,0 +1,100 @@
+{
+  "schema_version": 1,
+  "source_commit": "905012f11885a86c9e8e18710ead07897d941d40",
+  "scope": "Lead combined implementation/runtime gates completed; metadata/merge/main/conflict final check remains Root-owned",
+  "local_native_and_exact_parity_gates": "PASS",
+  "supplements_historical_ci_summary": "integration/ci-verified-summary.json retains its at-capture pending field unchanged",
+  "owner_five_static_runtime_reviews": "PASS, unchanged policy Source only; historical pending lead statements retained",
+  "lead_checks": {
+    "android_tools_all_features": {
+      "passed": 251,
+      "failed": 0,
+      "ignored": 0,
+      "filtered": 0
+    },
+    "android_ui_default_library": {
+      "passed": 125,
+      "failed": 0,
+      "pre_existing_ignored": 1,
+      "filtered": 0
+    },
+    "exact_original_captures": 35,
+    "frozen_parity_validator": "PASS",
+    "strict_repository_clippy": "PASS",
+    "full_workspace_cargo_fmt": "PASS",
+    "normal_all_features_library": "PASS",
+    "normal_full_app": {
+      "exit_code": 0,
+      "elapsed_seconds": 205.1826086459987,
+      "sha256": "9c018912f5622c4b991276a311a1f86bd3544de612537904d299cdc7f0b40891",
+      "bytes": 1359451424
+    },
+    "full_workspace_CI": {
+      "passed": 10500,
+      "failed": 0,
+      "pre_existing_skipped": 23,
+      "execution_seconds": 1099.69
+    },
+    "all_three_CI_jobs": "success",
+    "native": {
+      "verdict": "PASS",
+      "SDK_syncs": 2,
+      "paired_exit_zero_commands": 51,
+      "visually_inspected_full_app_PNGs": 17,
+      "owned_cleanup": "PASS",
+      "current_SDK_error_state_credit": false
+    }
+  },
+  "CI_run_id": 37696260846,
+  "CI_synthetic_merge": "6ce178a20c755cdce04774bc56281c8bf647c7c2",
+  "CI_synthetic_tree": "ca7e3a82b6dcd83c756a40e6e74c57dcf9cdb796",
+  "CI_tree_exactly_equals_source_tree": true,
+  "canonical_parity": {
+    "selected": 95,
+    "ported": 19,
+    "adapted": 16,
+    "not_applicable": 0,
+    "unported": 60,
+    "passing": 35,
+    "failing": 0,
+    "not_run": 60,
+    "global_census_complete": false,
+    "mirror_coverage": "unverified",
+    "new_P1_original_credit": 0
+  },
+  "policy_source_sha256": "0a467aa8d96cb64dc93b23dd31526c75e4b5e2b4f8aad0c52c89025a2660208c",
+  "policy_tests_sha256": "9977946288fed36aa169c376c722872c86d01a265b76339ae2ec7c86e8c2d924",
+  "whole_source_files_before_after": 4725,
+  "fixed_source_exclusions": [
+    ".",
+    ":(glob,exclude)docs/android-studio/*.md",
+    ":(exclude)docs/android-studio/reference-manifest.json",
+    ":(exclude)docs/android-studio/test-parity.json",
+    ":(glob,exclude)docs/android-studio/ports/*.json",
+    ":(glob,exclude)docs/android-studio/evidence/**/*.log",
+    ":(glob,exclude)docs/android-studio/evidence/**/*.json"
+  ],
+  "unchanged_owner_evidence_files": 42,
+  "no_new_non_Rust_exception": true,
+  "phase_or_IDE_complete": false,
+  "protected_merge": "pending Root normal PR61 dependency merge and final source-equivalence/main/conflict checks",
+  "bounded_external_preflight_inventory": {
+    "scope": "Separate bounded inspected-source planning inventory, not the canonical95selected/35passing matrix or an executed/runtime test census",
+    "inspected_method_declarations": 53,
+    "existing_adapted_declarations": 9,
+    "unported_declarations": 44,
+    "source_provider_definitions_unported": 22,
+    "runtime_parameter_or_runner_expansion": "incomplete; exact runtime case count unknown",
+    "global_census_complete": false,
+    "new_P1_original_credit": 0,
+    "inventory": {
+      "path": "docs/android-studio/evidence/module-presentation-lead/preflight/bounded-test-inventory.json",
+      "sha256": "2752149bde7e3d5b69901c45c76b3f2c012aea5a84729168e9a868f85b17fe53"
+    },
+    "preflight_report": {
+      "path": "docs/android-studio/evidence/module-presentation-lead/preflight/preflight-report.md.json",
+      "original_sha256": "3dfdc19ba1ee844a0b1f2fbf68cc77882ffc9fa76e0f74685473624f9580944b",
+      "wrapper_sha256": "8f9611636cf40756efd2f63b9c559abc566f15855573241915cc363a2ee5d058"
+    }
+  }
+}

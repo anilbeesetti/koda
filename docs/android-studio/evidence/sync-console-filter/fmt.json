@@ -1,0 +1,32 @@
+{
+  "source_commit": "f763baebb6d0970b283f759967d7980084317e67",
+  "source_snapshot_sha256": "072fa390a1446b8c259de4e343f65ef9a8a4d1404a27edd6cb2ad285f36e98df",
+  "source_file_count": 4748,
+  "stage": "format",
+  "command": [
+    "cargo",
+    "fmt",
+    "--all",
+    "--",
+    "--check"
+  ],
+  "environment_script": "/workspace/cloud-environment/env.sh",
+  "cargo_build_jobs": 1,
+  "profile_feature_target_flags_unchanged": true,
+  "free_bytes_before": {
+    "/workspace": 541286400,
+    "/tmp": 1451724800
+  },
+  "started_at_utc": "2026-10-08T06:18:25.589796+00:00",
+  "actual_process_pid": 372800,
+  "exit_code": 0,
+  "elapsed_seconds": 28.366321747002075,
+  "raw_log": "/workspace/android-studio-artifacts/sync-console-filter/runtime-f763/format/raw.log",
+  "raw_log_bytes": 0,
+  "raw_log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "free_bytes_after": {
+    "/workspace": 541261824,
+    "/tmp": 1451724800
+  },
+  "source_and_retained_artifact_guards": "PASS"
+}

@@ -1,0 +1,353 @@
+{
+  "schema_version": 1,
+  "verdict": "PASS",
+  "scope": "Independent local runtime UX addendum for the V2 artifact-facts third product correction. Final lead CI/merge, phase and full IDE completion remain separate.",
+  "reviewer": "v2_final_ux_review",
+  "review_utc": "2026-10-07T23:06:40.857384+00:00",
+  "source_commit": "9b9cbbc78e2ee035fe3f48f447f0072bd3aa17e2",
+  "git_tree": "6b84b2d512405eba30658cc9d92577570f4e4796",
+  "static_review": {
+    "path": "/workspace/android-studio-artifacts/v2-artifact-integration/agp-version-fix/ux-review-round3.md",
+    "sha256": "93527eae1e829179fafe670f6cef7391d1c0dd0eda80eaf82adde5bd0bfe8efe",
+    "verdict": "PASS"
+  },
+  "completed_non_keyboard_audit": {
+    "path": "/workspace/android-studio-artifacts/v2-artifact-integration/agp-version-fix/ux-runtime-audit-before-replay-round3.json",
+    "sha256": "ba7b398728f0ac18cc67f43390f29bd50887592ef4ce07c62670ab79f8b3fa48",
+    "actual_passed_tooling": 231,
+    "tooling_failed_ignored_filtered": 0,
+    "actual_passed_default_ui": 125,
+    "default_ui_failed_filtered": 0,
+    "pre_existing_ui_ignored": 1,
+    "exact_reference_captures": 35,
+    "partial_selected_census": 95,
+    "ported": 19,
+    "adapted": 16,
+    "unported": 60,
+    "passing": 35,
+    "strict_clippy_exit_code": 0,
+    "workspace_format_exit_code": 0,
+    "normal_full_app_build_exit_code": 0,
+    "normal_full_app_build_seconds": 201.78104909200192
+  },
+  "whole_source_files_independently_rehashed_after_cleanup": 4712,
+  "fixed_metadata_exclusions": [
+    ".",
+    ":(glob,exclude)docs/android-studio/*.md",
+    ":(exclude)docs/android-studio/reference-manifest.json",
+    ":(exclude)docs/android-studio/test-parity.json",
+    ":(glob,exclude)docs/android-studio/ports/*.json",
+    ":(glob,exclude)docs/android-studio/evidence/**/*.log",
+    ":(glob,exclude)docs/android-studio/evidence/**/*.json"
+  ],
+  "source_index_worktree_untracked_and_hash_guards_pass": true,
+  "source_bindings": {
+    "/workspace/android-studio-source-providers/crates/android_tools/src/generated_artifacts.rs": "2d56897f92de26bed4f556e6a2bea2cb3a4220a1da5b8eb83231aa8317dd7a52",
+    "/workspace/android-studio-source-providers/crates/android_tools/tests/generated_artifacts.rs": "0692a1860b01f5040f56799727ece650f77fbeb349600326e2ee5e214a56447c",
+    "/workspace/android-studio-source-providers/crates/android_tools/test_data/generated_artifacts/AgpVersion.kt": "e689e8d93c9b78f77bcfb94c41b97c5a0bb825537e576e84a30f5ffbbed0edfb",
+    "/workspace/android-studio-source-providers/crates/android_tools/test_data/generated_artifacts/ModelVersionsTest.kt": "9239c0688b3066bf964d801ba7b231dd5f70719a97331645fd53f10060252aef",
+    "/workspace/android-studio-source-providers/crates/android_tools/src/project_model.gradle": "508ecc9987932f8d184983f551eca0cb1bc9efa6ed12806dcaff8a0a2f6880b7"
+  },
+  "current_app": {
+    "path": "/tmp/android-studio-link-output/koda-v2-artifact-273741",
+    "bytes": 1359451320,
+    "sha256": "577814b594205348eab4869aef4f3d0dc0377bbd6fe4acc9bb40ca7788b89c3e"
+  },
+  "SDK_legacy_comparison": {
+    "new_models": 2,
+    "previous_complete_legacy_records": 7,
+    "only_envelope_excluded_from_legacy_comparison": "generatedArtifacts",
+    "only_normalization": "Exact known respective private project-root prefix in JSON strings",
+    "every_remaining_legacy_field_value_and_list_order_matches": true,
+    "complete_new_modules_match_current_Rust_roundtrip": true,
+    "reference_credit": 0
+  },
+  "original_keyboard_input_route_status": "UNVERIFIED remains in original recovery report; original screenshots do not prove key events",
+  "fresh_attempt2_keyboard_verification": {
+    "status": "PASS",
+    "path": "/workspace/android-studio-artifacts/v2-keyboard-9b9cbbc/attempt2",
+    "events_sha256": "32c7e4ce64c1d63d665fa8d572d52388a215c2a4250b930833f8b1001c26bed6",
+    "actual_paired_zero_exit_commands": 48,
+    "window_id": 2097153,
+    "app_pid": 278956,
+    "session_binding": {
+      "path": "/workspace/android-studio-artifacts/v2-keyboard-9b9cbbc/attempt2/session-binding.json",
+      "sha256": "e5d5fb84c9bb1febb283707f591ed551a2adac3ea9c7cc412f452d2f45efe64a"
+    },
+    "routes": [
+      {
+        "label": "wide-tab-to-output",
+        "command": [
+          "/workspace/cloud-environment/native/usr/bin/xdotool",
+          "key",
+          "--window",
+          "2097153",
+          "Tab"
+        ],
+        "utc": "2026-10-07T22:58:49.472348+00:00",
+        "exit_code": 0,
+        "window_id": 2097153,
+        "app_pid": 278956,
+        "visible_state": "wide-output-focus.png"
+      },
+      {
+        "label": "wide-space-select-output",
+        "command": [
+          "/workspace/cloud-environment/native/usr/bin/xdotool",
+          "key",
+          "--window",
+          "2097153",
+          "space"
+        ],
+        "utc": "2026-10-07T22:59:05.339791+00:00",
+        "exit_code": 0,
+        "window_id": 2097153,
+        "app_pid": 278956,
+        "visible_state": "wide-output-selected.png"
+      },
+      {
+        "label": "narrow-tab-to-output",
+        "command": [
+          "/workspace/cloud-environment/native/usr/bin/xdotool",
+          "key",
+          "--window",
+          "2097153",
+          "Tab"
+        ],
+        "utc": "2026-10-07T22:59:25.413311+00:00",
+        "exit_code": 0,
+        "window_id": 2097153,
+        "app_pid": 278956,
+        "visible_state": "narrow-output-focus.png"
+      },
+      {
+        "label": "narrow-space-select-output",
+        "command": [
+          "/workspace/cloud-environment/native/usr/bin/xdotool",
+          "key",
+          "--window",
+          "2097153",
+          "space"
+        ],
+        "utc": "2026-10-07T22:59:26.545351+00:00",
+        "exit_code": 0,
+        "window_id": 2097153,
+        "app_pid": 278956,
+        "visible_state": "narrow-output-selected.png"
+      },
+      {
+        "label": "narrow-shift-tab-to-sync",
+        "command": [
+          "/workspace/cloud-environment/native/usr/bin/xdotool",
+          "key",
+          "--window",
+          "2097153",
+          "shift+Tab"
+        ],
+        "utc": "2026-10-07T22:59:43.867252+00:00",
+        "exit_code": 0,
+        "window_id": 2097153,
+        "app_pid": 278956,
+        "visible_state": "narrow-reverse-sync-focus.png"
+      },
+      {
+        "label": "narrow-space-restore-sync",
+        "command": [
+          "/workspace/cloud-environment/native/usr/bin/xdotool",
+          "key",
+          "--window",
+          "2097153",
+          "space"
+        ],
+        "utc": "2026-10-07T22:59:45.010747+00:00",
+        "exit_code": 0,
+        "window_id": 2097153,
+        "app_pid": 278956,
+        "visible_state": "narrow-sync-restored.png"
+      },
+      {
+        "label": "hide-first-tab-output",
+        "command": [
+          "/workspace/cloud-environment/native/usr/bin/xdotool",
+          "key",
+          "--window",
+          "2097153",
+          "Tab"
+        ],
+        "utc": "2026-10-07T23:00:07.120310+00:00",
+        "exit_code": 0,
+        "window_id": 2097153,
+        "app_pid": 278956,
+        "visible_state": null
+      },
+      {
+        "label": "hide-second-tab-hide",
+        "command": [
+          "/workspace/cloud-environment/native/usr/bin/xdotool",
+          "key",
+          "--window",
+          "2097153",
+          "Tab"
+        ],
+        "utc": "2026-10-07T23:00:07.174524+00:00",
+        "exit_code": 0,
+        "window_id": 2097153,
+        "app_pid": 278956,
+        "visible_state": "wide-hide-focus.png"
+      },
+      {
+        "label": "hide-return",
+        "command": [
+          "/workspace/cloud-environment/native/usr/bin/xdotool",
+          "key",
+          "--window",
+          "2097153",
+          "Return"
+        ],
+        "utc": "2026-10-07T23:00:08.420273+00:00",
+        "exit_code": 0,
+        "window_id": 2097153,
+        "app_pid": 278956,
+        "visible_state": "hide-return.png"
+      }
+    ],
+    "captures": [
+      {
+        "path": "/workspace/android-studio-artifacts/v2-keyboard-9b9cbbc/attempt2/captures/build-sidebar-restored.png",
+        "sha256": "18972b54e91d2bd9edd037ae7b314988b5b813d5b3c78ac1fd0b9b9ac7955f27",
+        "bytes": 111511,
+        "independently_visually_inspected": true
+      },
+      {
+        "path": "/workspace/android-studio-artifacts/v2-keyboard-9b9cbbc/attempt2/captures/editor-gradle-tab.png",
+        "sha256": "db89f763bb56503c0fea070b052aeea5490878ff163a1646a38f286f05481a6b",
+        "bytes": 208457,
+        "independently_visually_inspected": true
+      },
+      {
+        "path": "/workspace/android-studio-artifacts/v2-keyboard-9b9cbbc/attempt2/captures/editor-xml-restored.png",
+        "sha256": "e00e2ab3e133ac1104cc409dc51d62fbed996d86138c83acca16e87de41d794e",
+        "bytes": 112633,
+        "independently_visually_inspected": true
+      },
+      {
+        "path": "/workspace/android-studio-artifacts/v2-keyboard-9b9cbbc/attempt2/captures/hide-return.png",
+        "sha256": "0dec97fd767c8a3f468fe313d725dc0de89eca434e7d16318bd8fc6e5db8fb5b",
+        "bytes": 65402,
+        "independently_visually_inspected": true
+      },
+      {
+        "path": "/workspace/android-studio-artifacts/v2-keyboard-9b9cbbc/attempt2/captures/narrow-output-focus.png",
+        "sha256": "453d5f938e492248c847c3591ac8cb846ceae71711fca95dd40d89495fb90e36",
+        "bytes": 45617,
+        "independently_visually_inspected": true
+      },
+      {
+        "path": "/workspace/android-studio-artifacts/v2-keyboard-9b9cbbc/attempt2/captures/narrow-output-selected.png",
+        "sha256": "32278e6fdcacdc9accbd56a37d48a186100be55fdb38be2e07b5359311e66d02",
+        "bytes": 44622,
+        "independently_visually_inspected": true
+      },
+      {
+        "path": "/workspace/android-studio-artifacts/v2-keyboard-9b9cbbc/attempt2/captures/narrow-reverse-sync-focus.png",
+        "sha256": "f56b74808bb4a03d5f510bea4e923d87073b0df6434dc26e02384761178019ba",
+        "bytes": 44797,
+        "independently_visually_inspected": true
+      },
+      {
+        "path": "/workspace/android-studio-artifacts/v2-keyboard-9b9cbbc/attempt2/captures/narrow-sync-restored.png",
+        "sha256": "8a0caef8a65526c098e5b193dd7907496b342548ecd1ef3b47790bd02c09e06c",
+        "bytes": 45824,
+        "independently_visually_inspected": true
+      },
+      {
+        "path": "/workspace/android-studio-artifacts/v2-keyboard-9b9cbbc/attempt2/captures/narrow-sync.png",
+        "sha256": "f7995cbc27c7fd10519cb945b05b3cf2c4d40a7cc35992107de86b89e5149587",
+        "bytes": 45907,
+        "independently_visually_inspected": true
+      },
+      {
+        "path": "/workspace/android-studio-artifacts/v2-keyboard-9b9cbbc/attempt2/captures/sync-current.png",
+        "sha256": "4fe9ca2f6269e0589d166a777ccb1ed7185e4dffc8146015c3e7e5e9dd7eebda",
+        "bytes": 115888,
+        "independently_visually_inspected": true
+      },
+      {
+        "path": "/workspace/android-studio-artifacts/v2-keyboard-9b9cbbc/attempt2/captures/trust-prompt.png",
+        "sha256": "b94e027542a3ef3e439d54f061e268dde463c51fe0230944d5bdb927f17db267",
+        "bytes": 87485,
+        "independently_visually_inspected": true
+      },
+      {
+        "path": "/workspace/android-studio-artifacts/v2-keyboard-9b9cbbc/attempt2/captures/wide-hide-focus.png",
+        "sha256": "0700c6c36477708189e9d2cf0cf27c8bfc9d0c0ec9fb5f6eeb6442dbb8345e7f",
+        "bytes": 111525,
+        "independently_visually_inspected": true
+      },
+      {
+        "path": "/workspace/android-studio-artifacts/v2-keyboard-9b9cbbc/attempt2/captures/wide-output-focus.png",
+        "sha256": "008082558fc49045ecc08d0e8385dd763c442c1c2ff31fe7b112964bf9fd8bc7",
+        "bytes": 115585,
+        "independently_visually_inspected": true
+      },
+      {
+        "path": "/workspace/android-studio-artifacts/v2-keyboard-9b9cbbc/attempt2/captures/wide-output-selected.png",
+        "sha256": "0eb1baea6c54c4571014f7a0bc4e94fd45a405c18c9e33fb56b573d8a8e39d30",
+        "bytes": 72892,
+        "independently_visually_inspected": true
+      }
+    ],
+    "trust_rows": [
+      [
+        1,
+        "/workspace/android-studio-artifacts/v2-keyboard-9b9cbbc/attempt2/generation-project",
+        null,
+        null
+      ]
+    ],
+    "trust_read_method": "Read-only query of disposable byte copies of 0-dev DB/WAL/SHM; original hashes unchanged",
+    "fixtures_source_and_two_private_copies_all_match": true,
+    "fixture_files_per_copy": 12,
+    "owned_cleanup_and_final_guard": {
+      "path": "/workspace/android-studio-artifacts/v2-keyboard-9b9cbbc/attempt2/final-closure-and-guard.json",
+      "sha256": "a8a6e0d223e0173268a33458b9f19a637ff00165492f1bba5d2c0d0d25ea983d",
+      "verdict": "PASS",
+      "successful_owned_pids_absent": [
+        278936,
+        278956,
+        278946
+      ],
+      "failed_attempt_owned_pids_absent": [
+        278199,
+        278219,
+        278209
+      ],
+      "display119_absent_independently_verified": true,
+      "unowned_gradle167092_present_independently_verified": true,
+      "launcher_exit_code": 143
+    },
+    "attached_launcher_PTY_sha256": "e24991d28eb5e7283c8c875f7cfee0d19466ff27aa3aaec6491178747b7255c4",
+    "original_reference_test_credit": 0
+  },
+  "preserved_setup_failure": {
+    "path": "/workspace/android-studio-artifacts/v2-keyboard-9b9cbbc",
+    "observed_error": "Attempt 1 Sync failed because JAVA_HOME used nonexistent app-runtime/jdk; initial window search also exited 127 before activation",
+    "resolved_by": "Fresh attempt 2 fixture/profile explicitly sources existing jdk21-env.sh; same Source and same app ELF",
+    "product_source_changed": false
+  },
+  "blocking_new_UX_findings": [],
+  "remaining_phase_items_and_baseline_limits": [
+    "Raw model JSON remains visible in Sync console, tracked by lead as a separate foundation console-hygiene task",
+    "Physical Project panel, unwired logical tree and unavailable authoritative imported getters do not gain parity credit",
+    "230px validates toolbar overflow only, not overall usability or full Android Studio fidelity",
+    "Recorded pre-existing Gradle indentation-query diagnostic; editor tabs do not prove Rust language-server features",
+    "No smoothness/hardware/startup/large-project/performance-comparison claim; original 34.568% caret and 1.5988% toolbar CPU samples preserved",
+    "Partial reference census: 60 individually identified tests unported, exhaustive total and mirror completeness unknown"
+  ],
+  "pending_lead_gates": [
+    "Current-source full-workspace CI 37695121709",
+    "Final source-equivalent metadata, conflicts/main integrity, protected merge/push"
+  ],
+  "reviewer_started_Cargo_Gradle_app_or_native_input": false,
+  "source_edits_by_reviewer": false
+}

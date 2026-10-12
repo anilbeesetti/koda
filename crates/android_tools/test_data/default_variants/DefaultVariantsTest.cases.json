@@ -1,0 +1,296 @@
+{
+  "repository": "platform/tools/adt/idea",
+  "revision": "a84efec3ba9542d9bfa1255103f0dc94833a3796",
+  "suite": "com.android.tools.idea.gradle.project.sync.DefaultVariantsTest",
+  "source_path": "project-system-gradle-sync/testSrc/com/android/tools/idea/gradle/project/sync/DefaultVariantsTest.kt",
+  "source_sha256": "c21c3dbc6fe94377ae7e82b2028d357c0ce0285793eecafa65140df63cc84b15",
+  "license": "Apache-2.0",
+  "copyright": "Copyright (C) 2022 The Android Open Source Project",
+  "source_url": "https://android.googlesource.com/platform/tools/adt/idea/+/a84efec3ba9542d9bfa1255103f0dc94833a3796/project-system-gradle-sync/testSrc/com/android/tools/idea/gradle/project/sync/DefaultVariantsTest.kt",
+  "scope": "Manually transcribed eight literal upstream cases; original unmodified source retained alongside. No tests run. No supplemental cases included.",
+  "cases": [
+    {
+      "test": "oneVariant",
+      "variants": [
+        {
+          "build_type": "debug",
+          "product_flavors": [
+            "foo"
+          ],
+          "name": "fooDebug"
+        }
+      ],
+      "user_preferred_build_types": [],
+      "user_preferred_product_flavors": [],
+      "expected": "fooDebug",
+      "implementation_status": "unported"
+    },
+    {
+      "test": "debugPreferred",
+      "variants": [
+        {
+          "build_type": "release",
+          "product_flavors": [
+            "foo"
+          ],
+          "name": "fooRelease"
+        },
+        {
+          "build_type": "debug",
+          "product_flavors": [
+            "foo"
+          ],
+          "name": "fooDebug"
+        }
+      ],
+      "user_preferred_build_types": [],
+      "user_preferred_product_flavors": [],
+      "expected": "fooDebug",
+      "implementation_status": "unported"
+    },
+    {
+      "test": "preferredBuildType",
+      "variants": [
+        {
+          "build_type": "debug",
+          "product_flavors": [
+            "foo"
+          ],
+          "name": "fooDebug"
+        },
+        {
+          "build_type": "release",
+          "product_flavors": [
+            "foo"
+          ],
+          "name": "fooRelease"
+        }
+      ],
+      "user_preferred_build_types": [
+        "release"
+      ],
+      "user_preferred_product_flavors": [],
+      "expected": "fooRelease",
+      "implementation_status": "unported"
+    },
+    {
+      "test": "preferredProductFlavorOverDebugBuildType",
+      "variants": [
+        {
+          "build_type": "debug",
+          "product_flavors": [
+            "foo"
+          ],
+          "name": "fooDebug"
+        },
+        {
+          "build_type": "release",
+          "product_flavors": [
+            "foo"
+          ],
+          "name": "fooRelease"
+        },
+        {
+          "build_type": "release",
+          "product_flavors": [
+            "bar"
+          ],
+          "name": "barRelease"
+        }
+      ],
+      "user_preferred_build_types": [],
+      "user_preferred_product_flavors": [
+        "bar"
+      ],
+      "expected": "barRelease",
+      "implementation_status": "unported"
+    },
+    {
+      "test": "preferredFlavorsInTwoDimensions",
+      "variants": [
+        {
+          "build_type": "debug",
+          "product_flavors": [
+            "foo",
+            "abc"
+          ],
+          "name": "fooAbcDebug"
+        },
+        {
+          "build_type": "debug",
+          "product_flavors": [
+            "foo",
+            "xyz"
+          ],
+          "name": "fooXyzDebug"
+        },
+        {
+          "build_type": "release",
+          "product_flavors": [
+            "foo",
+            "abc"
+          ],
+          "name": "fooAbcRelease"
+        },
+        {
+          "build_type": "release",
+          "product_flavors": [
+            "foo",
+            "xyz"
+          ],
+          "name": "fooXyzRelease"
+        },
+        {
+          "build_type": "debug",
+          "product_flavors": [
+            "bar",
+            "abc"
+          ],
+          "name": "barAbcDebug"
+        },
+        {
+          "build_type": "debug",
+          "product_flavors": [
+            "bar",
+            "xyz"
+          ],
+          "name": "barXyzDebug"
+        },
+        {
+          "build_type": "release",
+          "product_flavors": [
+            "bar",
+            "abc"
+          ],
+          "name": "barAbcRelease"
+        },
+        {
+          "build_type": "release",
+          "product_flavors": [
+            "bar",
+            "xyz"
+          ],
+          "name": "barXyzRelease"
+        }
+      ],
+      "user_preferred_build_types": [],
+      "user_preferred_product_flavors": [
+        "bar",
+        "abc"
+      ],
+      "expected": "barAbcDebug",
+      "implementation_status": "unported"
+    },
+    {
+      "test": "preferredFlavorInSecondDimensionOnly",
+      "variants": [
+        {
+          "build_type": "release",
+          "product_flavors": [
+            "foo",
+            "abc"
+          ],
+          "name": "fooAbcRelease"
+        },
+        {
+          "build_type": "release",
+          "product_flavors": [
+            "foo",
+            "xyz"
+          ],
+          "name": "fooXyzRelease"
+        },
+        {
+          "build_type": "debug",
+          "product_flavors": [
+            "foo",
+            "abc"
+          ],
+          "name": "fooAbcDebug"
+        },
+        {
+          "build_type": "debug",
+          "product_flavors": [
+            "foo",
+            "xyz"
+          ],
+          "name": "fooXyzDebug"
+        },
+        {
+          "build_type": "release",
+          "product_flavors": [
+            "bar",
+            "abc"
+          ],
+          "name": "barAbcRelease"
+        },
+        {
+          "build_type": "release",
+          "product_flavors": [
+            "bar",
+            "xyz"
+          ],
+          "name": "barXyzRelease"
+        },
+        {
+          "build_type": "debug",
+          "product_flavors": [
+            "bar",
+            "abc"
+          ],
+          "name": "barAbcDebug"
+        },
+        {
+          "build_type": "debug",
+          "product_flavors": [
+            "bar",
+            "xyz"
+          ],
+          "name": "barXyzDebug"
+        }
+      ],
+      "user_preferred_build_types": [],
+      "user_preferred_product_flavors": [
+        "abc"
+      ],
+      "expected": "barAbcDebug",
+      "implementation_status": "unported"
+    },
+    {
+      "test": "mismatchedProductFlavourLength",
+      "variants": [
+        {
+          "build_type": "debug",
+          "product_flavors": [
+            "foo"
+          ],
+          "name": "fooDebug"
+        },
+        {
+          "build_type": "release",
+          "product_flavors": [
+            "foo",
+            "abc"
+          ],
+          "name": "fooAbcRelease"
+        }
+      ],
+      "user_preferred_build_types": [],
+      "user_preferred_product_flavors": [
+        "abc"
+      ],
+      "expected": "fooDebug",
+      "implementation_status": "unported"
+    },
+    {
+      "test": "onEmpty",
+      "variants": [],
+      "user_preferred_build_types": [],
+      "user_preferred_product_flavors": [
+        "abc"
+      ],
+      "expected": null,
+      "implementation_status": "unported"
+    }
+  ]
+}

@@ -8,15 +8,18 @@ use dap::{
     },
     client::SessionId,
 };
-use gpui::AsyncApp;
+use gpui::{AsyncApp, EntityId, Global};
 use project::debugger::dap_store::DapStoreEvent;
 use serde_json::{Value, json};
 use task::{DebugScenario, ZedDebugConfig};
 
 pub(super) const ADAPTER: &str = "Android Kotlin";
 
-// ponytail: the community adapter maps JVM lines; advanced Kotlin inline/SMAP support needs a compiler-aware adapter.
 pub(super) struct AndroidKotlinAdapter;
+
+#[derive(Default)]
+struct DebuggerAttachments(HashMap<EntityId, WeakEntity<AndroidPanel>>);
+impl Global for DebuggerAttachments {}
 
 pub(super) fn binary() -> Result<PathBuf> {
     let path = std::env::var_os("ANDROID_IDE_KOTLIN_DEBUGGER").map(PathBuf::from)
@@ -25,6 +28,13 @@ pub(super) fn binary() -> Result<PathBuf> {
         path.is_absolute() && path.is_file(),
         "ANDROID_IDE_KOTLIN_DEBUGGER must point to the installed debugger executable"
     );
+    let revision = path
+        .parent()
+        .and_then(Path::parent)
+        .map(|root| root.join(".revision"))
+        .context("Android debugger installation layout is invalid")?;
+    ensure!(std::fs::read_to_string(revision).context("Rust Android debugger revision marker is missing; reinstall script/install-android-debugger")?.trim()
+        == "koda-rust-jdwp-1", "Rust Android debugger update required. Move the old installation aside and run script/install-android-debugger, then relaunch.");
     Ok(path)
 }
 
@@ -40,13 +50,57 @@ impl DebugAdapter for AndroidKotlinAdapter {
 
     async fn get_binary(
         &self,
-        _: &Arc<dyn DapDelegate>,
+        delegate: &Arc<dyn DapDelegate>,
         config: &DebugTaskDefinition,
         user_installed_path: Option<PathBuf>,
         user_args: Option<Vec<String>>,
         user_env: Option<HashMap<String, String>>,
-        _: &mut AsyncApp,
+        cx: &mut AsyncApp,
     ) -> Result<DebugAdapterBinary> {
+        let root = config
+            .config
+            .get("projectRoot")
+            .and_then(Value::as_str)
+            .map(PathBuf::from)
+            .context("Android debugging requires its owning project root")?;
+        ensure!(
+            root == delegate.worktree_root_path(),
+            "The Android debugger belongs to a different project"
+        );
+        ensure!(
+            cx.update(|cx| {
+                cx.try_global::<DebuggerAttachments>()
+                    .is_some_and(|attachments| {
+                        attachments
+                            .0
+                            .values()
+                            .filter_map(WeakEntity::upgrade)
+                            .any(|panel| {
+                                let panel = panel.read(cx);
+                                panel.debug_forward.as_ref().is_some_and(|forward| {
+                                    forward.owner.root == root
+                                        && config.label == forward.label
+                                        && config.config["hostName"] == "127.0.0.1"
+                                        && config.config["port"].as_u64()
+                                            == Some(u64::from(forward.port))
+                                        && panel
+                                            .project
+                                            .read(cx)
+                                            .android_model()
+                                            .is_current(&forward.model_token)
+                                        && panel
+                                            .verify_operation_owner(
+                                                &forward.owner,
+                                                AndroidOperation::Run,
+                                                cx,
+                                            )
+                                            .is_ok()
+                                })
+                            })
+                    })
+            }),
+            "Use Android: Debug in the active Android application to establish a current device attachment"
+        );
         let executable = match user_installed_path {
             Some(path) => path,
             None => binary()?,
@@ -59,17 +113,12 @@ impl DebugAdapter for AndroidKotlinAdapter {
             config.config["request"] == "attach",
             "Android debugging requires an attach configuration"
         );
-        let mut envs = user_env.unwrap_or_default();
-        envs.entry("JAVA_HOME".into()).or_insert(
-            android_tools::kotlin::java_home()?
-                .to_string_lossy()
-                .into_owned(),
-        );
+        let envs = user_env.unwrap_or_default();
         Ok(DebugAdapterBinary {
             command: Some(executable.to_string_lossy().into_owned()),
             arguments: user_args.unwrap_or_default(),
             envs,
-            cwd: None,
+            cwd: Some(root),
             connection: None,
             request_args: StartDebuggingRequestArguments {
                 request: StartDebuggingRequestArgumentsRequest::Attach,
@@ -87,6 +136,8 @@ impl DebugAdapter for AndroidKotlinAdapter {
 }
 
 pub(super) struct Forward {
+    owner: AndroidOperationOwner,
+    model_token: android_tools::project_model::ModelToken,
     executor: BackgroundExecutor,
     adb: PathBuf,
     serial: String,
@@ -158,7 +209,328 @@ async fn wait_for_application_process<ReadProcess: Future<Output = Result<String
     }
 }
 
+async fn read_processes(
+    root: &Path,
+    serial: &str,
+    application: &str,
+    executor: &BackgroundExecutor,
+) -> Result<Vec<android_tools::debugging::Process>> {
+    let adb = adb_path()?;
+    let jdwp = tool_output(
+        adb.clone(),
+        vec!["-s".into(), serial.into(), "jdwp".into()],
+        root,
+        executor,
+        Duration::from_secs(10),
+    )
+    .await?;
+    let processes = tool_output(
+        adb,
+        vec![
+            "-s".into(),
+            serial.into(),
+            "shell".into(),
+            "ps".into(),
+            "-A".into(),
+            "-o".into(),
+            "PID,NAME".into(),
+        ],
+        root,
+        executor,
+        Duration::from_secs(10),
+    )
+    .await?;
+    android_tools::debugging::processes(&jdwp, &processes, application)
+}
+
 impl AndroidPanel {
+    pub(super) fn debug_inputs_dirty(&self, include_configuration: bool, cx: &App) -> bool {
+        let project = self.project.read(cx);
+        let Some(selected) = project.android_model().selected.as_ref() else {
+            return true;
+        };
+        project.buffer_store().read(cx).buffers().any(|buffer| {
+            let buffer = buffer.read(cx);
+            if !buffer.is_dirty() {
+                return false;
+            }
+            let Some(file) = buffer.file() else {
+                return false;
+            };
+            let Some(worktree) = project.worktree_for_id(file.worktree_id(cx), cx) else {
+                return false;
+            };
+            let absolute = worktree.read(cx).abs_path().join(file.path().as_std_path());
+            (include_configuration
+                && self
+                    .root
+                    .as_ref()
+                    .is_some_and(|root| absolute == root.join(".zed/android-run.json")))
+                || selected.modules().any(|(_, variant)| {
+                    variant.components.iter().any(|component| {
+                        component.sources.iter().any(|source| {
+                            matches!(
+                                source.kind,
+                                android_tools::project_model::SourceKind::Java
+                                    | android_tools::project_model::SourceKind::Kotlin
+                            ) && absolute.starts_with(&source.path)
+                        })
+                    })
+                })
+                || (Some(worktree.read(cx).abs_path().as_ref()) == self.root.as_deref()
+                    && self.model_input_changed(file.path(), cx))
+        })
+    }
+
+    pub(super) fn disconnect_debugger(&mut self, cx: &mut Context<Self>) {
+        self.debug_monitor = None;
+        self.debug_model_token = None;
+        if let Some(forward) = self.debug_forward.take() {
+            let store = self.project.read(cx).dap_store();
+            let session = forward.session.or_else(|| {
+                store.read(cx).sessions().find_map(|session| {
+                    let session = session.read(cx);
+                    (session.label().as_ref() == Some(&forward.label)
+                        && session.adapter().as_ref() == ADAPTER)
+                        .then(|| session.session_id())
+                })
+            });
+            if session.is_none() {
+                let label = forward.label.clone();
+                let store = store.clone();
+                cx.spawn(async move |_, cx| {
+                    for _ in 0..60 {
+                        cx.background_executor()
+                            .timer(Duration::from_millis(500))
+                            .await;
+                        let session = store.read_with(cx, |store, cx| {
+                            store.sessions().find_map(|session| {
+                                let session = session.read(cx);
+                                (session.label().as_ref() == Some(&label)
+                                    && session.adapter().as_ref() == ADAPTER)
+                                    .then(|| session.session_id())
+                            })
+                        });
+                        if let Some(session) = session {
+                            store
+                                .update(cx, |store, cx| store.shutdown_session(session, cx))
+                                .await?;
+                            break;
+                        }
+                    }
+                    Ok::<_, anyhow::Error>(())
+                })
+                .detach_and_log_err(cx);
+            }
+            if let Some(session) = session {
+                store
+                    .update(cx, |store, cx| store.shutdown_session(session, cx))
+                    .detach_and_log_err(cx);
+            }
+            self.status = "Android debugger detached; application left running".into();
+        }
+        cx.notify();
+    }
+
+    fn debugger_session_timed_out(&mut self, cx: &mut Context<Self>) {
+        self.disconnect_debugger(cx);
+        self.status =
+            "Android debugger did not create a session. Check debugger output and retry.".into();
+        cx.notify();
+    }
+
+    pub(super) fn refresh_run_configurations(
+        &mut self,
+        window: &mut Window,
+        cx: &mut Context<Self>,
+    ) {
+        if self.running || self.syncing {
+            return;
+        }
+        let result = self
+            .trusted_root(cx)
+            .and_then(|root| android_tools::debugging::read_configurations(&root));
+        match result {
+            Ok(configurations) => {
+                self.error = None;
+                self.run_configurations = configurations;
+                if self
+                    .selected_run_configuration
+                    .as_ref()
+                    .is_some_and(|name| {
+                        !self
+                            .run_configurations
+                            .iter()
+                            .any(|configuration| &configuration.name == name)
+                    })
+                {
+                    self.selected_run_configuration = None;
+                }
+                self.status = format!(
+                    "Loaded {} Android run configurations",
+                    self.run_configurations.len()
+                )
+                .into();
+            }
+            Err(error) => self.fail(error, window, cx),
+        }
+        cx.notify();
+    }
+
+    pub(super) fn run_configuration_picker(&self, cx: &Context<Self>) -> impl IntoElement {
+        let configurations = self.run_configurations.clone();
+        let panel = cx.weak_entity();
+        PopoverMenu::new("android-run-configuration")
+            .trigger(
+                Button::new(
+                    "android-run-configuration",
+                    self.selected_run_configuration
+                        .clone()
+                        .unwrap_or_else(|| "Default launcher".into()),
+                )
+                .disabled(self.running || self.syncing)
+                .tab_index(0isize),
+            )
+            .menu(move |window, cx| {
+                Some(ContextMenu::build(window, cx, |mut menu, _, _| {
+                    let default_panel = panel.clone();
+                    menu = menu.entry("Default launcher", None, move |_, cx| {
+                        default_panel
+                            .update(cx, |panel, cx| {
+                                if panel.running || panel.syncing {
+                                    return;
+                                }
+                                panel.selected_run_configuration = None;
+                                cx.notify();
+                            })
+                            .log_err();
+                    });
+                    for configuration in &configurations {
+                        let panel = panel.clone();
+                        let name = configuration.name.clone();
+                        menu = menu.entry(name.clone(), None, move |_, cx| {
+                            panel
+                                .update(cx, |panel, cx| {
+                                    if panel.running || panel.syncing {
+                                        return;
+                                    }
+                                    panel.selected_run_configuration = Some(name.clone());
+                                    cx.notify();
+                                })
+                                .log_err();
+                        });
+                    }
+                    menu
+                }))
+            })
+    }
+
+    pub(super) fn refresh_debug_processes(&mut self, window: &mut Window, cx: &mut Context<Self>) {
+        if self.running
+            || self.syncing
+            || self.debug_forward.is_some()
+            || self.test_operation_id.is_some()
+        {
+            return;
+        }
+        let context = (|| {
+            let root = self.trusted_root(cx)?;
+            let target = self
+                .selected_target
+                .as_ref()
+                .context("Select an Android variant first")?;
+            self.validate_model_target(target, cx)?;
+            let application = target.application_id()?;
+            Ok::<_, anyhow::Error>((
+                root,
+                self.selected_device()?.serial.clone(),
+                application,
+                self.project.read(cx).android_model().token(),
+            ))
+        })();
+        let (root, serial, application, token) = match context {
+            Ok(context) => context,
+            Err(error) => {
+                self.fail(error, window, cx);
+                return;
+            }
+        };
+        self.running = true;
+        self.debug_processes.clear();
+        self.debug_process_context = None;
+        self.followup_model_token = Some(token.clone());
+        let executor = cx.background_executor().clone();
+        self.debug_task = Some(cx.spawn_in(window, async move |panel, cx| {
+            let result = cx
+                .background_spawn({
+                    let root = root.clone();
+                    let serial = serial.clone();
+                    let application = application.clone();
+                    async move { read_processes(&root, &serial, &application, &executor).await }
+                })
+                .await;
+            panel
+                .update_in(cx, |panel, window, cx| {
+                    if !panel.project.read(cx).android_model().is_current(&token) {
+                        return;
+                    }
+                    panel.running = false;
+                    panel.followup_model_token = None;
+                    let result = result.and_then(|processes| {
+                        ensure!(
+                            panel.trusted_root(cx)? == root
+                                && panel.selected_device()?.serial == serial,
+                            "The project or device changed during process discovery"
+                        );
+                        panel.status = if processes.is_empty() {
+                            "No debuggable application processes. Launch a debug APK, then refresh."
+                                .into()
+                        } else {
+                            "Choose a process to attach without building or redeploying.".into()
+                        };
+                        panel.error = None;
+                        panel.debug_processes = processes;
+                        panel.debug_process_context = Some((token, serial, application));
+                        Ok(())
+                    });
+                    if let Err(error) = result {
+                        panel.fail(error, window, cx);
+                    }
+                    cx.notify();
+                })
+                .log_err();
+        }));
+        cx.notify();
+    }
+
+    pub(super) fn debug_process_picker(&self, cx: &Context<Self>) -> impl IntoElement {
+        let processes = self.debug_processes.clone();
+        let context = self.debug_process_context.clone();
+        let panel = cx.weak_entity();
+        PopoverMenu::new("android-debug-process")
+            .trigger(Button::new("android-debug-process", "Attach process…").disabled(self.running || self.syncing || self.debug_forward.is_some() || self.test_operation_id.is_some() || processes.is_empty()).tab_index(0isize))
+            .menu(move |window, cx| Some(ContextMenu::build(window, cx, |mut menu, _, _| {
+                for process in &processes {
+                    let panel = panel.clone(); let process = process.clone(); let context = context.clone();
+                    menu = menu.entry(format!("{} · PID {}", process.name, process.pid), None, move |window, cx| {
+                        panel.update(cx, |panel, cx| {
+                            if panel.running || panel.syncing || panel.debug_forward.is_some() || panel.test_operation_id.is_some() { return; }
+                            let result = (|| {
+                                let (token, serial, application) = context.clone().context("Refresh debug processes first")?;
+                                ensure!(panel.project.read(cx).android_model().is_current(&token) && panel.selected_device()?.serial == serial, "Variant or device changed. Refresh debug processes.");
+                                ensure!(!panel.debug_inputs_dirty(false, cx), "Save source edits before attaching. Use Debug to rebuild changed sources.");
+                                let root = panel.trusted_root(cx)?;
+                                panel.attach_debugger_process(root, serial, application, Some(process.clone()), window, cx);
+                                Ok::<_, anyhow::Error>(())
+                            })();
+                            if let Err(error) = result { panel.fail(error, window, cx); }
+                        }).log_err();
+                    });
+                }
+                menu
+            })))
+    }
+
     pub(super) fn observe_debugger(&self, cx: &mut Context<Self>) -> Vec<Subscription> {
         let store = self.project.read(cx).dap_store();
         vec![
@@ -182,6 +554,8 @@ impl AndroidPanel {
                         .is_some_and(|forward| forward.session == Some(*id))
                 {
                     panel.debug_forward = None;
+                    panel.debug_model_token = None;
+                    panel.debug_monitor = None;
                     panel.status = "Android debugger disconnected".into();
                     cx.notify();
                 }
@@ -197,46 +571,167 @@ impl AndroidPanel {
         window: &mut Window,
         cx: &mut Context<Self>,
     ) {
-        if let Err(error) = self.trusted_root(cx).and_then(|current| {
-            ensure!(
-                current == root,
-                "The Android project changed before debugger attachment"
+        self.attach_debugger_process(root, serial, application_id, None, window, cx);
+    }
+
+    fn attach_debugger_process(
+        &mut self,
+        root: PathBuf,
+        serial: String,
+        application_id: String,
+        selected_process: Option<android_tools::debugging::Process>,
+        window: &mut Window,
+        cx: &mut Context<Self>,
+    ) {
+        if (self.running && selected_process.is_some())
+            || self.debug_forward.is_some()
+            || self.test_operation_id.is_some()
+        {
+            return;
+        }
+        if self.debug_inputs_dirty(false, cx) {
+            self.running = false;
+            self.fail(
+                anyhow::anyhow!(
+                    "Save source/model edits and rebuild before attaching the Android debugger."
+                ),
+                window,
+                cx,
             );
-            Ok(())
-        }) {
+            return;
+        }
+        if let Err(error) = binary() {
             self.fail(error, window, cx);
             return;
         }
+        let token = self.project.read(cx).android_model().token();
+        self.followup_model_token = Some(token.clone());
+        let source_roots = self
+            .project
+            .read(cx)
+            .android_model()
+            .selected
+            .as_ref()
+            .map(|selected| {
+                selected
+                    .modules()
+                    .flat_map(|(_, variant)| &variant.components)
+                    .filter(|component| {
+                        component.scope == android_tools::project_model::SourceScope::Main
+                    })
+                    .flat_map(|component| &component.sources)
+                    .filter(|source| {
+                        matches!(
+                            source.kind,
+                            android_tools::project_model::SourceKind::Java
+                                | android_tools::project_model::SourceKind::Kotlin
+                        )
+                    })
+                    .map(|source| source.path.clone())
+                    .collect::<Vec<_>>()
+            })
+            .unwrap_or_default();
+        let owner = match self.operation_owner(AndroidOperation::Run, cx) {
+            Ok(owner) if owner.root == root => owner,
+            Ok(_) => {
+                self.fail(
+                    anyhow::anyhow!("The Android project changed before debugger attachment"),
+                    window,
+                    cx,
+                );
+                return;
+            }
+            Err(error) => {
+                self.fail(error, window, cx);
+                return;
+            }
+        };
+        let model_token = self.project.read(cx).android_model().token();
+        self.backend_owner = Some(owner.context.clone());
         self.running = true;
+        self.error = None;
         self.status = "Attaching Android debugger…".into();
         let executor = cx.background_executor().clone();
+        self.next_operation_id += 1;
+        let attachment_id = self.next_operation_id;
         self.debug_task = Some(cx.spawn_in(window, async move |panel, cx| {
-            let result = cx.background_spawn({
+            let result = async {
+            panel.read_with(cx, |panel, cx| panel.verify_operation_owner(&owner, AndroidOperation::Run, cx))??;
+            cx.background_spawn({
                 let root = root.clone();
+                let owner = owner.clone();
+                let model_token = model_token.clone();
                 async move {
+                    owner.ensure_active()?;
                     let adb = adb_path()?;
-                    let process = wait_for_application_process(
-                        || tool_output(adb.clone(), vec!["-s".into(), serial.clone(), "shell".into(), "pidof".into(), "-s".into(), application_id.clone()], &root, &executor, Duration::from_secs(1)),
+                    let process = if let Some(selected_process) = selected_process {
+                        ensure!(read_processes(&root, &serial, &application_id, &executor).await?.contains(&selected_process), "The selected process exited or is no longer debuggable. Refresh processes.");
+                        selected_process.pid
+                    } else { wait_for_application_process(
+                        || async {
+                            owner.ensure_active()?;
+                            tool_output(adb.clone(), vec!["-s".into(), serial.clone(), "shell".into(), "pidof".into(), "-s".into(), application_id.clone()], &root, &executor, Duration::from_secs(1)).await
+                        },
                         &executor,
-                    ).await?;
+                    ).await? };
+                    owner.ensure_active()?;
                     let output = tool_output(adb.clone(), vec!["-s".into(), serial.clone(), "forward".into(), "tcp:0".into(), format!("jdwp:{process}")], &root, &executor, Duration::from_secs(10)).await?;
                     let port: u16 = positive_number(&output, "debugger port")?;
-                    Ok::<_, anyhow::Error>(Forward { executor, adb, serial, port,
-                        label: format!("Android · {application_id} · {process}:{port}").into(), session: None })
+                    Ok::<_, anyhow::Error>(Forward { owner, model_token, executor, adb, serial, port,
+                        label: format!("Android · {application_id} · {process}:{port} · {attachment_id}").into(), session: None })
                 }
-            }).await;
+            }).await
+            }.await;
             panel.update_in(cx, |panel, window, cx| {
+                if !panel.project.read(cx).android_model().is_current(&token) { return; }
                 panel.running = false;
+                panel.followup_model_token = None;
                 let result = result.and_then(|forward| {
+                    panel.verify_operation_owner(&owner, AndroidOperation::Run, cx)?;
+                    ensure!(panel.project.read(cx).android_model().is_current(&model_token), "The Android model changed during debugger attachment");
                     ensure!(panel.trusted_root(cx)? == root, "The Android project changed during debugger attachment");
+                    ensure!(panel.selected_device()?.serial == forward.serial, "The selected device changed during debugger attachment");
+                    ensure!(!panel.debug_inputs_dirty(false, cx), "Sources/model inputs changed during debugger attachment. Save and rebuild before retrying.");
                     let worktree = panel.project.read(cx).visible_worktrees(cx)
                         .find(|worktree| worktree.read(cx).abs_path().as_ref() == root)
                         .map(|worktree| worktree.read(cx).id()).context("The Android project was closed")?;
                     let provider = panel.workspace.read_with(cx, |workspace, _| workspace.debugger_provider())?
                         .context("The native debugger is unavailable")?;
                     let scenario = DebugScenario { adapter: ADAPTER.into(), label: forward.label.clone(), build: None,
-                        config: json!({"request":"attach", "hostName":"127.0.0.1", "port":forward.port, "projectRoot":root, "timeout":5000}), tcp_connection: None };
+                        config: json!({"request":"attach", "hostName":"127.0.0.1", "port":forward.port, "projectRoot":root, "sourceRoots":source_roots, "timeout":5000}), tcp_connection: None };
+                    panel.debug_model_token = Some(token.clone());
                     panel.debug_forward = Some(forward);
+                    if !cx.has_global::<DebuggerAttachments>() { cx.set_global(DebuggerAttachments::default()); }
+                    let panel_id = cx.entity_id();
+                    let panel_handle = cx.weak_entity();
+                    if cx.global_mut::<DebuggerAttachments>().0.insert(panel_id, panel_handle).is_none() {
+                        cx.on_release(move |_, cx| {
+                            if cx.has_global::<DebuggerAttachments>() { cx.global_mut::<DebuggerAttachments>().0.remove(&panel_id); }
+                        }).detach();
+                    }
+                    panel.debug_monitor = Some(cx.spawn(async move |panel, cx| {
+                        let result = async {
+                        for _ in 0..60 {
+                            cx.background_executor().timer(Duration::from_millis(500)).await;
+                            let connected = panel.update(cx, |panel, cx| {
+                                let store = panel.project.read(cx).dap_store();
+                                if let Some(forward) = &mut panel.debug_forward {
+                                    forward.session = store.read(cx).sessions().find_map(|session| {
+                                        let session = session.read(cx);
+                                        (session.label().as_ref() == Some(&forward.label) && session.adapter().as_ref() == ADAPTER).then(|| session.session_id())
+                                    });
+                                    forward.session.is_some()
+                                } else { true }
+                            })?;
+                            if connected { return Ok::<_, anyhow::Error>(()); }
+                        }
+                        panel.update(cx, |panel, cx| {
+                            panel.debugger_session_timed_out(cx);
+                        })?;
+                        Ok(())
+                        }.await;
+                        result.log_err();
+                    }));
                     provider.start_session(scenario, TaskContext { cwd: Some(root), ..Default::default() }.into(), None, Some(worktree), window, cx);
                     panel.status = "Android debugger started. Use the debugger controls to inspect, step, resume, or disconnect.".into();
                     Ok(())
@@ -253,6 +748,40 @@ impl AndroidPanel {
 mod tests {
     use super::*;
 
+    async fn empty_android_fixture_project(cx: &mut gpui::TestAppContext) -> Entity<Project> {
+        let filesystem = project::FakeFs::new(cx.executor());
+        filesystem
+            .insert_tree("/android", serde_json::json!({"app":{}}))
+            .await;
+        Project::test(filesystem, [Path::new("/android")], cx).await
+    }
+
+    fn attachment_fixture_owner(
+        panel: &mut AndroidPanel,
+        cx: &mut Context<AndroidPanel>,
+    ) -> AndroidOperationOwner {
+        let root = project_context::for_workspace(&panel.workspace, cx)
+            .and_then(|controller| controller.read(cx).root(cx))
+            .expect("Evaluated Android attachment fixture root");
+        if panel.selected_target.is_none() {
+            let target = AndroidTarget {
+                module: ":app".into(),
+                variant: "debug".into(),
+                output_listing: root.join("output.json"),
+            };
+            panel.root = Some(root);
+            panel.selected_target = Some(target.clone());
+            panel.targets = vec![target.clone()];
+            crate::tests::publish_test_android_model(panel, &target, cx);
+        }
+        // Capture the token after affirmative fixture initialization. Existing
+        // variant/model scenarios retain their already-published selection.
+        panel.debug_model_token = Some(panel.project.read(cx).android_model().token());
+        panel
+            .operation_owner(AndroidOperation::Run, cx)
+            .expect("Current attachment fixture owner")
+    }
+
     #[gpui::test]
     async fn tests_do_not_redeploy_an_application_owned_by_the_debugger(
         cx: &mut gpui::TestAppContext,
@@ -265,9 +794,11 @@ mod tests {
         let project = Project::test(filesystem, [Path::new("/android")], cx).await;
         let (workspace, cx) =
             cx.add_window_view(|window, cx| Workspace::test_new(project.clone(), window, cx));
-        let panel = cx.new(|cx| AndroidPanel::new(workspace.downgrade(), project, cx));
+        let panel = crate::tests::new_test_android_panel(&workspace, project, cx);
         panel.update_in(cx, |panel, window, cx| {
             panel.debug_forward = Some(Forward {
+                owner: attachment_fixture_owner(panel, cx),
+                model_token: panel.project.read(cx).android_model().token(),
                 executor: cx.background_executor().clone(),
                 adb: PathBuf::from("/nonexistent/test-adb"),
                 serial: "test-device".into(),
@@ -294,6 +825,314 @@ mod tests {
                 );
             }
         });
+    }
+
+    #[gpui::test]
+    async fn active_debugger_rejects_repeated_unit_device_and_discovery_requests(
+        cx: &mut gpui::TestAppContext,
+    ) {
+        let _state = cx.update(workspace::AppState::test);
+        let project = empty_android_fixture_project(cx).await;
+        let (workspace, cx) =
+            cx.add_window_view(|window, cx| Workspace::test_new(project.clone(), window, cx));
+        let panel = crate::tests::new_test_android_panel(&workspace, project.clone(), cx);
+        panel.update_in(cx, |panel, window, cx| {
+            panel.debug_model_token = Some(panel.project.read(cx).android_model().token());
+            panel.debug_forward = Some(Forward {
+                owner: attachment_fixture_owner(panel, cx),
+                model_token: panel.project.read(cx).android_model().token(),
+                executor: cx.background_executor().clone(),
+                adb: "/missing-test-adb".into(),
+                serial: "device".into(),
+                port: 6000,
+                label: "active-debug".into(),
+                session: None,
+            });
+            let operation = panel.next_operation_id;
+            for _ in 0..2 {
+                for kind in [
+                    android_tools::testing::TestKind::Unit,
+                    android_tools::testing::TestKind::Device,
+                ] {
+                    for discover_only in [false, true] {
+                        panel.error = None;
+                        panel.start_tests(kind, Vec::new(), discover_only, window, cx);
+                        assert!(panel.error.as_ref().is_some_and(|error| {
+                            error.contains("Disconnect the Android debugger")
+                        }));
+                        assert!(panel.debug_forward.is_some());
+                        assert!(panel.test_operation_id.is_none());
+                        assert!(panel.pending_test.is_none());
+                        assert!(panel.test_task.is_none());
+                        assert!(panel.test_cancel.is_none());
+                        assert!(!panel.test_panel.read(cx).busy);
+                        assert_eq!(panel.next_operation_id, operation);
+                    }
+                }
+            }
+            panel.disconnect_debugger(cx);
+        });
+        cx.run_until_parked();
+    }
+
+    #[gpui::test]
+    async fn running_and_cancelling_tests_reject_repeated_debug_actions(
+        cx: &mut gpui::TestAppContext,
+    ) {
+        let _state = cx.update(workspace::AppState::test);
+        let project = empty_android_fixture_project(cx).await;
+        let (workspace, cx) =
+            cx.add_window_view(|window, cx| Workspace::test_new(project.clone(), window, cx));
+        let panel = crate::tests::new_test_android_panel(&workspace, project.clone(), cx);
+        panel.update_in(cx, |panel, window, cx| {
+            let (cancel, mut cancellation) = futures::channel::oneshot::channel();
+            panel.test_operation_id = Some(17);
+            panel.test_cancel = Some(cancel);
+            let operation = panel.next_operation_id;
+            for cancelling in [false, true] {
+                if cancelling {
+                    panel.cancel_tests(cx);
+                    assert_eq!(
+                        cancellation.try_recv().expect("Test cancellation channel"),
+                        Some(())
+                    );
+                }
+                let status = panel.status.clone();
+                for _ in 0..2 {
+                    panel.refresh_debug_processes(window, cx);
+                    for selected in [
+                        None,
+                        Some(android_tools::debugging::Process {
+                            pid: 42,
+                            name: "dev.app:worker".into(),
+                        }),
+                    ] {
+                        panel.attach_debugger_process(
+                            "/android".into(),
+                            "device".into(),
+                            "dev.app".into(),
+                            selected,
+                            window,
+                            cx,
+                        );
+                    }
+                    assert!(panel.error.is_none());
+                    assert_eq!(panel.status, status);
+                    assert_eq!(panel.test_operation_id, Some(17));
+                    assert_eq!(panel.next_operation_id, operation);
+                    assert!(panel.debug_forward.is_none());
+                    assert!(panel.debug_task.is_none());
+                    assert!(panel.debug_monitor.is_none());
+                    assert!(panel.followup_model_token.is_none());
+                    assert!(!panel.running);
+                    if !cancelling {
+                        assert_eq!(
+                            cancellation.try_recv().expect("Test cancellation channel"),
+                            None
+                        );
+                    }
+                }
+            }
+            panel.test_operation_id = None;
+        });
+        cx.run_until_parked();
+    }
+
+    #[gpui::test]
+    async fn cancelled_deferred_attach_shuts_down_only_its_session(cx: &mut gpui::TestAppContext) {
+        deferred_attach_cleanup(cx, false).await;
+    }
+
+    #[gpui::test]
+    async fn timed_out_deferred_attach_shuts_down_only_its_session(cx: &mut gpui::TestAppContext) {
+        deferred_attach_cleanup(cx, true).await;
+    }
+
+    async fn deferred_attach_cleanup(cx: &mut gpui::TestAppContext, timed_out: bool) {
+        let _state = cx.update(workspace::AppState::test);
+        let project = empty_android_fixture_project(cx).await;
+        let (workspace, cx) =
+            cx.add_window_view(|window, cx| Workspace::test_new(project.clone(), window, cx));
+        let panel = crate::tests::new_test_android_panel(&workspace, project.clone(), cx);
+        let store = project.read_with(cx, |project, _| project.dap_store());
+        panel.update(cx, |panel, cx| {
+            panel.debug_model_token = Some(panel.project.read(cx).android_model().token());
+            panel.debug_forward = Some(Forward {
+                owner: attachment_fixture_owner(panel, cx),
+                model_token: panel.project.read(cx).android_model().token(),
+                executor: cx.background_executor().clone(),
+                adb: "/missing-test-adb".into(),
+                serial: "device".into(),
+                port: 6000,
+                label: "cancelled-attach".into(),
+                session: None,
+            });
+            if timed_out {
+                panel.debugger_session_timed_out(cx);
+            } else {
+                panel.disconnect_debugger(cx);
+            }
+            panel.disconnect_debugger(cx);
+            assert!(panel.debug_forward.is_none());
+        });
+        let (cancelled, unrelated) = store.update(cx, |store, cx| {
+            let cancelled = store.new_session(
+                Some("cancelled-attach".into()),
+                ADAPTER.into(),
+                TaskContext::default().into(),
+                None,
+                Default::default(),
+                cx,
+            );
+            let unrelated = store.new_session(
+                Some("different-attach".into()),
+                ADAPTER.into(),
+                TaskContext::default().into(),
+                None,
+                Default::default(),
+                cx,
+            );
+            (
+                cancelled.read(cx).session_id(),
+                unrelated.read(cx).session_id(),
+            )
+        });
+        cx.run_until_parked();
+        cx.executor().advance_clock(Duration::from_millis(500));
+        cx.run_until_parked();
+        store.read_with(cx, |store, _| {
+            assert!(
+                store.session_by_id(cancelled).is_none(),
+                "A deferred start after cancellation must be shut down"
+            );
+            assert!(
+                store.session_by_id(unrelated).is_some(),
+                "Other debug sessions must remain active"
+            );
+        });
+    }
+
+    #[gpui::test]
+    async fn active_debugger_detaches_after_variant_changes_and_switching_back(
+        cx: &mut gpui::TestAppContext,
+    ) {
+        let _state = cx.update(workspace::AppState::test);
+        let project = empty_android_fixture_project(cx).await;
+        let (workspace, cx) =
+            cx.add_window_view(|window, cx| Workspace::test_new(project.clone(), window, cx));
+        let panel = crate::tests::new_test_android_panel(&workspace, project.clone(), cx);
+        let target = AndroidTarget {
+            module: ":app".into(),
+            variant: "debug".into(),
+            output_listing: "/android/output.json".into(),
+        };
+        panel.update(cx, |panel, cx| {
+            panel.root = Some("/android".into());
+            crate::tests::publish_test_android_model(panel, &target, cx);
+        });
+        cx.run_until_parked();
+        let store = project.read_with(cx, |project, _| project.dap_store());
+        let (owned, unrelated) = store.update(cx, |store, cx| {
+            let session =
+                |store: &mut project::debugger::dap_store::DapStore,
+                 label: &str,
+                 cx: &mut Context<project::debugger::dap_store::DapStore>| {
+                    store
+                        .new_session(
+                            Some(label.into()),
+                            ADAPTER.into(),
+                            TaskContext::default().into(),
+                            None,
+                            Default::default(),
+                            cx,
+                        )
+                        .read(cx)
+                        .session_id()
+                };
+            (
+                session(store, "active-attach", cx),
+                session(store, "unrelated-attach", cx),
+            )
+        });
+        panel.update(cx, |panel, cx| {
+            panel.debug_model_token = Some(panel.project.read(cx).android_model().token());
+            panel.debug_forward = Some(Forward {
+                owner: attachment_fixture_owner(panel, cx),
+                model_token: panel.project.read(cx).android_model().token(),
+                executor: cx.background_executor().clone(),
+                adb: "/missing-test-adb".into(),
+                serial: "device".into(),
+                port: 6000,
+                label: "active-attach".into(),
+                session: Some(owned),
+            });
+            let other_variant = AndroidTarget {
+                variant: "release".into(),
+                ..target.clone()
+            };
+            crate::tests::publish_test_android_model(panel, &other_variant, cx);
+            crate::tests::publish_test_android_model(panel, &target, cx);
+        });
+        cx.run_until_parked();
+        assert!(panel.read_with(cx, |panel, _| panel.debug_forward.is_none()));
+        store.read_with(cx, |store, _| {
+            assert!(store.session_by_id(owned).is_none());
+            assert!(store.session_by_id(unrelated).is_some());
+        });
+    }
+
+    #[gpui::test]
+    async fn attach_ignores_unrelated_dirty_buffers_but_rejects_selected_sources(
+        cx: &mut gpui::TestAppContext,
+    ) {
+        let _state = cx.update(workspace::AppState::test);
+        let filesystem = project::FakeFs::new(cx.executor());
+        filesystem
+            .insert_tree(
+                "/android",
+                json!({"notes.txt": "notes", ".zed": {"android-run.json": "[]"}, "app": {"src": {"Main.kt": "fun main() {}"}}}),
+            )
+            .await;
+        let project = Project::test(filesystem, [Path::new("/android")], cx).await;
+        let notes = project
+            .update(cx, |project, cx| {
+                project.open_local_buffer("/android/notes.txt", cx)
+            })
+            .await
+            .expect("Open notes");
+        let configuration = project
+            .update(cx, |project, cx| {
+                project.open_local_buffer("/android/.zed/android-run.json", cx)
+            })
+            .await
+            .expect("Open configuration");
+        let source = project
+            .update(cx, |project, cx| {
+                project.open_local_buffer("/android/app/src/Main.kt", cx)
+            })
+            .await
+            .expect("Open source");
+        let (workspace, cx) =
+            cx.add_window_view(|window, cx| Workspace::test_new(project.clone(), window, cx));
+        let panel = crate::tests::new_test_android_panel(&workspace, project, cx);
+        panel.update(cx, |panel, cx| {
+            let target = AndroidTarget {
+                module: ":app".into(),
+                variant: "debug".into(),
+                output_listing: "/android/output.json".into(),
+            };
+            panel.root = Some("/android".into());
+            crate::tests::publish_test_android_model(panel, &target, cx);
+        });
+        notes.update(cx, |buffer, cx| buffer.edit([(0..0, "edited ")], None, cx));
+        assert!(!panel.read_with(cx, |panel, cx| panel.debug_inputs_dirty(false, cx)));
+        configuration.update(cx, |buffer, cx| buffer.edit([(0..0, " ")], None, cx));
+        assert!(!panel.read_with(cx, |panel, cx| panel.debug_inputs_dirty(false, cx)));
+        assert!(panel.read_with(cx, |panel, cx| panel.debug_inputs_dirty(true, cx)));
+        source.update(cx, |buffer, cx| {
+            buffer.edit([(0..0, "// edited\n")], None, cx)
+        });
+        assert!(panel.read_with(cx, |panel, cx| panel.debug_inputs_dirty(false, cx)));
     }
 
     #[gpui::test]

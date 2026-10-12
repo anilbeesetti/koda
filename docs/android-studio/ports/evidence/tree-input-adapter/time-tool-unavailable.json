@@ -1,0 +1,14 @@
+{
+  "status": "measurement_tool_unavailable",
+  "failed_commands": [
+    "/usr/bin/time -v verified-test-binary --exact stress20000",
+    "/usr/bin/time -v verified-test-binary --exact stressJavaBudget"
+  ],
+  "error": "FileNotFoundError: /usr/bin/time is not installed; neither exact test was launched for these timed attempts",
+  "preserved_empty_logs": [
+    "stress-20000-timed.log",
+    "stress-java-budget-timed.log"
+  ],
+  "source_fix_round": false,
+  "recovery": "Use per-PID os.posix_spawn plus os.wait4 to isolate exact command rusage from prior git helper in runner"
+}

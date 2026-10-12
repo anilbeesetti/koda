@@ -1,0 +1,56 @@
+{
+  "schema_version": 1,
+  "task": "1-v2-artifact-facts",
+  "branch": "android-studio-task/1-v2-artifact-facts",
+  "status": "implementation_static_reviews_running_execution_pending",
+  "scope": "Raw independent official V2 artifact transport and two original version ordering methods; no canonical matrix promotion or tree/LSP/IDE completeness",
+  "global_census_complete": false,
+  "canonical_matrix_changed": false,
+  "reference": {
+    "repository": "platform/tools/adt/idea",
+    "revision": "a84efec3ba9542d9bfa1255103f0dc94833a3796",
+    "suite": "com.android.tools.idea.gradle.project.sync.ModelVersionsTest",
+    "license": "Apache-2.0",
+    "files": [
+      {
+        "path": "project-system-gradle-sync/testSrc/com/android/tools/idea/gradle/project/sync/ModelVersionsTest.kt",
+        "sha256": "9239c0688b3066bf964d801ba7b231dd5f70719a97331645fd53f10060252aef",
+        "retained_path": "crates/android_tools/test_data/generated_artifacts/ModelVersionsTest.kt"
+      }
+    ]
+  },
+  "proposed_tests": [
+    {
+      "reference_test": "checkModelVersionOrdering",
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:project-system-gradle-sync/testSrc/com/android/tools/idea/gradle/project/sync/ModelVersionsTest.kt#com.android.tools.idea.gradle.project.sync.ModelVersionsTest.checkModelVersionOrdering",
+      "status": "unported",
+      "execution_status": "not_run",
+      "package": "android_tools",
+      "integration_target": "generated_artifacts",
+      "test_name": "check_model_version_ordering",
+      "proposed_status_after_actual_and_lead_gates": "ported",
+      "reason": "Every original signed minimum/maximum, ordered tuple, description, reversed input and ordered full record assertion preserved; normal Cargo and lead capture gates pending."
+    },
+    {
+      "reference_test": "checkModelConsumerVersionOrdering",
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:project-system-gradle-sync/testSrc/com/android/tools/idea/gradle/project/sync/ModelVersionsTest.kt#com.android.tools.idea.gradle.project.sync.ModelVersionsTest.checkModelConsumerVersionOrdering",
+      "status": "unported",
+      "execution_status": "not_run",
+      "package": "android_tools",
+      "integration_target": "generated_artifacts",
+      "test_name": "check_model_consumer_version_ordering",
+      "proposed_status_after_actual_and_lead_gates": "ported",
+      "reason": "Every original signed minimum/maximum, ordered tuple, description, reversed input and ordered full record assertion preserved; normal Cargo and lead capture gates pending."
+    }
+  ],
+  "unported_reference_tests": [
+    "ModelVersionsTest.checkSupportsParallelSync",
+    "five AndroidProjectViewTest generated/resources/direct-file flows"
+  ],
+  "non_rust_exceptions": [
+    {
+      "component": "Existing Gradle/Android SDK JVM tooling-model serialization bridge",
+      "reason": "Official model objects and getters are provided by Gradle/AGP JVM APIs; Rust owns version policy, validation and IDE behavior."
+    }
+  ]
+}

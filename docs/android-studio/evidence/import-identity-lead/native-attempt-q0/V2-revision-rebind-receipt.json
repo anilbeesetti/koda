@@ -1,0 +1,34 @@
+{
+  "prepared_only": true,
+  "runtime_executed": false,
+  "utc": "2026-10-08T02:32:58.531194+00:00",
+  "source_commit": "7e3f72ebfaef39d6e6630dd11fa7dc91c8985d4a",
+  "scope": "External native probe only; no product, reference-test, fixture, cache, Git or runtime changes",
+  "probe_before_path": "/workspace/android-studio-artifacts/import-identity-native-7e3f72e/before-V2-revision-rebind/runtime-probe.rs",
+  "probe_before_sha256": "e20fb08e3632fdbf0acd1412ecadcbff37553eeaad999f080a2c13a594fae75e",
+  "probe_after_path": "/workspace/android-studio-artifacts/import-identity-native-7e3f72e/runtime-probe.rs",
+  "probe_after_sha256": "a967c834d0f786f3779bd7a4b0536e60fca064b9c5f06b52b3baa7d46a50f360",
+  "exact_deltas": [
+    {
+      "before": "    let model_revision = env::var(\"KODA_IMPORT_MODEL_REVISION\")?.parse::<u64>()?;\n",
+      "after": "moved unchanged before V2 parse"
+    },
+    {
+      "before": "    let facts = parse_generated_artifacts(&output, &model, 1, &consumer)?;\n",
+      "after": "    let facts = parse_generated_artifacts(&output, &model, model_revision, &consumer)?;\n"
+    },
+    {
+      "before": "    facts.ensure_current(&model, 1)?;\n",
+      "after": "    facts.ensure_current(&model, model_revision)?;\n"
+    }
+  ],
+  "all_prior_artifact_capability_and_import_assertions_preserved": true,
+  "same_actual_supplied_model_revision_for_all_fact_snapshots": true,
+  "Basic_model_caller_revision_not_internally_tagged": true,
+  "source_and_baseref_unchanged": true,
+  "base_probe_sha256": "0e6cb4ff731f9b228334e6dc19094d04b2e247dc1e93ebf709c0cbd7e6c1e5cc",
+  "updated_addition_provenance_sha256": "619c3ade618306f8081068f7d371f0a3883274ccb8b97f1b2badbe5913fa2b7b",
+  "initial_probe_and_all_provenance_history_preserved": true,
+  "Rust_probe_compiled": false,
+  "new_reference_or_runtime_credit": 0
+}

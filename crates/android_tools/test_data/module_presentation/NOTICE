@@ -1,0 +1,11 @@
+This directory retains unchanged reference sources from Android Studio Rabbit1
+(AOSP tools/adt/idea a84efec3ba9542d9bfa1255103f0dc94833a3796) and IntelliJ
+Community idea/262.9437.185 (b75ab523e6adbe1d26112219729eacbcfd24daa0).
+
+Copyright (C) The Android Open Source Project.
+Copyright JetBrains s.r.o. and contributors.
+
+The originals retain their copyright and Apache 2.0 headers. The Rust display
+policy and supplemental tests adapt the referenced behavior. No original test
+method has been ported by this bounded task. See selection.json for exact source
+hashes, line ranges, policy boundaries, and supplementary test declarations.

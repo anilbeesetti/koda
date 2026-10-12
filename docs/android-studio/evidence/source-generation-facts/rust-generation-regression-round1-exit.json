@@ -1,0 +1,19 @@
+{
+  "command": [
+    "cargo",
+    "test",
+    "--locked",
+    "-p",
+    "android_tools",
+    "--all-features",
+    "--lib",
+    "project_model::tests::evaluated_variant_sources_retain_sdk_generation_flags_and_order",
+    "--",
+    "--exact",
+    "--nocapture"
+  ],
+  "exit_code": 0,
+  "elapsed_seconds": 5.752561266999692,
+  "source_root_sha256": "52fa6207155f99d8d91197968af5c97ce8a57f5acc79c270f20a2374dcc32b5e",
+  "root_bytes_unchanged": true
+}

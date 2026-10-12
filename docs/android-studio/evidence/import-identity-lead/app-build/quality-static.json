@@ -1,0 +1,66 @@
+{
+  "verdict": "PASS",
+  "scope": "Read-only static equivalence and output-only final-linker routing audit only; actual Rust probe, actual linker argument receipt, full app, product/source/Clippy/native/CI gates remain pending",
+  "reviewed_at_utc": "2026-10-08T01:51:14.330465+00:00",
+  "preparation_source_commit_context": "a418947fcacd49c259a83cfc7c9a7c640552117c",
+  "whole_product_current_source_or_Clippy_PASS_claim": false,
+  "previous_reviewed_helper_SHA256": "986a3ee63a40b574ada793cf241a8db0cd640fadf8708cbc3bceec597bacfa09",
+  "new_helper_SHA256": "1be51b477135a4be865650db1b09747fc9b0b20b4a31cddcd6d0e90d609daf9f",
+  "new_helper_bytes": 4466,
+  "preparation_scope_SHA256": "3269de3bf908711fdb0111cf5fa9b49a69069b527937f4fae483c87cfa6f0289",
+  "probe_SHA256": "e2dcbcec7832d5d82c7e60757ddced1f3fe5db11a96d22091231cd14b68aa941",
+  "probe_bytes": 82,
+  "probe_byte_identical": true,
+  "exact_forward_and_inverse_constant_path_label_substitutions_verified": true,
+  "substitutions": [
+    {
+      "original": "/workspace/android-studio-artifacts/parallel-sync-integration/app-build",
+      "new": "/workspace/android-studio-artifacts/import-identity-integration/app-build"
+    },
+    {
+      "original": "koda-parallel-sync",
+      "new": "koda-import-identity"
+    }
+  ],
+  "EXPECTED_unchanged": "/workspace/.cache/zed/target/debug/deps/koda-145bb81fa8b08935",
+  "REAL_CC_unchanged": "/usr/bin/cc",
+  "OWNED_DIRECTORY_unchanged": "/tmp/android-studio-link-output",
+  "only_selected_route": "Exactly one explicit -o followed by the exact EXPECTED app output or the private owned PROBE output",
+  "unselected_links_pass_original_OsString_arguments_to_real_cc": true,
+  "selected_routes_clone_OsString_arguments_and_change_only_the_output_index": true,
+  "no_shell_Cargo_profile_rustflags_libraries_or_compile_inputs_changed": true,
+  "existing_original_and_redirected_outputs_refused": true,
+  "new_receipts_use_create_new": true,
+  "real_cc_failure_exit_or_signal_preserved": true,
+  "real_cc_success_requires_regular_redirected_output_before_alias_creation": true,
+  "receipt_JSON_argument_strings_are_lossy_UTF8_static_limitation": "Actual probe/app audits must prove all actual argument strings are valid UTF-8/ASCII without replacement before using receipt arrays as byte-equality evidence; real forwarding uses original OsString values.",
+  "capacity_observation": {
+    "/workspace": {
+      "available_bytes": 555966464,
+      "total_bytes": 33770192896,
+      "available_MiB": 530.21
+    },
+    "/tmp": {
+      "available_bytes": 1457926144,
+      "total_bytes": 9441349632,
+      "available_MiB": 1390.39
+    }
+  },
+  "capacity_scope_limit": "Observed free space is not a peak-link/build guarantee. The full new app is expected near1.36GB and prior verified4fb app must remain retained until successful current app/native replacement. Actual at-execution capacity/aliases/PID-FD gates belong Root; no broad cache retirement authorized by this review.",
+  "prior_4fb_app_ELF_bytes_to_preserve": 1359451600,
+  "prior_4fb_app_ELF_SHA256_to_preserve": "eac18f9a4c2ed6499406ba79b38a1ea6c290c903f7faa9c47472855aa3211e34",
+  "current_product_Clippy_state": "The reported redundant-clone Clippy failure is not a linker-helper finding or a passed product gate. Capture corrected Source/test ownership and complete required validation before a normal full-app claim.",
+  "actual_helper_or_probe_compilation": false,
+  "actual_probe_linker_arguments_reviewed": false,
+  "actual_full_app_final_linker_arguments_reviewed": false,
+  "project_Cargo_SDK_cache_alias_Source_or_Git_actions_by_reviewer": false,
+  "blocking_findings": [],
+  "next_required_checks": [
+    "Root compile/run the tiny owned Rust helper/probe when the exclusive runtime lease permits",
+    "Independent actual Rust-probe receipt/argument/output/source-binding audit",
+    "Corrected Source/component/Clippy/format gates and whole fixed7 Source/index/current-source snapshots",
+    "Normal full-app build with current Source guards and alias-only cleanup retaining previous physical4fb ELF",
+    "Independent actual app linker receipt/argument/output and currentSource audit",
+    "Current app/native/SDK/model/cleanup, CI, final metadata/merge checks"
+  ]
+}

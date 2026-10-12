@@ -1,0 +1,8 @@
+{
+  "original_path": "/workspace/android-studio-artifacts/parallel-sync-native-4fb7a80/generation-project/app/custom-manifest/AndroidManifest.xml",
+  "original_bytes": 134,
+  "original_sha256": "04b0035bfbb75cdf2e1ca08522a873ec17c57c7c4d504db5141791950a2fdd3e",
+  "content_preserved_byte_exact": true,
+  "encoding": "utf-8",
+  "utf8_content": "<manifest xmlns:android=\"http://schemas.android.com/apk/res/android\"><application android:label=\"Source provider smoke\" /></manifest>\n"
+}

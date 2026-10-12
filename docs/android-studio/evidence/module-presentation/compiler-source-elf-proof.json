@@ -1,0 +1,310 @@
+{
+  "test_total": 221,
+  "summaries": [
+    [
+      "85",
+      "0",
+      "0",
+      "0",
+      "0"
+    ],
+    [
+      "20",
+      "0",
+      "0",
+      "0",
+      "0"
+    ],
+    [
+      "20",
+      "0",
+      "0",
+      "0",
+      "0"
+    ],
+    [
+      "27",
+      "0",
+      "0",
+      "0",
+      "0"
+    ],
+    [
+      "21",
+      "0",
+      "0",
+      "0",
+      "0"
+    ],
+    [
+      "29",
+      "0",
+      "0",
+      "0",
+      "0"
+    ],
+    [
+      "19",
+      "0",
+      "0",
+      "0",
+      "0"
+    ]
+  ],
+  "artifacts": [
+    {
+      "reason": "compiler-artifact",
+      "package_id": "path+file:///workspace/android-studio-module-presentation/crates/android_tools#0.1.0",
+      "manifest_path": "/workspace/android-studio-module-presentation/crates/android_tools/Cargo.toml",
+      "target": {
+        "kind": [
+          "test"
+        ],
+        "crate_types": [
+          "bin"
+        ],
+        "name": "module_presentation",
+        "src_path": "/workspace/android-studio-module-presentation/crates/android_tools/tests/module_presentation.rs",
+        "edition": "2024",
+        "doc": false,
+        "doctest": false,
+        "test": true
+      },
+      "profile": {
+        "opt_level": "0",
+        "debuginfo": 0,
+        "debug_assertions": true,
+        "overflow_checks": true,
+        "test": true
+      },
+      "features": [
+        "bundled-preview"
+      ],
+      "filenames": [
+        "/workspace/.cache/zed/target/debug/deps/module_presentation-4997cb5b6a45221d"
+      ],
+      "executable": "/workspace/.cache/zed/target/debug/deps/module_presentation-4997cb5b6a45221d",
+      "fresh": false,
+      "verified_sha256": "6dcbba6ac91c0318aaa8cc7a459fd599a1d61eacbdd4ba4444b50b133f4726e4",
+      "verified_bytes": 1642216
+    },
+    {
+      "reason": "compiler-artifact",
+      "package_id": "path+file:///workspace/android-studio-module-presentation/crates/android_tools#0.1.0",
+      "manifest_path": "/workspace/android-studio-module-presentation/crates/android_tools/Cargo.toml",
+      "target": {
+        "kind": [
+          "test"
+        ],
+        "crate_types": [
+          "bin"
+        ],
+        "name": "project_view_preferences_reference",
+        "src_path": "/workspace/android-studio-module-presentation/crates/android_tools/tests/project_view_preferences_reference.rs",
+        "edition": "2024",
+        "doc": false,
+        "doctest": false,
+        "test": true
+      },
+      "profile": {
+        "opt_level": "0",
+        "debuginfo": 0,
+        "debug_assertions": true,
+        "overflow_checks": true,
+        "test": true
+      },
+      "features": [
+        "bundled-preview"
+      ],
+      "filenames": [
+        "/workspace/.cache/zed/target/debug/deps/project_view_preferences_reference-920b46c1a9286394"
+      ],
+      "executable": "/workspace/.cache/zed/target/debug/deps/project_view_preferences_reference-920b46c1a9286394",
+      "fresh": false,
+      "verified_sha256": "70eeb6665de9ded9c7e87036b33c605a772ac785c5b90f2ce7f45af2266497b2",
+      "verified_bytes": 2643408
+    },
+    {
+      "reason": "compiler-artifact",
+      "package_id": "path+file:///workspace/android-studio-module-presentation/crates/android_tools#0.1.0",
+      "manifest_path": "/workspace/android-studio-module-presentation/crates/android_tools/Cargo.toml",
+      "target": {
+        "kind": [
+          "test"
+        ],
+        "crate_types": [
+          "bin"
+        ],
+        "name": "project_tree_component",
+        "src_path": "/workspace/android-studio-module-presentation/crates/android_tools/tests/project_tree_component.rs",
+        "edition": "2024",
+        "doc": false,
+        "doctest": false,
+        "test": true
+      },
+      "profile": {
+        "opt_level": "0",
+        "debuginfo": 0,
+        "debug_assertions": true,
+        "overflow_checks": true,
+        "test": true
+      },
+      "features": [
+        "bundled-preview"
+      ],
+      "filenames": [
+        "/workspace/.cache/zed/target/debug/deps/project_tree_component-5492bd7c5a79a950"
+      ],
+      "executable": "/workspace/.cache/zed/target/debug/deps/project_tree_component-5492bd7c5a79a950",
+      "fresh": false,
+      "verified_sha256": "af301d9d60626d322893a29489f70d397a363ba0c60d6f53da1e1acb1bf04d69",
+      "verified_bytes": 4334976
+    },
+    {
+      "reason": "compiler-artifact",
+      "package_id": "path+file:///workspace/android-studio-module-presentation/crates/android_tools#0.1.0",
+      "manifest_path": "/workspace/android-studio-module-presentation/crates/android_tools/Cargo.toml",
+      "target": {
+        "kind": [
+          "test"
+        ],
+        "crate_types": [
+          "bin"
+        ],
+        "name": "project_tree_adapter",
+        "src_path": "/workspace/android-studio-module-presentation/crates/android_tools/tests/project_tree_adapter.rs",
+        "edition": "2024",
+        "doc": false,
+        "doctest": false,
+        "test": true
+      },
+      "profile": {
+        "opt_level": "0",
+        "debuginfo": 0,
+        "debug_assertions": true,
+        "overflow_checks": true,
+        "test": true
+      },
+      "features": [
+        "bundled-preview"
+      ],
+      "filenames": [
+        "/workspace/.cache/zed/target/debug/deps/project_tree_adapter-1a256a69c3619b4e"
+      ],
+      "executable": "/workspace/.cache/zed/target/debug/deps/project_tree_adapter-1a256a69c3619b4e",
+      "fresh": false,
+      "verified_sha256": "bc3a15c64ed17cb61f64cb97212cf4a024c71d30062e36d62b8409bb231c6d42",
+      "verified_bytes": 6480096
+    },
+    {
+      "reason": "compiler-artifact",
+      "package_id": "path+file:///workspace/android-studio-module-presentation/crates/android_tools#0.1.0",
+      "manifest_path": "/workspace/android-studio-module-presentation/crates/android_tools/Cargo.toml",
+      "target": {
+        "kind": [
+          "test"
+        ],
+        "crate_types": [
+          "bin"
+        ],
+        "name": "gradle_import_reference",
+        "src_path": "/workspace/android-studio-module-presentation/crates/android_tools/tests/gradle_import_reference.rs",
+        "edition": "2024",
+        "doc": false,
+        "doctest": false,
+        "test": true
+      },
+      "profile": {
+        "opt_level": "0",
+        "debuginfo": 0,
+        "debug_assertions": true,
+        "overflow_checks": true,
+        "test": true
+      },
+      "features": [
+        "bundled-preview"
+      ],
+      "filenames": [
+        "/workspace/.cache/zed/target/debug/deps/gradle_import_reference-04456d8e242bc9e5"
+      ],
+      "executable": "/workspace/.cache/zed/target/debug/deps/gradle_import_reference-04456d8e242bc9e5",
+      "fresh": false,
+      "verified_sha256": "cbd84acdf1b84d054febbd5c4fe2866a718d8b3df214cf2157528486998c01db",
+      "verified_bytes": 3018424
+    },
+    {
+      "reason": "compiler-artifact",
+      "package_id": "path+file:///workspace/android-studio-module-presentation/crates/android_tools#0.1.0",
+      "manifest_path": "/workspace/android-studio-module-presentation/crates/android_tools/Cargo.toml",
+      "target": {
+        "kind": [
+          "test"
+        ],
+        "crate_types": [
+          "bin"
+        ],
+        "name": "project_tree_facts",
+        "src_path": "/workspace/android-studio-module-presentation/crates/android_tools/tests/project_tree_facts.rs",
+        "edition": "2024",
+        "doc": false,
+        "doctest": false,
+        "test": true
+      },
+      "profile": {
+        "opt_level": "0",
+        "debuginfo": 0,
+        "debug_assertions": true,
+        "overflow_checks": true,
+        "test": true
+      },
+      "features": [
+        "bundled-preview"
+      ],
+      "filenames": [
+        "/workspace/.cache/zed/target/debug/deps/project_tree_facts-d85b15a481942004"
+      ],
+      "executable": "/workspace/.cache/zed/target/debug/deps/project_tree_facts-d85b15a481942004",
+      "fresh": false,
+      "verified_sha256": "0b4de9798cb4fea714c3d613a40ab5f00c83f75c61b8c1dcae14f6b5d254589a",
+      "verified_bytes": 6414976
+    },
+    {
+      "reason": "compiler-artifact",
+      "package_id": "path+file:///workspace/android-studio-module-presentation/crates/android_tools#0.1.0",
+      "manifest_path": "/workspace/android-studio-module-presentation/crates/android_tools/Cargo.toml",
+      "target": {
+        "kind": [
+          "lib"
+        ],
+        "crate_types": [
+          "lib"
+        ],
+        "name": "android_tools",
+        "src_path": "/workspace/android-studio-module-presentation/crates/android_tools/src/android_tools.rs",
+        "edition": "2024",
+        "doc": true,
+        "doctest": false,
+        "test": true
+      },
+      "profile": {
+        "opt_level": "0",
+        "debuginfo": 0,
+        "debug_assertions": true,
+        "overflow_checks": true,
+        "test": true
+      },
+      "features": [
+        "bundled-preview"
+      ],
+      "filenames": [
+        "/workspace/.cache/zed/target/debug/deps/android_tools-7334319486a8ebb2"
+      ],
+      "executable": "/workspace/.cache/zed/target/debug/deps/android_tools-7334319486a8ebb2",
+      "fresh": false,
+      "verified_sha256": "857b569c19a4fbd7d42a0d55019e97b00aa8656536fba5e3c64642a349d9c9ff",
+      "verified_bytes": 303978976
+    }
+  ],
+  "source_bindings": 4717,
+  "whole_source_git_index_status_unchanged": true
+}

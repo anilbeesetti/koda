@@ -1,0 +1,150 @@
+{
+  "schema_version": 1,
+  "scope": "Selected complete pinned Java/Kotlin sources; not exhaustive reference coverage",
+  "files": [
+    {
+      "source": "base",
+      "revision": "4a5d2ec9571e2021fc9a4621e24a195f966ee6dd",
+      "path": "apkparser/analyzer/src/test/java/com/android/tools/apk/analyzer/PathUtilsTest.java",
+      "sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+      "bytes": 2533,
+      "fixture": "base/apkparser/analyzer/src/test/java/com/android/tools/apk/analyzer/PathUtilsTest.java",
+      "license": "Apache-2.0"
+    },
+    {
+      "source": "base",
+      "revision": "4a5d2ec9571e2021fc9a4621e24a195f966ee6dd",
+      "path": "build-system/aaptcompiler/src/test/java/com/android/aaptcompiler/FloatParsingTest.kt",
+      "sha256": "63773368c6e7c381bf91f4e4f53f45ff331962adea69c91c596dfbc10ee01413",
+      "bytes": 10743,
+      "fixture": "base/build-system/aaptcompiler/src/test/java/com/android/aaptcompiler/FloatParsingTest.kt",
+      "license": "Apache-2.0"
+    },
+    {
+      "source": "base",
+      "revision": "4a5d2ec9571e2021fc9a4621e24a195f966ee6dd",
+      "path": "build-system/gradle-api/src/main/java/com/android/build/api/instrumentation/AsmClassVisitorFactory.kt",
+      "sha256": "aa1c2f1fcdf6ee6e4db97cd69bd9ce57618b59c3b8891829ac8f83c42316692f",
+      "bytes": 3173,
+      "fixture": "base/build-system/gradle-api/src/main/java/com/android/build/api/instrumentation/AsmClassVisitorFactory.kt",
+      "license": "Apache-2.0"
+    },
+    {
+      "source": "base",
+      "revision": "4a5d2ec9571e2021fc9a4621e24a195f966ee6dd",
+      "path": "build-system/gradle-core/src/test/java/com/android/build/api/artifact/impl/AbstractMultipleArtifactTest.kt",
+      "sha256": "e1034120d26bf31de9e7abe7de26a2342d04bd91c16ae56dbd4d4a6641f0be30",
+      "bytes": 15790,
+      "fixture": "base/build-system/gradle-core/src/test/java/com/android/build/api/artifact/impl/AbstractMultipleArtifactTest.kt",
+      "license": "Apache-2.0"
+    },
+    {
+      "source": "idea",
+      "revision": "a84efec3ba9542d9bfa1255103f0dc94833a3796",
+      "path": "adt-ui/src/test/java/com/android/tools/adtui/AdtUiTestSuite.java",
+      "sha256": "16a828d742ef6bec8b5cf52c813624c3c3a99d97dafcc40f9e1c5b89d06462b5",
+      "bytes": 879,
+      "fixture": "idea/adt-ui/src/test/java/com/android/tools/adtui/AdtUiTestSuite.java",
+      "license": "Apache-2.0"
+    },
+    {
+      "source": "idea",
+      "revision": "a84efec3ba9542d9bfa1255103f0dc94833a3796",
+      "path": "adt-ui/src/test/java/com/android/tools/adtui/TabbedToolbarTest.kt",
+      "sha256": "7e72bbc46fb4f28872c48cfdce7c90a8c5de8e40c5136943790aa9ab6f8f963b",
+      "bytes": 4201,
+      "fixture": "idea/adt-ui/src/test/java/com/android/tools/adtui/TabbedToolbarTest.kt",
+      "license": "Apache-2.0"
+    },
+    {
+      "source": "idea",
+      "revision": "a84efec3ba9542d9bfa1255103f0dc94833a3796",
+      "path": "adt-ui/src/test/java/com/android/tools/adtui/actions/PanSurfaceActionTest.kt",
+      "sha256": "bb33303f2050fc9d86f1ae04d355a3c4e6779aa89ae5c19cfc36973057fe2e12",
+      "bytes": 2911,
+      "fixture": "idea/adt-ui/src/test/java/com/android/tools/adtui/actions/PanSurfaceActionTest.kt",
+      "license": "Apache-2.0"
+    },
+    {
+      "source": "idea",
+      "revision": "a84efec3ba9542d9bfa1255103f0dc94833a3796",
+      "path": "adt-ui/src/test/java/com/android/tools/adtui/common/ColorPaletteManagerTest.kt",
+      "sha256": "33d296249b80ad61a7de3dd25abdf44779cd2bd6ade5847024d0b30b2cb6d09e",
+      "bytes": 5447,
+      "fixture": "idea/adt-ui/src/test/java/com/android/tools/adtui/common/ColorPaletteManagerTest.kt",
+      "license": "Apache-2.0"
+    },
+    {
+      "source": "idea",
+      "revision": "a84efec3ba9542d9bfa1255103f0dc94833a3796",
+      "path": "adt-ui/src/test/java/com/android/tools/adtui/visualtests/VisualTest.java",
+      "sha256": "6fb03861a6996eacced7b796f02d41f589fe9b48879c9a7b3269af9ad890c253",
+      "bytes": 5495,
+      "fixture": "idea/adt-ui/src/test/java/com/android/tools/adtui/visualtests/VisualTest.java",
+      "license": "Apache-2.0"
+    },
+    {
+      "source": "idea",
+      "revision": "a84efec3ba9542d9bfa1255103f0dc94833a3796",
+      "path": "android/gradle/testSrc/com/android/tools/idea/gradle/project/GradleModuleImportTest.java",
+      "sha256": "e63aa8bcd300922c731ba1c27be470dcafd808021c8906082d62f8f0e7e6c762",
+      "bytes": 16649,
+      "fixture": "idea/android/gradle/testSrc/com/android/tools/idea/gradle/project/GradleModuleImportTest.java",
+      "license": "Apache-2.0"
+    },
+    {
+      "source": "idea",
+      "revision": "a84efec3ba9542d9bfa1255103f0dc94833a3796",
+      "path": "project-system-gradle-sync/testSrc/com/android/tools/idea/gradle/project/sync/DefaultVariantsTest.kt",
+      "sha256": "c21c3dbc6fe94377ae7e82b2028d357c0ce0285793eecafa65140df63cc84b15",
+      "bytes": 4006,
+      "fixture": "idea/project-system-gradle-sync/testSrc/com/android/tools/idea/gradle/project/sync/DefaultVariantsTest.kt",
+      "license": "Apache-2.0"
+    },
+    {
+      "source": "jetbrains-android",
+      "revision": "132bc7c3cf52598117590637d00e81b929444bde",
+      "path": "adt-ui/src/test/java/com/android/tools/adtui/AdtUiTestSuite.java",
+      "sha256": "16a828d742ef6bec8b5cf52c813624c3c3a99d97dafcc40f9e1c5b89d06462b5",
+      "bytes": 879,
+      "fixture": "jetbrains-android/adt-ui/src/test/java/com/android/tools/adtui/AdtUiTestSuite.java",
+      "license": "Apache-2.0"
+    },
+    {
+      "source": "jetbrains-android",
+      "revision": "132bc7c3cf52598117590637d00e81b929444bde",
+      "path": "adt-ui/src/test/java/com/android/tools/adtui/TabbedToolbarTest.kt",
+      "sha256": "f524898eb42526b57242d0c79db1ecf88ead8105a623eb7c64d57cea45d47bb6",
+      "bytes": 4236,
+      "fixture": "jetbrains-android/adt-ui/src/test/java/com/android/tools/adtui/TabbedToolbarTest.kt",
+      "license": "Apache-2.0"
+    },
+    {
+      "source": "jetbrains-android",
+      "revision": "132bc7c3cf52598117590637d00e81b929444bde",
+      "path": "adt-ui/src/test/java/com/android/tools/adtui/actions/PanSurfaceActionTest.kt",
+      "sha256": "bb4496f6f969e846da2b1970fb79067148ddb44f881fee95980ccd18bcf5cddc",
+      "bytes": 2923,
+      "fixture": "jetbrains-android/adt-ui/src/test/java/com/android/tools/adtui/actions/PanSurfaceActionTest.kt",
+      "license": "Apache-2.0"
+    },
+    {
+      "source": "jetbrains-android",
+      "revision": "132bc7c3cf52598117590637d00e81b929444bde",
+      "path": "android/gradle/testSrc/com/android/tools/idea/gradle/project/GradleModuleImportTest.java",
+      "sha256": "e63aa8bcd300922c731ba1c27be470dcafd808021c8906082d62f8f0e7e6c762",
+      "bytes": 16649,
+      "fixture": "jetbrains-android/android/gradle/testSrc/com/android/tools/idea/gradle/project/GradleModuleImportTest.java",
+      "license": "Apache-2.0"
+    },
+    {
+      "source": "jetbrains-android",
+      "revision": "132bc7c3cf52598117590637d00e81b929444bde",
+      "path": "project-system-gradle-sync/testSrc/com/android/tools/idea/gradle/project/sync/DefaultVariantsTest.kt",
+      "sha256": "e79c781a5e7f96a24a1f55278351cb708d8f2a5417ad676f78b925b47430544a",
+      "bytes": 4197,
+      "fixture": "jetbrains-android/project-system-gradle-sync/testSrc/com/android/tools/idea/gradle/project/sync/DefaultVariantsTest.kt",
+      "license": "Apache-2.0"
+    }
+  ]
+}

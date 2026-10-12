@@ -1,0 +1,786 @@
+{
+  "schema_version": 1,
+  "task": "1-reference-census",
+  "branch": "android-studio-task/1-reference-census",
+  "base_commit": "6ac8e50dce8893e30c4cc544e0f4c165759751b2",
+  "completion_status": "Bounded discovery owner verification complete; ready for lead integration gates. Combined app/current-head parity/full-workspace/merge remain pending; effective reference census incomplete.",
+  "scope": "Rust streamed archive/member and lexical declaration candidate discovery; not effective upstream test census or behavioral parity",
+  "source_commit": "1a6b161d0e24018e8678c18cd677aadadd9bc89e",
+  "canonical_parity": {
+    "files": [
+      {
+        "path": "docs/android-studio/reference-manifest.json",
+        "sha256": "e23b942ee6e3e39ac869de13ad762ce4f8cb75eb6233695e90036d8b3f3dc1c2",
+        "changes": "none"
+      },
+      {
+        "path": "docs/android-studio/test-parity.json",
+        "sha256": "9c5f15bd43293281d9ef38c550a9699db9c884db0287154eb09793f1aab700d6",
+        "changes": "none"
+      }
+    ],
+    "catalog_cases": 92,
+    "previous_passing_mappings": 26,
+    "new_canonical_rows": 0,
+    "new_behavior_ports": 0,
+    "census_complete": false,
+    "warning": "Current-head execution evidence must be captured by the lead after integration; old whole-tree evidence is not promoted by this task."
+  },
+  "reference_fixture_discovery": {
+    "original_files": 3,
+    "expected_declared_methods": 24,
+    "behavioral_parity_credit": 0,
+    "provenance": "tooling/xtask/test_data/reference_census/provenance.json",
+    "license": "Apache-2.0; unchanged complete original files retain their copyright/license headers",
+    "additional_archive_prefix": {
+      "bytes": 1536,
+      "sha256": "cd3d6c0175e3992cc0cda497fc3c531a4b81173e7af5aeb7a82555d1f050f311",
+      "provenance": "tooling/xtask/test_data/reference_census/jetbrains-android/provenance.json",
+      "behavioral_parity_credit": 0
+    }
+  },
+  "reviews": {
+    "code": {
+      "verdict": "pass",
+      "scope": "affected correction3 static code review; no product IDE fidelity claim",
+      "reviewed_source_sha256": "87e5e808b3e8a9e76ad65f681594b737ab666233e1790c1ab5e077f5a48d5beb"
+    },
+    "ui": {
+      "verdict": "pass",
+      "scope": "affected correction3 static ui review; no product IDE fidelity claim",
+      "reviewed_source_sha256": "87e5e808b3e8a9e76ad65f681594b737ab666233e1790c1ab5e077f5a48d5beb"
+    },
+    "ux": {
+      "verdict": "pass",
+      "scope": "affected static ux review; actual deterministic run and final report remain pending",
+      "reviewed_source_sha256": "87e5e808b3e8a9e76ad65f681594b737ab666233e1790c1ab5e077f5a48d5beb"
+    },
+    "performance": {
+      "verdict": "pass",
+      "scope": "final measured debugCLI/pinnedcorpus performance review; no IDE startup/responsiveness claim",
+      "reviewed_source_sha256": "87e5e808b3e8a9e76ad65f681594b737ab666233e1790c1ab5e077f5a48d5beb",
+      "measurements": {
+        "generation_seconds": 465.5060025720013,
+        "generation_peak_rss_kib": 32456,
+        "deterministic_seconds": 517.6954359709998,
+        "deterministic_peak_rss_kib": 32604
+      },
+      "limitations": [
+        "Walltime includes external measurement wrapper post-run executable hashing.",
+        "--check requires existing output plus full staging output space."
+      ]
+    },
+    "quality": {
+      "verdict": "pass",
+      "static_verdict": "pass",
+      "scope": "Final source/test/license/evidence/report quality review, including independent full gzip decompression proof; lead integration gates remain separate.",
+      "reviewed_source_sha256": "87e5e808b3e8a9e76ad65f681594b737ab666233e1790c1ab5e077f5a48d5beb",
+      "reviewed_report_sha256": "ccc42b8fa5c38be0b22b2e02414eb42dccbdce0c44b0e34af0ab2da0ffe8b805"
+    }
+  },
+  "checks": {
+    "rust_tests": {
+      "status": "pass",
+      "declared_new_tests": 33,
+      "prior_tests_preserved": 27,
+      "additional_archive_regressions": 6,
+      "command": ["cargo", "test", "--locked", "-p", "xtask", "--all-features"],
+      "source_commit": "1a6b161d0e24018e8678c18cd677aadadd9bc89e",
+      "exit_code": 0,
+      "summary": {
+        "executed": 74,
+        "passed": 74,
+        "failed": 0,
+        "ignored": 0,
+        "filtered": 0,
+        "runtime_seconds": 2.87
+      },
+      "log": {
+        "path": "/workspace/android-studio-artifacts/reference-census-validation/xtask-tests-1a6b161d0e.log",
+        "sha256": "7d2dcd35530d2972661687541e75d173a6315df0ee36999031284dd9a85aa733"
+      }
+    },
+    "clippy": {
+      "status": "pass",
+      "command": ["./script/clippy", "--locked", "-p", "xtask"],
+      "source_commit": "1a6b161d0e24018e8678c18cd677aadadd9bc89e",
+      "exit_code": 0,
+      "log": {
+        "path": "/workspace/android-studio-artifacts/reference-census-validation/clippy-1a6b161d0e.log",
+        "sha256": "b4fb497c4898df4206f80ee6c3b938309801c30473f5db17b666de08852da8f6"
+      }
+    },
+    "full_archive_execution": {
+      "status": "pass",
+      "source_commit": "1a6b161d0e24018e8678c18cd677aadadd9bc89e",
+      "exit_code": 0,
+      "output": "/tmp/android-studio-reference-census/candidates-1a6b161d0e",
+      "measurement": {
+        "command": [
+          "/tmp/android-studio-reference-census/xtask-1a6b161d0e",
+          "android-reference-census",
+          "--repository",
+          "/workspace/android-studio-reference-census",
+          "--reference-root",
+          "/workspace/android-studio-references",
+          "--output",
+          "/tmp/android-studio-reference-census/candidates-1a6b161d0e"
+        ],
+        "executable_sha256": "001523de86d393d7a9c5dc8220c9ab277fc49e33090e1ca73da37562830ca49f",
+        "exit_code": 0,
+        "elapsed_seconds": 465.5060025720013,
+        "user_seconds": 462.554724,
+        "system_seconds": 1.555985,
+        "maximum_resident_set_kib": 32456,
+        "major_page_faults": 0,
+        "minor_page_faults": 12511,
+        "measurement": "Python monotonic wall time and Linux RUSAGE_CHILDREN; Rust CLI executed as the sole child"
+      },
+      "measurement_evidence": {
+        "path": "/workspace/android-studio-artifacts/reference-census-validation/corpus-measurement-1a6b161d0e.json",
+        "sha256": "602dc68366e951ecf0a3f645c748721e4eb3983b8f0ce68b14101f88fb082a9e"
+      },
+      "log": {
+        "path": "/workspace/android-studio-artifacts/reference-census-validation/corpus.log",
+        "sha256": "2abd18e7be4f875ad90e4328aa04600efb76a7085949ada035afb6a57fc9c579"
+      },
+      "stderr": {
+        "path": "/workspace/android-studio-artifacts/reference-census-validation/corpus-stderr-1a6b161d0e.log",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "summary": {
+        "path": "/workspace/android-studio-artifacts/reference-census-validation/corpus-summary-1a6b161d0e.json",
+        "sha256": "b9826f5e5913e466bd8d21003faabca7110976173f1abd644e3f18ad113d73e9"
+      },
+      "retained_summary": {
+        "path": "/workspace/android-studio-artifacts/reference-census-validation/corpus-summary-1a6b161d0e.json",
+        "sha256": "b9826f5e5913e466bd8d21003faabca7110976173f1abd644e3f18ad113d73e9"
+      },
+      "artifact_file_bytes": 450356556,
+      "counts": {
+        "physical_records": 305254,
+        "logical_records": 193381,
+        "source_build_runner_candidates": 108311,
+        "lexical_method_candidates": 342071,
+        "files_with_unresolved_lexing": 934,
+        "unclassified_regular_members": 18112
+      },
+      "interpretation": "These are archive/source/declaration counts, never runtime tests, effective suites, ports or parity coverage.",
+      "effective_test_census_complete": false,
+      "sources": [
+        {
+          "id": "base",
+          "revision": "4a5d2ec9571e2021fc9a4621e24a195f966ee6dd",
+          "repository": "https://android.googlesource.com/platform/tools/base",
+          "coverage": "canonical",
+          "archive": {
+            "path": "base.tar.gz",
+            "sha256": "0cbac492c1e2b47273fc9a1e2929caa6460660cf475cbd7773256f443cb30bb4"
+          },
+          "archive_bytes": 319977585,
+          "all_members_traversed": true,
+          "physical_member_types": {
+            "30": 20319,
+            "35": 10323,
+            "78": 30574
+          },
+          "member_kinds": {
+            "directory": 10323,
+            "file": 20319
+          },
+          "candidate_kinds": {
+            "build_runner": 1103,
+            "jvm_source": 11667,
+            "other_source_or_runner": 4240
+          },
+          "method_candidates": 194895,
+          "files_with_unresolved_lexing": 377,
+          "unclassified_regular_members": 3309,
+          "members": {
+            "path": "base-members.jsonl",
+            "sha256": "c30bd69ecc3391916bbc97b6a2deb801ad108fb598b003262f35e77ea444df34"
+          },
+          "physical_members": {
+            "path": "base-physical-members.jsonl",
+            "sha256": "538a03d81903957b4a145e760ac5f6274e43fb548c2aeb8bc39f643c88c5081c"
+          },
+          "candidates": {
+            "path": "base-candidates.jsonl",
+            "sha256": "cdd1057451c73dd1a6c76c035f8cbf1e3a66281e76155d511372c9c57774b5ad"
+          }
+        },
+        {
+          "id": "idea",
+          "revision": "a84efec3ba9542d9bfa1255103f0dc94833a3796",
+          "repository": "https://android.googlesource.com/platform/tools/adt/idea",
+          "coverage": "canonical",
+          "archive": {
+            "path": "idea.tar.gz",
+            "sha256": "f15d0ee82d4719da82aa7d549dc4c3c14c180dac8112c4a1a73a65474419cf84"
+          },
+          "archive_bytes": 588852018,
+          "all_members_traversed": true,
+          "physical_member_types": {
+            "30": 53078,
+            "32": 6,
+            "35": 28291,
+            "78": 81296
+          },
+          "member_kinds": {
+            "directory": 28291,
+            "file": 53078,
+            "symlink": 6
+          },
+          "candidate_kinds": {
+            "build_runner": 6026,
+            "jvm_source": 19727,
+            "other_source_or_runner": 20040
+          },
+          "method_candidates": 74443,
+          "files_with_unresolved_lexing": 224,
+          "unclassified_regular_members": 7285,
+          "members": {
+            "path": "idea-members.jsonl",
+            "sha256": "425511c489f57e32065c185441007ba8d9656521c7e2df4fe8e25e58988a9d0d"
+          },
+          "physical_members": {
+            "path": "idea-physical-members.jsonl",
+            "sha256": "d52ba4802229951ac433628c6425cb030c57de3580b776e205fe8e009644a9dc"
+          },
+          "candidates": {
+            "path": "idea-candidates.jsonl",
+            "sha256": "de57a4e8d3b178ae89adb1af884141632cd950e1e7936ae624c560b28c6f172e"
+          }
+        },
+        {
+          "id": "jetbrains-android",
+          "revision": "132bc7c3cf52598117590637d00e81b929444bde",
+          "repository": "https://github.com/JetBrains/android",
+          "coverage": "unverified_mirror",
+          "archive": {
+            "path": "jetbrains-android.tar.gz",
+            "sha256": "d7bb6a155c077166a6aed54ddaaa7d1629cbee8c200ceced0bddc0bcedfd92e2"
+          },
+          "archive_bytes": 202866754,
+          "all_members_traversed": true,
+          "physical_member_types": {
+            "30": 53026,
+            "32": 6,
+            "35": 28331,
+            "67": 1,
+            "78": 3
+          },
+          "member_kinds": {
+            "directory": 28331,
+            "file": 53026,
+            "global_pax_metadata": 1,
+            "symlink": 6
+          },
+          "candidate_kinds": {
+            "build_runner": 5932,
+            "jvm_source": 19398,
+            "other_source_or_runner": 20178
+          },
+          "method_candidates": 72733,
+          "files_with_unresolved_lexing": 333,
+          "unclassified_regular_members": 7518,
+          "members": {
+            "path": "jetbrains-android-members.jsonl",
+            "sha256": "3e5d3ae65bfea5d2de425a36fb678402015feee635ea57010e7dca6c4d9311d2"
+          },
+          "physical_members": {
+            "path": "jetbrains-android-physical-members.jsonl",
+            "sha256": "de6747913958ab4b5b39dbe9288d987bf0d8390b18498b9cf8eac9538c6d00fc"
+          },
+          "candidates": {
+            "path": "jetbrains-android-candidates.jsonl",
+            "sha256": "b6c64a5e46e87c84cfd9f1cf08e68801f6abb258b5f0036785844cf4c15e6e11"
+          }
+        }
+      ],
+      "raw_output_status": "compressed-and-retired; all10gzip artifacts retain verified original bytes/hashes",
+      "generated_summary": {
+        "path": "/tmp/android-studio-reference-census/candidates-1a6b161d0e/summary.json",
+        "sha256": "b9826f5e5913e466bd8d21003faabca7110976173f1abd644e3f18ad113d73e9",
+        "raw_path_status": "compressed-and-retired"
+      }
+    },
+    "deterministic_check": {
+      "status": "pass",
+      "source_commit": "1a6b161d0e24018e8678c18cd677aadadd9bc89e",
+      "exit_code": 0,
+      "measurement": {
+        "command": [
+          "/tmp/android-studio-reference-census/xtask-1a6b161d0e",
+          "android-reference-census",
+          "--repository",
+          "/workspace/android-studio-reference-census",
+          "--reference-root",
+          "/workspace/android-studio-references",
+          "--output",
+          "/tmp/android-studio-reference-census/candidates-1a6b161d0e",
+          "--check"
+        ],
+        "executable_sha256": "001523de86d393d7a9c5dc8220c9ab277fc49e33090e1ca73da37562830ca49f",
+        "exit_code": 0,
+        "elapsed_seconds": 517.6954359709998,
+        "user_seconds": 494.141221,
+        "system_seconds": 1.838179,
+        "maximum_resident_set_kib": 32604,
+        "major_page_faults": 0,
+        "minor_page_faults": 12586,
+        "measurement": "Python monotonic wall time and Linux RUSAGE_CHILDREN; Rust CLI executed as the sole child"
+      },
+      "measurement_evidence": {
+        "path": "/workspace/android-studio-artifacts/reference-census-validation/deterministic-check-measurement-1a6b161d0e.json",
+        "sha256": "3e927a8f5b9ade5b23f55e334184ab3ffb3c63cc90bc72030adbeb514fcea380"
+      },
+      "log": {
+        "path": "/workspace/android-studio-artifacts/reference-census-validation/deterministic-check.log",
+        "sha256": "2abd18e7be4f875ad90e4328aa04600efb76a7085949ada035afb6a57fc9c579"
+      },
+      "stderr": {
+        "path": "/workspace/android-studio-artifacts/reference-census-validation/deterministic-check-stderr-1a6b161d0e.log",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "result": "Exact same generated artifact set and bytes across a complete repeat of all3pinnedarchives; no extraction/overwrite."
+    },
+    "rustfmt": {
+      "status": "pass",
+      "scope": "direct rustfmt on changed Rust files"
+    },
+    "prettier": {
+      "status": "pass",
+      "version": "3.5.0",
+      "scope": "New docs/NOTICE/provenance and final taskreport; original Java/Kotlin files not formatted.",
+      "report_command": [
+        "npx",
+        "--yes",
+        "prettier@3.5.0",
+        "--write",
+        "docs/android-studio/ports/reference-census-task-report.json"
+      ]
+    },
+    "app_build_and_live_check": {
+      "status": "pending lead validation",
+      "scope": "developer tooling only; product app source unchanged"
+    },
+    "full_workspace_suite": {
+      "status": "pending lead integration"
+    },
+    "cli_build": {
+      "status": "pass",
+      "source_commit": "1a6b161d0e24018e8678c18cd677aadadd9bc89e",
+      "command": ["cargo", "build", "--locked", "-p", "xtask"],
+      "exit_code": 0,
+      "log": {
+        "path": "/workspace/android-studio-artifacts/reference-census-validation/cli-build-1a6b161d0e.log",
+        "sha256": "a13416adcd4d8321ec1f4f78c2ab8a2b7f215208639e9f8567808f993bf1cecf"
+      },
+      "executable": {
+        "path": "/tmp/android-studio-reference-census/xtask-1a6b161d0e",
+        "sha256": "001523de86d393d7a9c5dc8220c9ab277fc49e33090e1ca73da37562830ca49f"
+      }
+    },
+    "cli_help": {
+      "status": "pass",
+      "exit_code": 0,
+      "log": {
+        "path": "/workspace/android-studio-artifacts/reference-census-validation/cli-help-1a6b161d0e.log",
+        "sha256": "525d78a5fe5f5d519a59304aa2b3cb341cabec1de23052ec5a2f119d76c30ab6"
+      },
+      "source_commit": "1a6b161d0e24018e8678c18cd677aadadd9bc89e"
+    },
+    "inventory_retention": {
+      "status": "pass",
+      "command": [
+        "python3",
+        "/workspace/android-studio-artifacts/reference-census-validation/preserve-inventories-1a6b161d0e.py"
+      ],
+      "script_sha256": "47faaaa249bebbb11b0a5c9df2cdc03c33138ab05f5d0325f808508fb3e2adbe",
+      "manifest": {
+        "path": "/workspace/android-studio-artifacts/reference-census-validation/inventories-1a6b161d0e/inventory-retention.json",
+        "sha256": "e5b3b6b7ac714ff019de8c67a1b331e0d3311e25432a22ccabf81aba8ebd4280"
+      },
+      "raw_artifact_file_bytes": 450356556,
+      "compressed_artifact_file_bytes": 46910874,
+      "artifacts": [
+        {
+          "raw_path": "/tmp/android-studio-reference-census/candidates-1a6b161d0e/base-candidates.jsonl",
+          "raw_bytes": 73473422,
+          "raw_sha256": "cdd1057451c73dd1a6c76c035f8cbf1e3a66281e76155d511372c9c57774b5ad",
+          "gzip_path": "/workspace/android-studio-artifacts/reference-census-validation/inventories-1a6b161d0e/base-candidates.jsonl.gz",
+          "gzip_bytes": 4258319,
+          "gzip_sha256": "561454f18ddcb695f954963f4d0727e140ec083e4084ca01852d8f72632b69e9",
+          "decompressed_bytes": 73473422,
+          "decompressed_sha256": "cdd1057451c73dd1a6c76c035f8cbf1e3a66281e76155d511372c9c57774b5ad",
+          "decompression_verified": true,
+          "raw_path_status": "compressed-and-retired"
+        },
+        {
+          "raw_path": "/tmp/android-studio-reference-census/candidates-1a6b161d0e/base-members.jsonl",
+          "raw_bytes": 11234145,
+          "raw_sha256": "c30bd69ecc3391916bbc97b6a2deb801ad108fb598b003262f35e77ea444df34",
+          "gzip_path": "/workspace/android-studio-artifacts/reference-census-validation/inventories-1a6b161d0e/base-members.jsonl.gz",
+          "gzip_bytes": 1295243,
+          "gzip_sha256": "67645f1b568eababc853798f02fb52e1674b6030f9aec638f7659d8a292dcfad",
+          "decompressed_bytes": 11234145,
+          "decompressed_sha256": "c30bd69ecc3391916bbc97b6a2deb801ad108fb598b003262f35e77ea444df34",
+          "decompression_verified": true,
+          "raw_path_status": "compressed-and-retired"
+        },
+        {
+          "raw_path": "/tmp/android-studio-reference-census/candidates-1a6b161d0e/base-physical-members.jsonl",
+          "raw_bytes": 32853035,
+          "raw_sha256": "538a03d81903957b4a145e760ac5f6274e43fb548c2aeb8bc39f643c88c5081c",
+          "gzip_path": "/workspace/android-studio-artifacts/reference-census-validation/inventories-1a6b161d0e/base-physical-members.jsonl.gz",
+          "gzip_bytes": 4536158,
+          "gzip_sha256": "c7098102d9217c74121aee52eca0472d7fd68ae87e9c41ca9a4f6b7a94d0a03d",
+          "decompressed_bytes": 32853035,
+          "decompressed_sha256": "538a03d81903957b4a145e760ac5f6274e43fb548c2aeb8bc39f643c88c5081c",
+          "decompression_verified": true,
+          "raw_path_status": "compressed-and-retired"
+        },
+        {
+          "raw_path": "/tmp/android-studio-reference-census/candidates-1a6b161d0e/idea-candidates.jsonl",
+          "raw_bytes": 63508520,
+          "raw_sha256": "de57a4e8d3b178ae89adb1af884141632cd950e1e7936ae624c560b28c6f172e",
+          "gzip_path": "/workspace/android-studio-artifacts/reference-census-validation/inventories-1a6b161d0e/idea-candidates.jsonl.gz",
+          "gzip_bytes": 5781074,
+          "gzip_sha256": "a400bea4cc8712da3c5bc1a9beb8f8a4d577b7abddb6301e307ba0e2f3358584",
+          "decompressed_bytes": 63508520,
+          "decompressed_sha256": "de57a4e8d3b178ae89adb1af884141632cd950e1e7936ae624c560b28c6f172e",
+          "decompression_verified": true,
+          "raw_path_status": "compressed-and-retired"
+        },
+        {
+          "raw_path": "/tmp/android-studio-reference-census/candidates-1a6b161d0e/idea-members.jsonl",
+          "raw_bytes": 29442713,
+          "raw_sha256": "425511c489f57e32065c185441007ba8d9656521c7e2df4fe8e25e58988a9d0d",
+          "gzip_path": "/workspace/android-studio-artifacts/reference-census-validation/inventories-1a6b161d0e/idea-members.jsonl.gz",
+          "gzip_bytes": 3286690,
+          "gzip_sha256": "c2f5ec02bf26d5254322b284eb67cfd797058679a30958a5dde22f5858632f9a",
+          "decompressed_bytes": 29442713,
+          "decompressed_sha256": "425511c489f57e32065c185441007ba8d9656521c7e2df4fe8e25e58988a9d0d",
+          "decompression_verified": true,
+          "raw_path_status": "compressed-and-retired"
+        },
+        {
+          "raw_path": "/tmp/android-studio-reference-census/candidates-1a6b161d0e/idea-physical-members.jsonl",
+          "raw_bytes": 87486222,
+          "raw_sha256": "d52ba4802229951ac433628c6425cb030c57de3580b776e205fe8e009644a9dc",
+          "gzip_path": "/workspace/android-studio-artifacts/reference-census-validation/inventories-1a6b161d0e/idea-physical-members.jsonl.gz",
+          "gzip_bytes": 11879134,
+          "gzip_sha256": "f2334c7a21ef3121ab865e8eb930942cef51395a921fdb7bf7fbf1e9f27c1ab9",
+          "decompressed_bytes": 87486222,
+          "decompressed_sha256": "d52ba4802229951ac433628c6425cb030c57de3580b776e205fe8e009644a9dc",
+          "decompression_verified": true,
+          "raw_path_status": "compressed-and-retired"
+        },
+        {
+          "raw_path": "/tmp/android-studio-reference-census/candidates-1a6b161d0e/jetbrains-android-candidates.jsonl",
+          "raw_bytes": 62748344,
+          "raw_sha256": "b6c64a5e46e87c84cfd9f1cf08e68801f6abb258b5f0036785844cf4c15e6e11",
+          "gzip_path": "/workspace/android-studio-artifacts/reference-census-validation/inventories-1a6b161d0e/jetbrains-android-candidates.jsonl.gz",
+          "gzip_bytes": 5633114,
+          "gzip_sha256": "7a79c9b5f6c6cbda2a261b8b746828937197ef5d884369a3fe4322a21606d57c",
+          "decompressed_bytes": 62748344,
+          "decompressed_sha256": "b6c64a5e46e87c84cfd9f1cf08e68801f6abb258b5f0036785844cf4c15e6e11",
+          "decompression_verified": true,
+          "raw_path_status": "compressed-and-retired"
+        },
+        {
+          "raw_path": "/tmp/android-studio-reference-census/candidates-1a6b161d0e/jetbrains-android-members.jsonl",
+          "raw_bytes": 33442395,
+          "raw_sha256": "3e5d3ae65bfea5d2de425a36fb678402015feee635ea57010e7dca6c4d9311d2",
+          "gzip_path": "/workspace/android-studio-artifacts/reference-census-validation/inventories-1a6b161d0e/jetbrains-android-members.jsonl.gz",
+          "gzip_bytes": 3315725,
+          "gzip_sha256": "4b4fa88148cbf5b98ab282925f7d3ace83774b025a43ad64c0aab3d909fdc479",
+          "decompressed_bytes": 33442395,
+          "decompressed_sha256": "3e5d3ae65bfea5d2de425a36fb678402015feee635ea57010e7dca6c4d9311d2",
+          "decompression_verified": true,
+          "raw_path_status": "compressed-and-retired"
+        },
+        {
+          "raw_path": "/tmp/android-studio-reference-census/candidates-1a6b161d0e/jetbrains-android-physical-members.jsonl",
+          "raw_bytes": 56162329,
+          "raw_sha256": "de6747913958ab4b5b39dbe9288d987bf0d8390b18498b9cf8eac9538c6d00fc",
+          "gzip_path": "/workspace/android-studio-artifacts/reference-census-validation/inventories-1a6b161d0e/jetbrains-android-physical-members.jsonl.gz",
+          "gzip_bytes": 6923529,
+          "gzip_sha256": "b861bdfddbab90b747c74902a51ea92baf4f9c7c0dfb7bd742d6212f35db4a23",
+          "decompressed_bytes": 56162329,
+          "decompressed_sha256": "de6747913958ab4b5b39dbe9288d987bf0d8390b18498b9cf8eac9538c6d00fc",
+          "decompression_verified": true,
+          "raw_path_status": "compressed-and-retired"
+        },
+        {
+          "raw_path": "/tmp/android-studio-reference-census/candidates-1a6b161d0e/summary.json",
+          "raw_bytes": 5431,
+          "raw_sha256": "b9826f5e5913e466bd8d21003faabca7110976173f1abd644e3f18ad113d73e9",
+          "gzip_path": "/workspace/android-studio-artifacts/reference-census-validation/inventories-1a6b161d0e/summary.json.gz",
+          "gzip_bytes": 1888,
+          "gzip_sha256": "ecdbb130c9273b059a1bcbb112e5bc9f8f0a341bd78e1bdbc22ea94b91e3ae79",
+          "decompressed_bytes": 5431,
+          "decompressed_sha256": "b9826f5e5913e466bd8d21003faabca7110976173f1abd644e3f18ad113d73e9",
+          "decompression_verified": true,
+          "raw_path_status": "compressed-and-retired"
+        }
+      ],
+      "validation": "Each gzip fully decompressed with exact raw bytes/SHA equality and raw hash checked against successful corpus summary; 10files retained.",
+      "raw_artifacts_retained": false,
+      "cleanup": "Lead explicitly approved ONLY verified generated raw/tmp output retirement; sources/CLI/fixtures/archives/logs preserved.",
+      "raw_path_status": "compressed-and-retired",
+      "retirement_receipt": {
+        "path": "/workspace/android-studio-artifacts/reference-census-validation/generated-output-retirement-1a6b161d0e.json",
+        "sha256": "a3b7a42191f0dce5f449a59c71040a6d72b20ab82905f5ee5defb7e115436943"
+      }
+    }
+  },
+  "unresolved": [
+    "upstream build/test target reconciliation",
+    "inherited, abstract and nested runner suites",
+    "parameterized/repeated/dynamic/generated effective cases",
+    "custom aliases and disabled/quarantined dispatch",
+    "semantic non-JVM and extensionless runner discovery",
+    "unclassified payload review",
+    "reference fixture/behavior applicability review",
+    "canonical mirror omission reconciliation"
+  ],
+  "safety_of_classification": "Discovery does not assign ported, adapted, not_applicable, passing or runtime-count statuses. Deferred product scopes stay unported.",
+  "non_rust_components_added": [],
+  "source_sha256": "87e5e808b3e8a9e76ad65f681594b737ab666233e1790c1ab5e077f5a48d5beb",
+  "fix_rounds": [
+    {
+      "round": 1,
+      "findings": "physical tar metadata, consumed-stream provenance, protected output publication",
+      "affected_review": "code pass"
+    },
+    {
+      "round": 2,
+      "findings": "quadratic header/prefix processing and retained nested metadata",
+      "affected_review": "performance pass"
+    },
+    {
+      "round": 3,
+      "findings": "long valid Java annotation prefix uncertainty",
+      "affected_review": "code pass"
+    }
+  ],
+  "escalation": {
+    "reason": "first executed validation remains failing after three static review fix rounds",
+    "action": "lead reported escalation to user and authorized exactly one redundant-slash fixture setup correction; new commit preserves all assertions, original fixture bytes, and production safe_path validation",
+    "original_reference_tests_changed": false,
+    "canonical_matrix_changed": false,
+    "lead_runtime_corrections": [
+      {
+        "round": 1,
+        "commit": "b19dabf082f34d3f20a2203e42c3f83f3fe959b3",
+        "change": "Remove only the redundant slash in the synthetic GNU long-name fixture format; no assertion or production behavior changes.",
+        "validation": "affected code/quality static reviews and unfiltered execution pending"
+      },
+      {
+        "round": 2,
+        "commit": "a2590ff065b535ab77ef37e4be789d1481974e2f",
+        "change": "Move only the first output binding instead of redundantly cloning it; second clone and every assertion remain unchanged.",
+        "validation": "full unfiltered tests/clippy/CLI and affected static reviews pending"
+      },
+      {
+        "round": 3,
+        "commit": "1a6b161d0e24018e8678c18cd677aadadd9bc89e",
+        "change": "Retain only the verified exact Git global PAX comment as explicit logical metadata; reject other global semantics and preserve strict filesystem guard behavior. Independently cover directory-only pinned wrapper roots.",
+        "validation": "Corrected74tests/clippy/exactCLIbuild/help/allfiveaffectedreviews/fullcorpus/deterministic--check/compressedretention proofs PASS. Historical failures retained; no canonical parity promotion.",
+        "superseded_diagnosis": "Directory-only handling did not cause or resolve the actual pinned-archive failure; direct matching Rust reproducer proved global PAX metadata is the cause.",
+        "candidate_commits": [
+          "516f2cb3a40d08e76fbba8d2c3237dde6c8d3f3b",
+          "1a6b161d0e24018e8678c18cd677aadadd9bc89e"
+        ],
+        "pre_freeze_findings": [
+          "Lead static finding: separate metadata and filesystem duplicate namespaces, with positive same-name anchored-file regression.",
+          "Executed candidate finding: explicitly mark only the NEW synthetic child Regular; preserve b0 assertion and all original helpers/fixtures."
+        ]
+      }
+    ],
+    "latest_blocker": "No remaining owner findings after all five affected reviewer passes and complete discovery execution/retention checks. Lead combinedapp/current-headparity/full-workspace/merge gates remain separate. Effective reference census and behavioral parity remain incomplete."
+  },
+  "validation_attempts": [
+    {
+      "status": "prior source failed; corrected source unfiltered rerun pending",
+      "declared_new_tests": 27,
+      "command": ["cargo", "test", "--locked", "-p", "xtask", "--all-features"],
+      "source_commit": "10aa0e70cf489b61ff5c77c7b166ddadc52c36da",
+      "exit_code": 101,
+      "summary": {
+        "executed": 68,
+        "passed": 67,
+        "failed": 1,
+        "ignored": 0
+      },
+      "log": {
+        "path": "/workspace/android-studio-artifacts/reference-census-validation/xtask-tests-10aa0e70cf-failed.log",
+        "sha256": "3cd800de7fe93943001f8ec1976b4a0994456eedce2b20145d48919217b46a1a"
+      },
+      "failing_test": "tasks::android_reference_census::tests::physical_extension_headers_and_resolved_names_are_both_retained",
+      "assessment": "Incorrect new synthetic fixture path has a redundant slash; strict production normalization correctly rejects it. Correct path construction without changing any test assertions or production checks.",
+      "corrected_source_commit": "b19dabf082f34d3f20a2203e42c3f83f3fe959b3"
+    },
+    {
+      "status": "pass",
+      "declared_new_tests": 27,
+      "command": ["cargo", "test", "--locked", "-p", "xtask", "--all-features"],
+      "source_commit": "b19dabf082f34d3f20a2203e42c3f83f3fe959b3",
+      "exit_code": 0,
+      "summary": {
+        "executed": 68,
+        "passed": 68,
+        "failed": 0,
+        "ignored": 0,
+        "filtered": 0,
+        "runtime_seconds": 2.92
+      },
+      "log": {
+        "path": "/workspace/android-studio-artifacts/reference-census-validation/xtask-tests-b19dabf082.log",
+        "sha256": "3f1b2e0e9c05242c9225e844c83d55abde3396923ff5b241271a8946da33d7ed"
+      }
+    },
+    {
+      "status": "failed",
+      "command": ["./script/clippy", "--locked", "-p", "xtask"],
+      "source_commit": "b19dabf082f34d3f20a2203e42c3f83f3fe959b3",
+      "exit_code": 101,
+      "finding": "clippy::redundant_clone at line2146, first output.clone() in rejected_checkout_output_has_no_filesystem_side_effects; binding is shadowed before further use",
+      "log": {
+        "path": "/workspace/android-studio-artifacts/reference-census-validation/clippy-b19dabf082.log",
+        "sha256": "12ecc21b7ef34ce91462a6265df8b6974e10336af7c00dabcdc24bbe645b685d"
+      }
+    },
+    {
+      "status": "failed measurement wrapper before CLI launch",
+      "source_commit": "a2590ff065b535ab77ef37e4be789d1481974e2f",
+      "exit_code": 127,
+      "reason": "/usr/bin/time missing from environment",
+      "log": {
+        "path": "/workspace/android-studio-artifacts/reference-census-validation/corpus-time-a2590ff065-missing-time.log",
+        "sha256": "cc467911a47efc43f00fa162899a788e9062ded0d5b03fe291840e59800b2535"
+      },
+      "action": "Retain log; use external Python monotonic/RUSAGE_CHILDREN wrapper to measure unchanged Rust CLI."
+    },
+    {
+      "status": "failed",
+      "source_commit": "a2590ff065b535ab77ef37e4be789d1481974e2f",
+      "exit_code": 1,
+      "failure": "Locked Rust tar0.4.46 returns the initial global PAX header as a logical entry; its metadata name pax_global_header fails filesystem mirror-prefix validation. No summary or output published; staging removed.",
+      "measurement": {
+        "command": [
+          "/tmp/android-studio-reference-census/xtask-a2590ff065",
+          "android-reference-census",
+          "--repository",
+          "/workspace/android-studio-reference-census",
+          "--reference-root",
+          "/workspace/android-studio-references",
+          "--output",
+          "/tmp/android-studio-reference-census/candidates-a2590ff065"
+        ],
+        "executable_sha256": "86d4d20049662daeda9ee88f0f78ce6f59c503561b0342b5f0e067c6ba9a4de4",
+        "exit_code": 1,
+        "elapsed_seconds": 411.1218286410003,
+        "user_seconds": 408.897586,
+        "system_seconds": 2.113334,
+        "maximum_resident_set_kib": 32332,
+        "major_page_faults": 0,
+        "minor_page_faults": 12091,
+        "measurement": "Python monotonic wall time and Linux RUSAGE_CHILDREN; Rust CLI executed as the sole child"
+      },
+      "log": {
+        "path": "/workspace/android-studio-artifacts/reference-census-validation/corpus-stderr-a2590ff065.log",
+        "sha256": "1119a4147eab13e751d1bec8b8e667c44c35a6cb974cfc4a689e74df2dc82351"
+      },
+      "initial_diagnosis": "Python tarfile hid the initial global PAX header, so the first read-only diagnosis incorrectly attributed the failure to root trailing-slash handling.",
+      "diagnostic_reproducer": {
+        "path": "/workspace/android-studio-artifacts/reference-census-validation/global-pax-reproducer-a2590ff065.json",
+        "sha256": "2cddba98dc5e8636f623d5b9b7d59d47d03e1273fb72ec95f067ee7699001e97",
+        "actual_global_and_root_exit_code": 1,
+        "actual_root_without_global_exit_code": 0,
+        "global_payload": "52 comment=132bc7c3cf52598117590637d00e81b929444bde\n",
+        "raw_root_header_path": "android-132bc7c3cf52598117590637d00e81b929444bde/"
+      }
+    },
+    {
+      "status": "pass",
+      "declared_new_tests": 27,
+      "source_commit": "a2590ff065b535ab77ef37e4be789d1481974e2f",
+      "command": ["cargo", "test", "--locked", "-p", "xtask", "--all-features"],
+      "exit_code": 0,
+      "summary": {
+        "executed": 68,
+        "passed": 68,
+        "failed": 0,
+        "ignored": 0,
+        "filtered": 0,
+        "runtime_seconds": 2.88
+      },
+      "log": {
+        "path": "/workspace/android-studio-artifacts/reference-census-validation/xtask-tests-a2590ff065.log",
+        "sha256": "338ae5029fd8e0e2f41b6a39a30ef634e39b6961a29699953eafd9971673b032"
+      }
+    },
+    {
+      "status": "pass",
+      "source_commit": "a2590ff065b535ab77ef37e4be789d1481974e2f",
+      "command": ["./script/clippy", "--locked", "-p", "xtask"],
+      "exit_code": 0,
+      "log": {
+        "path": "/workspace/android-studio-artifacts/reference-census-validation/clippy-a2590ff065.log",
+        "sha256": "d90d55e8f7a2d4a23d49f1a77d610169a6fc727eef88890caf812e2fb07be4d6"
+      }
+    },
+    {
+      "status": "pre-freeze lead correction3 failure",
+      "source_commit": "516f2cb3a40d08e76fbba8d2c3237dde6c8d3f3b",
+      "command": ["cargo", "test", "--locked", "-p", "xtask", "--all-features"],
+      "exit_code": 101,
+      "summary": {
+        "executed": 73,
+        "passed": 72,
+        "failed": 1,
+        "ignored": 0,
+        "filtered": 0
+      },
+      "failure": "New actual-prefix fixture assertion requires physical Regular type byte0x30, but old helper defaults semantically regular NUL; new child builder now explicitly sets Regular and preserves the assertion/oldhelper/prefix.",
+      "log": {
+        "path": "/workspace/android-studio-artifacts/reference-census-validation/xtask-tests-516f2cb3a4.log",
+        "sha256": "558cde48f4a1b498e5fbe51a49f5647b2e3b759b8d0a6386b96b47170148df40"
+      }
+    },
+    {
+      "status": "environment-only formatting wrapper failure",
+      "source_commit": "1a6b161d0e24018e8678c18cd677aadadd9bc89e",
+      "command": [
+        "npx",
+        "--yes",
+        "prettier@3.5.0",
+        "--write",
+        "docs/android-studio/ports/reference-census-task-report.json"
+      ],
+      "exit_code": 228,
+      "reason": "overlayENOSPC before Prettier executed; source/evidence intact and report snapshot saved/tmp",
+      "log": {
+        "path": "/workspace/android-studio-artifacts/reference-census-validation/prettier-enospc-1a6b161d0e.log",
+        "sha256": "64e81cfced4ce00eb1cd1dc437edbc19754dd07059807d0242a9c8c3eb0eb2d6"
+      },
+      "resolution": "Capacity recovered under lead coordination; exact Prettier3.5.0 retry succeeded."
+    }
+  ],
+  "review_scope_rationale": {
+    "production_change": "Narrow verified Git global metadata and directory-only pinned root handling require new scoped code/quality/UI/UX/performance reviews. Product app source and canonical parity unchanged."
+  },
+  "non_rust_verification_tools_used": [
+    {
+      "tool": "Python3 external measurement wrapper",
+      "reason": "/usr/bin/time absent; existing Python runtime launches the unchanged Rust CLI and records monotonic/RUSAGE_CHILDREN evidence. Not delivered IDE or build-tooling logic."
+    },
+    {
+      "tool": "Prettier3.5.0",
+      "reason": "Existing repository documentation formatter; Rust implements delivered discovery and archive logic."
+    }
+  ]
+}

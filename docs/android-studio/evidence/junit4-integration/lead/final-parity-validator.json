@@ -1,0 +1,14 @@
+{
+  "command": [
+    "/tmp/android-studio-junit4-integration/xtask",
+    "android-parity",
+    "--repository",
+    "/workspace/android-studio-integration",
+    "--reference-root",
+    "/workspace/android-studio-references"
+  ],
+  "actual_exit_code": 0,
+  "elapsed_seconds": 0.8772686320007779,
+  "tested_commit": "93155342aa84f5d14d2d75b89d406414110757f3",
+  "log_sha256": "6f0807a0eb3a0da24cf43adc48145bf1aa09841c903482446794b530772cbfe6"
+}

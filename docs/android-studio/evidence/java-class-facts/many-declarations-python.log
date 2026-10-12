@@ -1,0 +1,6 @@
+
+running 1 test
+test java_class_facts::tests::large_multiple_declaration_inputs_keep_the_last_actual_navigation_target ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 83 filtered out; finished in 0.02s
+

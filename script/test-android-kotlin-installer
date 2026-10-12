@@ -211,13 +211,16 @@ class KotlinBootstrapTests(unittest.TestCase):
             launcher = repository / "script/android-ide"
             launcher.parent.mkdir()
             shutil.copy2(Path(__file__).with_name("android-ide"), launcher)
-            icon = repository / "crates/zed/resources/KodaNightly.icns"
+            icon = repository / "crates/zed/resources/KodaDev.icns"
             icon.parent.mkdir(parents=True)
-            shutil.copy2(Path(__file__).resolve().parents[1] / "crates/zed/resources/KodaNightly.icns", icon)
+            shutil.copy2(Path(__file__).resolve().parents[1] / "crates/zed/resources/KodaDev.icns", icon)
             executable = repository / "target/debug/koda"
             executable.parent.mkdir(parents=True)
             executable.write_text(
-                "#!/usr/bin/env python3\nimport json, os\n"
+                "#!/usr/bin/env python3\nimport json, os, sys\n"
+                "if '--system-specs' in sys.argv:\n"
+                "    print('Koda: v0.1 (Koda Dev)')\n"
+                "    sys.exit(0)\n"
                 "print(json.dumps({key: os.environ.get(key) for key in "
                 "['ANDROID_IDE_KOTLIN_BACKEND', 'ANDROID_IDE_KOTLIN_SERVER', "
                 "'ANDROID_IDE_OFFICIAL_KOTLIN_SERVER', 'JAVA_HOME']}))\n"

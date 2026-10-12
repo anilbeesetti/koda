@@ -32,7 +32,7 @@ pub struct OpenRecentProject {
 actions!(
     zed,
     [
-        /// Show the Zed welcome screen
+        /// Show the Koda welcome screen
         ShowWelcome
     ]
 );
@@ -448,9 +448,9 @@ impl Render for WelcomePage {
         };
 
         let welcome_label = if self.fallback_to_recent_projects {
-            "Welcome back to Zed"
+            "Welcome back to Koda"
         } else {
-            "Welcome to Zed"
+            "Welcome to Koda"
         };
 
         h_flex()
@@ -465,48 +465,60 @@ impl Render for WelcomePage {
             .child(
                 v_flex()
                     .id("welcome-content")
-                    .p_8()
                     .max_w_128()
                     .size_full()
-                    .gap_6()
-                    .justify_center()
                     .overflow_y_scroll()
                     .child(
-                        h_flex()
+                        v_flex()
                             .w_full()
+                            .min_h_full()
+                            .flex_shrink_0()
+                            .p_8()
+                            .gap_6()
                             .justify_center()
-                            .mb_4()
-                            .gap_4()
-                            .child(Vector::square(VectorName::ZedLogo, rems_from_px(45_f32)))
                             .child(
-                                v_flex().child(Headline::new(welcome_label)).child(
-                                    Label::new("The editor for what's next")
-                                        .size(LabelSize::Small)
-                                        .color(Color::Muted)
-                                        .italic(),
-                                ),
-                            ),
-                    )
-                    .child(first_section.render(Default::default(), &self.focus_handle))
-                    .child(second_section)
-                    .when(ai_enabled && !showing_recent_projects, |this| {
-                        let agent_tab_index = next_tab_index;
-                        next_tab_index += 1;
-                        this.child(self.render_agent_card(agent_tab_index, cx))
-                    })
-                    .when(!self.fallback_to_recent_projects, |this| {
-                        this.child(
-                            v_flex().gap_4().child(Divider::horizontal()).child(
-                                Button::new("welcome-exit", "Return to Onboarding")
-                                    .tab_index(next_tab_index as isize)
-                                    .full_width()
-                                    .label_size(LabelSize::XSmall)
-                                    .on_click(|_, window, cx| {
-                                        window.dispatch_action(OpenOnboarding.boxed_clone(), cx);
-                                    }),
-                            ),
-                        )
-                    }),
+                                h_flex()
+                                    .w_full()
+                                    .justify_center()
+                                    .mb_4()
+                                    .gap_4()
+                                    .child(Vector::square(
+                                        VectorName::KodaLogo,
+                                        rems_from_px(45_f32),
+                                    ))
+                                    .child(
+                                        v_flex().child(Headline::new(welcome_label)).child(
+                                            Label::new("The editor for what's next")
+                                                .size(LabelSize::Small)
+                                                .color(Color::Muted)
+                                                .italic(),
+                                        ),
+                                    ),
+                            )
+                            .child(first_section.render(Default::default(), &self.focus_handle))
+                            .child(second_section)
+                            .when(ai_enabled && !showing_recent_projects, |this| {
+                                let agent_tab_index = next_tab_index;
+                                next_tab_index += 1;
+                                this.child(self.render_agent_card(agent_tab_index, cx))
+                            })
+                            .when(!self.fallback_to_recent_projects, |this| {
+                                this.child(
+                                    v_flex().gap_4().child(Divider::horizontal()).child(
+                                        Button::new("welcome-exit", "Return to Onboarding")
+                                            .tab_index(next_tab_index as isize)
+                                            .full_width()
+                                            .label_size(LabelSize::XSmall)
+                                            .on_click(|_, window, cx| {
+                                                window.dispatch_action(
+                                                    OpenOnboarding.boxed_clone(),
+                                                    cx,
+                                                );
+                                            }),
+                                    ),
+                                )
+                            }),
+                    ),
             )
     }
 }

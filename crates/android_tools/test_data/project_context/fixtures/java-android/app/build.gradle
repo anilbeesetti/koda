@@ -1,0 +1,6 @@
+plugins { alias(libs.plugins.android.application) }
+android {
+    namespace 'dev.koda.context.javaonly'
+    compileSdk 37
+    defaultConfig { applicationId 'dev.koda.context.javaonly'; minSdk 26; targetSdk 37 }
+}

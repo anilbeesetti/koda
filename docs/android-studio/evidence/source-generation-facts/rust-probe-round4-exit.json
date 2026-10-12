@@ -1,0 +1,20 @@
+{
+  "command": [
+    "cargo",
+    "run",
+    "--locked",
+    "-p",
+    "android_tools",
+    "--all-features",
+    "--example",
+    "project_model_probe",
+    "--",
+    "/workspace/android-studio-artifacts/assets-generation-facts/project",
+    "/workspace/android-studio-artifacts/assets-generation-facts/gradle-round4.log",
+    "--model-only"
+  ],
+  "exit_code": 0,
+  "elapsed_seconds": 0.8994464389979839,
+  "decoded_flag_assertions_passed": true,
+  "output_sha256": "2592e9e91deef6a54522c43309a2951372c52f048dce0dd45a4e985fbd33d662"
+}

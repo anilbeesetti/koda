@@ -1,0 +1,6 @@
+#!/usr/bin/env sh
+# The full existing JVM acceptance fixture is implemented in Rust fixture.rs.
+set -eu
+repository=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
+cd "$repository"
+exec cargo run -p android_debugger --bin android-debugger -- probe-jvm --repository "$repository" "$@"

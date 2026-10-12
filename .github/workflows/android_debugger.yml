@@ -1,0 +1,361 @@
+name: Android Rust debugger and test runner parity
+
+on:
+  pull_request:
+    branches: [android-studio]
+    types: [opened, synchronize, reopened, ready_for_review]
+    paths:
+      - .github/workflows/android_debugger.yml
+      - Cargo.toml
+      - Cargo.lock
+      - rust-toolchain.toml
+      - crates/android_debugger/**
+      - crates/android_tools/src/testing.rs
+      - crates/android_tools/src/project_model.gradle
+      - crates/android_ui/src/android_tests.rs
+      - crates/android_ui/src/android_debugger.rs
+      - examples/android-ide/**
+      - script/test-android-debugger-jvm
+      - script/test-android-test-runner
+  push:
+    branches: [android-studio]
+    paths:
+      - .github/workflows/android_debugger.yml
+      - Cargo.toml
+      - Cargo.lock
+      - rust-toolchain.toml
+      - crates/android_debugger/**
+      - crates/android_tools/src/testing.rs
+      - crates/android_tools/src/project_model.gradle
+      - crates/android_ui/src/android_tests.rs
+      - crates/android_ui/src/android_debugger.rs
+      - examples/android-ide/**
+      - script/test-android-debugger-jvm
+      - script/test-android-test-runner
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: android-debugger-parity-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: false
+
+defaults:
+  run:
+    shell: bash
+
+env:
+  CARGO_TERM_COLOR: always
+  CARGO_INCREMENTAL: '0'
+  CARGO_BUILD_JOBS: '1'
+  CARGO_PROFILE_DEV_DEBUG: '0'
+  CARGO_PROFILE_DEV_BUILD_OVERRIDE_DEBUG: '0'
+  CARGO_PROFILE_TEST_DEBUG: '0'
+  CARGO_PROFILE_TEST_BUILD_OVERRIDE_DEBUG: '0'
+  RUST_TEST_THREADS: '2'
+  RUST_BACKTRACE: '1'
+
+jobs:
+  debugger:
+    name: Rust unit suite, real JVM debugger and Gradle runner fixtures
+    runs-on: ubuntu-24.04
+    timeout-minutes: 150
+    steps:
+      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
+        with:
+          persist-credentials: false
+          ref: ${{ github.sha }}
+      - name: Initialize private paths and bounded command transport
+        run: |
+          set -euo pipefail
+          debugger_ci="$RUNNER_TEMP/android-debugger-ci"
+          mkdir -p "$debugger_ci/artifacts" "$debugger_ci/tmp" "$debugger_ci/preferences"
+          printf 'DEBUGGER_CI=%s\nDEBUGGER_ARTIFACTS=%s\nCARGO_HOME=%s\nCARGO_TARGET_DIR=%s\nGRADLE_USER_HOME=%s\nANDROID_HOME=%s\nANDROID_SDK_ROOT=%s\n' \
+            "$debugger_ci" "$debugger_ci/artifacts" "$debugger_ci/cargo-home" \
+            "$debugger_ci/rust-target" "$debugger_ci/gradle-home" \
+            "$debugger_ci/android-sdk" "$debugger_ci/android-sdk" >> "$GITHUB_ENV"
+          cat > "$debugger_ci/bounded-run" <<'BOUNDED_RUN'
+          #!/usr/bin/env bash
+          # CI command transport only. Assertions and fixture supervision are Rust;
+          # systemd owns aggregate memory, wall time and all process descendants.
+          # Bash's non-POSIX -f units are KiB, including when the caller exported
+          # POSIXLY_CORRECT. Failure to select or apply a limit is always fatal.
+          set +o posix || exit "$?"
+          set -euo pipefail
+          umask 077
+          memory=$1; duration=$2; label=$3; log=$4; shift 4
+          capture_limit=$((64 * 1024 * 1024))
+          nonce=$(od -An -N16 -tx1 /dev/urandom | tr -d ' \n')
+          [[ "$nonce" =~ ^[0-9a-f]{32}$ ]]
+          unit="debugger-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}-${label}-${nonce}.service"
+          marker="koda-debugger-${nonce}"
+          owner_uid=$(id -u); owner_gid=$(id -g)
+          owner_user=$(id -un); owner_group=$(id -gn)
+          transport_dir=$(mktemp -d "${log}.transport.XXXXXXXX")
+          transport_started=false
+          joined_status=0
+          # Preserve the actual caller input before Bash backgrounds the creator.
+          # This retains both the SDK license heredoc and an intentional EOF.
+          exec {caller_stdin}<&0
+          unit_field() {
+            local value
+            if value=$(sudo timeout --signal=TERM --kill-after=2s 5s \
+              systemctl show "$unit" --property="$1" --value); then
+              printf '%s\n' "$value"
+            else
+              return 1
+            fi
+          }
+          stop_owned_unit() {
+            local load invocation active observed_user observed_group
+            load=$(unit_field LoadState) || return 1
+            # Absence is only one observation, never final closure while the
+            # creator can still register. close_transport supplies that barrier.
+            [[ "$load" != not-found ]] || return 0
+            [[ "$(unit_field Id)" == "$unit" ]] || return 1
+            [[ "$(unit_field Description)" == "$marker" ]] || return 1
+            observed_user=$(unit_field User) || return 1
+            observed_group=$(unit_field Group) || return 1
+            [[ "$observed_user" == "$owner_uid" || "$observed_user" == "$owner_user" ]] || return 1
+            [[ "$observed_group" == "$owner_gid" || "$observed_group" == "$owner_group" ]] || return 1
+            invocation=$(unit_field InvocationID) || return 1
+            [[ "$invocation" =~ ^[0-9a-f]{32}$ ]] || return 1
+            if [[ -f "$log.invocation" ]]; then
+              [[ "$(cat "$log.invocation")" == "$invocation" ]] || return 1
+            else
+              printf '%s\n' "$invocation" > "$log.invocation.$BASHPID"
+              mv "$log.invocation.$BASHPID" "$log.invocation"
+            fi
+            sudo timeout --signal=TERM --kill-after=2s 15s systemctl stop "$unit" || return 1
+            load=$(unit_field LoadState) || return 1
+            [[ "$load" != not-found ]] || return 0
+            [[ "$(unit_field InvocationID)" == "$invocation" ]] || return 1
+            active=$(unit_field ActiveState) || return 1
+            [[ "$active" == inactive || "$active" == failed ]]
+          }
+          close_transport() {
+            local deadline=$((SECONDS + 30)) witness_nonce witness_status
+            if [[ "$transport_started" == true ]]; then
+              # Keep the creator alive through its acknowledgement. Cancellation
+              # requests exact-unit stop while registration is pending, then joins
+              # the complete pipeline before accepting any final absent unit.
+              while [[ ! -f "$transport_dir/complete" ]]; do
+                stop_owned_unit || return 1
+                if (( SECONDS >= deadline )); then
+                  printf 'ERROR: launcher completion deadline expired; ownership closure is incomplete\n' >&2
+                  return 1
+                fi
+                sleep 0.1
+              done
+              if wait "$transport_job"; then joined_status=0; else joined_status=$?; fi
+              read -r witness_nonce witness_status < "$transport_dir/complete" || return 1
+              [[ "$witness_nonce" == "$nonce" && "$witness_status" =~ ^[0-9]+$ ]] || return 1
+              (( witness_status <= 255 )) || return 1
+              [[ "$witness_status" -eq "$joined_status" ]] || return 1
+            fi
+            # The creator is now terminal and joined (or never started), so it
+            # cannot subsequently register a service after this final observation.
+            stop_owned_unit
+          }
+          cleanup() {
+            local status=$?
+            trap - EXIT INT TERM PIPE
+            if ! close_transport; then
+              printf 'ERROR: launcher/exact-owned-unit cleanup failed for %s; closure is incomplete\n' "$unit" >&2
+              status=1
+            elif (( status == 0 && joined_status != 0 )); then
+              status=$joined_status
+            fi
+            exit "$status"
+          }
+          capture_cleanup() {
+            local status=$? bytes
+            trap - EXIT INT TERM PIPE
+            bytes=$(stat -c %s "$log") || status=1
+            if (( status != 0 || ${bytes:-0} >= capture_limit )); then
+              printf 'ERROR: bounded capture failed or reached its 64MiB limit for %s\n' "$unit" >&2
+              status=1
+              printf '%s\n' "$status" > "$transport_dir/capture-error.$BASHPID"
+              mv "$transport_dir/capture-error.$BASHPID" "$transport_dir/capture-error"
+            fi
+            exit "$status"
+          }
+          capture() {
+            trap capture_cleanup EXIT
+            trap 'exit 130' INT
+            trap 'exit 143' TERM
+            trap 'exit 141' PIPE
+            # Bash -f uses KiB. Only tee inherits this regular-file bound;
+            # compilation, fixtures and Gradle report files remain unchanged.
+            (
+              ulimit -c 0 || exit "$?"
+              ulimit -f 65536 || exit "$?"
+              exec tee "$log"
+            )
+          }
+          trap cleanup EXIT
+          trap 'exit 130' INT
+          trap 'exit 143' TERM
+          trap 'exit 141' PIPE
+          [[ "$(unit_field LoadState)" == not-found ]]
+          # A fresh transient unit is created atomically; systemd-run refuses an
+          # existing name. Cleanup authenticates its tag, user and invocation.
+          # SIGKILL cannot run traps: RuntimeMaxSec/hosted-runner teardown remain
+          # fallback bounds, never a claim that shell cancellation was observed.
+          transport() {
+            trap - EXIT INT TERM PIPE
+            set +e
+          sudo systemd-run --quiet --wait --pipe --collect \
+            --unit="$unit" --property="Description=$marker" \
+            --uid="$owner_uid" --gid="$owner_gid" \
+            --working-directory="$GITHUB_WORKSPACE" \
+            --property="MemoryMax=$memory" --property=MemorySwapMax=0 \
+            --property=TasksMax=256 --property=KillMode=control-group \
+            --property="RuntimeMaxSec=$duration" --property=TimeoutStopSec=10s \
+            --setenv="PATH=$PATH" --setenv="RUSTUP_HOME=${RUSTUP_HOME:-$HOME/.rustup}" \
+            --setenv=RUSTUP_TOOLCHAIN=1.98.1 --setenv="CARGO_HOME=$CARGO_HOME" \
+            --setenv="CARGO_TARGET_DIR=$CARGO_TARGET_DIR" --setenv=CARGO_BUILD_JOBS=1 \
+            --setenv=CARGO_INCREMENTAL=0 --setenv=CARGO_TERM_COLOR=always \
+            --setenv=CARGO_PROFILE_DEV_DEBUG=0 --setenv=CARGO_PROFILE_DEV_BUILD_OVERRIDE_DEBUG=0 \
+            --setenv=CARGO_PROFILE_TEST_DEBUG=0 --setenv=CARGO_PROFILE_TEST_BUILD_OVERRIDE_DEBUG=0 \
+            --setenv=RUST_TEST_THREADS=2 --setenv=RUST_BACKTRACE=1 \
+            --setenv="JAVA_HOME=${JAVA_HOME:-}" --setenv="JAVA_TOOL_OPTIONS=${JAVA_TOOL_OPTIONS:-}" \
+            --setenv="GRADLE_USER_HOME=$GRADLE_USER_HOME" --setenv="GRADLE_OPTS=${GRADLE_OPTS:-}" \
+            --setenv="ANDROID_HOME=$ANDROID_HOME" --setenv="ANDROID_SDK_ROOT=$ANDROID_SDK_ROOT" \
+            --setenv="KODA_ANDROID_DEBUGGER=$CARGO_TARGET_DIR/debug/android-debugger" \
+            --setenv="TMPDIR=$DEBUGGER_CI/tmp" "$@" <&"$caller_stdin" 2>&1 | capture
+            local status=$?
+            printf '%s %s\n' "$nonce" "$status" > "$transport_dir/complete.$BASHPID"
+            mv "$transport_dir/complete.$BASHPID" "$transport_dir/complete"
+            exit "$status"
+          }
+          transport_started=true
+          transport "$@" &
+          transport_job=$!
+          exec {caller_stdin}<&-
+          # Both parent-only cancellation and early capture failure enter the
+          # completion barrier promptly; neither kills an unacknowledged creator
+          # or signals a numeric PID after Bash may have reaped that process.
+          while [[ ! -f "$transport_dir/complete" ]]; do
+            [[ ! -f "$transport_dir/capture-error" ]] || exit 1
+            sleep 0.1
+          done
+          # EXIT cleanup joins once and propagates the actual pipefail status.
+          exit 0
+          BOUNDED_RUN
+          chmod 700 "$debugger_ci/bounded-run"
+          command -v systemd-run
+          test "$(df --output=avail -B1 "$RUNNER_TEMP" | tail -n 1)" -ge 4294967296
+          sha256sum Cargo.lock > "$debugger_ci/artifacts/Cargo.lock.sha256"
+      - name: Install exact repository Rust toolchain
+        run: rustup show active-toolchain
+      - uses: actions/setup-java@cf277c60eb25467037889841efdb72551f06f6c3 # v4
+        with:
+          distribution: temurin
+          java-version: '21.0.12'
+      - name: Bound official JVMs and Gradle worker concurrency
+        run: |
+          set -euo pipefail
+          printf 'JAVA_TOOL_OPTIONS=%s\nGRADLE_OPTS=%s\n' \
+            "-Xms16m -Xmx768m -XX:MaxMetaspaceSize=512m -XX:ReservedCodeCacheSize=128m -XX:MaxDirectMemorySize=128m -XX:ActiveProcessorCount=2 -Xss512k -Djava.util.prefs.userRoot=$DEBUGGER_CI/preferences -Djava.io.tmpdir=$DEBUGGER_CI/tmp" \
+            '-Dorg.gradle.daemon=false -Dorg.gradle.workers.max=2 -Dorg.gradle.jvmargs=-Xmx1536m -Dkotlin.compiler.execution.strategy=in-process' >> "$GITHUB_ENV"
+          java -version 2>&1 | tee "$DEBUGGER_ARTIFACTS/java-version.log"
+          javac -version 2>&1 | tee "$DEBUGGER_ARTIFACTS/javac-version.log"
+      - name: Compile and run every Rust debugger unit test
+        run: |
+          set -euo pipefail
+          "$DEBUGGER_CI/bounded-run" 1G 20min rust-tests "$DEBUGGER_ARTIFACTS/rust-debugger-tests.log" \
+            cargo test --locked -p android_debugger
+      - name: Build the actual Rust debugger CLI
+        run: |
+          set -euo pipefail
+          "$DEBUGGER_CI/bounded-run" 1G 15min rust-cli "$DEBUGGER_ARTIFACTS/rust-debugger-build.log" \
+            cargo build --locked -p android_debugger --bin android-debugger
+          test -x "$CARGO_TARGET_DIR/debug/android-debugger"
+      - name: Acquire checksum-pinned official Kotlin compiler distribution
+        # Official Gradle/JDK/compiler runtimes are non-Rust exceptions; the IDE,
+        # debugger protocol, test runner and every acceptance predicate are Rust.
+        run: |
+          set -euo pipefail
+          curl --fail --location --retry 3 --connect-timeout 30 --max-time 600 \
+            https://services.gradle.org/distributions/gradle-9.6.1-bin.zip \
+            --output "$DEBUGGER_CI/gradle-9.6.1-bin.zip"
+          printf '%s  %s\n' 9c0f7faeeb306cb14e4279a3e084ca6b596894089a0638e68a07c945a32c9e14 \
+            "$DEBUGGER_CI/gradle-9.6.1-bin.zip" | sha256sum --check --strict
+          unzip -q "$DEBUGGER_CI/gradle-9.6.1-bin.zip" -d "$DEBUGGER_CI/toolchains"
+          debugger_lib="$DEBUGGER_CI/toolchains/gradle-9.6.1/lib"
+          for jar in kotlin-compiler-embeddable-2.3.21.jar kotlin-stdlib-2.3.21.jar \
+            kotlin-reflect-2.3.21.jar kotlin-script-runtime-2.3.21.jar \
+            kotlinx-coroutines-core-jvm-1.10.2.jar annotations-24.0.1.jar; do
+            test -f "$debugger_lib/$jar"
+            sha256sum "$debugger_lib/$jar" >> "$DEBUGGER_ARTIFACTS/kotlin-compiler-files.sha256"
+          done
+          printf 'DEBUGGER_KOTLIN_LIB=%s\n' "$debugger_lib" >> "$GITHUB_ENV"
+      - name: Run the unchanged real JVM debugger fixture and SampleWorkspace
+        run: |
+          set -euo pipefail
+          debugger_classpath="$DEBUGGER_KOTLIN_LIB/kotlin-compiler-embeddable-2.3.21.jar:$DEBUGGER_KOTLIN_LIB/kotlin-stdlib-2.3.21.jar:$DEBUGGER_KOTLIN_LIB/kotlin-reflect-2.3.21.jar:$DEBUGGER_KOTLIN_LIB/kotlin-script-runtime-2.3.21.jar:$DEBUGGER_KOTLIN_LIB/kotlinx-coroutines-core-jvm-1.10.2.jar:$DEBUGGER_KOTLIN_LIB/annotations-24.0.1.jar"
+          "$DEBUGGER_CI/bounded-run" 4G 10min jvm-fixture "$DEBUGGER_ARTIFACTS/jvm-fixture.log" \
+            sh script/test-android-debugger-jvm \
+            --adapter "$CARGO_TARGET_DIR/debug/android-debugger" --java-home "$JAVA_HOME" \
+            --compiler-classpath "$debugger_classpath" --stdlib "$DEBUGGER_KOTLIN_LIB/kotlin-stdlib-2.3.21.jar"
+      - name: Acquire official Android SDK for the unchanged AGP 9.4 fixture
+        run: |
+          set -euo pipefail
+          mkdir -p "$ANDROID_HOME/cmdline-tools"
+          curl --fail --location --retry 3 --connect-timeout 30 --max-time 600 \
+            https://dl.google.com/android/repository/commandlinetools-linux-15859902_latest.zip \
+            --output "$DEBUGGER_CI/android-commandline-tools.zip"
+          printf '%s  %s\n' 4e4c464f145a7512b57d088ac6c278c03c9eea610886b35a5e0804e74eedf583 \
+            "$DEBUGGER_CI/android-commandline-tools.zip" | sha256sum --check --strict
+          unzip -q "$DEBUGGER_CI/android-commandline-tools.zip" -d "$DEBUGGER_CI/android-commandline-tools"
+          mv "$DEBUGGER_CI/android-commandline-tools/cmdline-tools" "$ANDROID_HOME/cmdline-tools/pinned"
+          debugger_sdkmanager="$ANDROID_HOME/cmdline-tools/pinned/bin/sdkmanager"
+          "$DEBUGGER_CI/bounded-run" 4G 5min sdk-licenses "$DEBUGGER_ARTIFACTS/sdk-licenses.log" "$debugger_sdkmanager" --sdk_root="$ANDROID_HOME" --licenses <<'ANDROID_LICENSES'
+          y
+          y
+          y
+          y
+          y
+          y
+          y
+          y
+          y
+          y
+          y
+          y
+          y
+          y
+          y
+          y
+          ANDROID_LICENSES
+          "$DEBUGGER_CI/bounded-run" 4G 10min sdk-install "$DEBUGGER_ARTIFACTS/sdk-install.log" "$debugger_sdkmanager" --sdk_root="$ANDROID_HOME" \
+            'platforms;android-37' 'build-tools;36.0.0' < /dev/null
+          test -f "$ANDROID_HOME/platforms/android-37/android.jar"
+          test -x "$ANDROID_HOME/build-tools/36.0.0/aapt2"
+      - name: Run the unchanged Gradle test-runner acceptance cases
+        # No --device is supplied: the CLI must report device instrumentation as
+        # NOT RUN. Every existing unit/model selector and failure predicate runs.
+        run: |
+          set -euo pipefail
+          # Model plus all five probes retain their existing 600-second bounds.
+          "$DEBUGGER_CI/bounded-run" 4G 65min runner-fixture "$DEBUGGER_ARTIFACTS/test-runner-fixture.log" \
+            sh script/test-android-test-runner
+      - name: Verify that fixture acquisition did not modify the dependency lock
+        if: always()
+        run: |
+          set -euo pipefail
+          sha256sum --check --strict "$RUNNER_TEMP/android-debugger-ci/artifacts/Cargo.lock.sha256"
+      - name: Retain exact unit, compiler, protocol and fixture diagnostics
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: android-rust-debugger-parity-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            ${{ runner.temp }}/android-debugger-ci/artifacts/**
+            target/android-ide/validation/jvm-debugger/**
+          if-no-files-found: warn
+          retention-days: 7
+          include-hidden-files: false
+          overwrite: false

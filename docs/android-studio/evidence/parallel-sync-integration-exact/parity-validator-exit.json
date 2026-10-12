@@ -1,0 +1,18 @@
+{
+  "source_commit": "4fb7a80eacc598a786b4b98c809d1df24a1b02ee",
+  "command": [
+    "/tmp/android-studio-junit4-integration/xtask",
+    "android-parity",
+    "--repository",
+    "/workspace/android-studio-parallel-sync-policy",
+    "--reference-root",
+    "/workspace/android-studio-references"
+  ],
+  "exit_code": 0,
+  "elapsed_seconds": 0.8824758240007213,
+  "log": "/workspace/android-studio-artifacts/parallel-sync-integration/exact-capture/parity-validator.log",
+  "log_sha256": "d36d3229331febf3b06cac59ec45a72913525ec6ffd2c61af326ca5c1d48b011",
+  "validator_bytes": 77379416,
+  "validator_sha256": "f86f1846b0553a703dd5a381173dafb500db36b3654e8e0b61841c05299695af",
+  "completed_at_utc": "2026-10-08T00:22:01.988836+00:00"
+}

@@ -1,0 +1,12 @@
+{
+  "command": [
+    "cargo",
+    "fmt",
+    "--all",
+    "--",
+    "--check"
+  ],
+  "exitCode": 0,
+  "wallSeconds": 28.978338084001734,
+  "sourceCommit": "830ff53de76dbecd5fc3761f1c5f5bae164763c2"
+}

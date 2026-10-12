@@ -29,6 +29,10 @@ pub enum IconName {
     AiVercel,
     AiXAi,
     AiZed,
+    #[strum(serialize = "android-studio-add")]
+    AndroidStudioAdd,
+    #[strum(serialize = "android-studio-close")]
+    AndroidStudioClose,
     Archive,
     ArrowCircle,
     ArrowDown,
@@ -182,6 +186,7 @@ pub enum IconName {
     Info,
     Json,
     Keyboard,
+    Koda,
     LineHeight,
     Link,
     Linux,

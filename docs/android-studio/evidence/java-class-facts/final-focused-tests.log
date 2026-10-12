@@ -1,0 +1,37 @@
+   Compiling android_tools v0.1.0 (/workspace/android-studio-java-class-facts/crates/android_tools)
+    Finished `test` profile [unoptimized] target(s) in 5.85s
+     Running unittests src/android_tools.rs (/workspace/.cache/zed/target/debug/deps/android_tools-7334319486a8ebb2)
+
+running 29 tests
+test java_class_facts::tests::annotations_with_class_literals_arrays_and_nested_annotations_are_not_declarations ... ok
+test java_class_facts::tests::annotated_package_and_static_or_wildcard_imports_preserve_package_facts ... ok
+test java_class_facts::tests::delimiter_nesting_is_bounded_without_recursion ... ok
+test java_class_facts::tests::dollar_identifiers_are_actual_declarations ... ok
+test java_class_facts::tests::empty_sources_and_empty_declarations_have_no_invented_classes ... ok
+test java_class_facts::tests::extracts_the_exact_original_generated_build_config_input ... ok
+test java_class_facts::tests::generic_supertypes_and_records_accept_type_annotations_and_wildcards ... ok
+test java_class_facts::tests::invalid_code_characters_inside_balanced_bodies_do_not_produce_facts ... ok
+test java_class_facts::tests::invalid_utf8_reports_the_first_invalid_byte ... ok
+test java_class_facts::tests::annotation_and_array_delimiters_share_the_enclosing_generic_depth_budget ... ok
+test java_class_facts::tests::comments_and_escaped_literals_cannot_inject_class_facts ... ok
+test java_class_facts::tests::line_comments_end_at_cr_lf_or_crlf ... ok
+test java_class_facts::tests::malformed_declaration_headers_return_no_partial_facts ... ok
+test java_class_facts::tests::malformed_escapes_character_literals_and_text_block_openings_are_rejected ... ok
+test java_class_facts::tests::modifiers_generic_bounds_and_sealed_hierarchies_keep_declaration_names ... ok
+test java_class_facts::tests::nested_local_and_anonymous_types_do_not_become_top_level_facts ... ok
+test java_class_facts::tests::non_ascii_identifiers_do_not_get_truncated_to_ascii_names ... ok
+test java_class_facts::tests::preserves_multiple_top_level_type_kinds_and_source_order ... ok
+test java_class_facts::tests::primitive_arrays_are_reference_type_arguments_including_annotated_dimensions ... ok
+test java_class_facts::tests::reads_the_unchanged_reference_activity_instead_of_a_filename ... ok
+test java_class_facts::tests::text_blocks_hide_type_keywords_and_delimiters_after_unicode_content ... ok
+test java_class_facts::tests::unbalanced_nested_delimiters_return_the_actual_failure_offset ... ok
+test java_class_facts::tests::unicode_comments_and_literals_keep_actual_utf8_navigation_offsets ... ok
+test java_class_facts::tests::unicode_escape_preprocessing_is_explicit_even_inside_comments_or_literals ... ok
+test java_class_facts::tests::unsupported_top_level_shapes_are_explicit_not_empty_successes ... ok
+test java_class_facts::tests::unterminated_comments_and_literals_are_explicit ... ok
+test java_class_facts::tests::large_multiple_declaration_inputs_keep_the_last_actual_navigation_target ... ok
+test java_class_facts::tests::declaration_count_limit_never_exposes_partial_results ... ok
+test java_class_facts::tests::source_size_limit_is_checked_before_utf8_or_tokenization ... ok
+
+test result: ok. 29 passed; 0 failed; 0 ignored; 0 measured; 55 filtered out; finished in 0.12s
+

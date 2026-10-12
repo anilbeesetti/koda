@@ -1,0 +1,11 @@
+{
+  "command": [
+    "/workspace/.cache/zed/target/debug/examples/project_model_probe",
+    "/workspace/android-studio-artifacts/assets-generation-facts/project",
+    "/workspace/android-studio-artifacts/followup-integration/gradle-generation.log",
+    "--model-only"
+  ],
+  "exit_code": 0,
+  "tested_commit": "371e79d3dd29f94db1b1cc2d01aff85327630065",
+  "assertions_passed": true
+}

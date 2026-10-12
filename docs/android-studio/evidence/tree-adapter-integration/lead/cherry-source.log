@@ -1,0 +1,9 @@
+[android-studio-task/1-tree-adapter-integration 4d63691807] android: adapt immutable per-module tree inputs
+ Date: Wed Oct 7 20:23:32 2026 +0000
+ 7 files changed, 4290 insertions(+)
+ create mode 100644 crates/android_tools/src/project_tree_adapter.rs
+ create mode 100644 crates/android_tools/test_data/project_tree_adapter/README.md
+ create mode 100644 crates/android_tools/test_data/project_tree_adapter/provenance.json
+ create mode 100644 crates/android_tools/test_data/project_tree_adapter/sdk-generation-model.json
+ create mode 100644 crates/android_tools/tests/project_tree_adapter.rs
+ create mode 100644 docs/android-studio/tree-input-adapter-plan.md

@@ -1,0 +1,141 @@
+{
+  "verdict": "PASS",
+  "scope": "Independent completed normal full-app build/final-link audit only; no native execution or phase completion",
+  "reviewed_at_utc": "2026-10-08T03:09:52.047647+00:00",
+  "source_commit": "7e3f72ebfaef39d6e6630dd11fa7dc91c8985d4a",
+  "source_tree": "f18fa92ba5a951f71bb66bbf28e218b9aa179ed9",
+  "blocking_findings": [],
+  "command": [
+    "cargo",
+    "build",
+    "--locked",
+    "-p",
+    "zed",
+    "--bin",
+    "koda"
+  ],
+  "actual_exit_code": 0,
+  "actual_elapsed_seconds": 726.3144619020022,
+  "normal_dev_unoptimized_profile_observed_in_raw_log": true,
+  "raw_log": {
+    "path": "/workspace/android-studio-artifacts/import-identity-integration/app-build/app-build-retry.log",
+    "bytes": 24282,
+    "sha256": "9e439ca61fbe2bfd57e8df5a841b9a3e0b14f42c5f95ee440a6c747eb7e1ce39"
+  },
+  "actual_link_arguments": {
+    "count": 1206,
+    "all_ASCII_and_no_NUL_lossless_JSON_receipt": true,
+    "same_count_order_and_all_argument_bytes_except_sole_output_value": true,
+    "sole_output_switch_index": 1198,
+    "only_changed_argument_index": 1199,
+    "real_cc": "/usr/bin/cc",
+    "original_output": "/workspace/.cache/zed/target/debug/deps/koda-145bb81fa8b08935",
+    "redirected_output": "/tmp/android-studio-link-output/koda-import-identity-339403",
+    "actual_real_cc_exit": 0
+  },
+  "helper": {
+    "source": {
+      "path": "/workspace/android-studio-artifacts/import-identity-integration/app-build/cc.rs",
+      "bytes": 4466,
+      "sha256": "1be51b477135a4be865650db1b09747fc9b0b20b4a31cddcd6d0e90d609daf9f"
+    },
+    "binary": {
+      "path": "/workspace/android-studio-artifacts/import-identity-integration/app-build/bin/cc",
+      "bytes": 4594128,
+      "sha256": "e21ba9925188f76a5872b62fba400401d1e5832e94f158e231e2f7fddf563a43"
+    },
+    "matches_prior_independent_static_and_actual_tiny_Rust_probe_PASS": true,
+    "unselected_links_forwarded_unchanged_and_existing_selected_outputs_refused": true,
+    "no_Cargo_flags_features_profile_or_Rustflags_change_introduced_by_reviewed_recipe_or_helper": true
+  },
+  "actual_executable": {
+    "path": "/tmp/android-studio-link-output/koda-import-identity-339403",
+    "bytes": 1359509184,
+    "sha256": "09d15d2ce3bdb708692254a8365bf94dedaa33a892af2b2a8156a8b75ced60b0",
+    "regular_non_symlink": true,
+    "ELF64_little_endian_x86_64": true
+  },
+  "published_aliases": [
+    {
+      "path": "/workspace/.cache/zed/target/debug/deps/koda-145bb81fa8b08935",
+      "target": "/tmp/android-studio-link-output/koda-import-identity-339403",
+      "resolved": "/tmp/android-studio-link-output/koda-import-identity-339403"
+    },
+    {
+      "path": "/workspace/.cache/zed/target/debug/koda",
+      "target": "/tmp/android-studio-link-output/koda-import-identity-339403",
+      "resolved": "/tmp/android-studio-link-output/koda-import-identity-339403"
+    }
+  ],
+  "source_guards": {
+    "all4743_actual_fixed7_names_and_file_SHA256_rehashed_before_and_after": true,
+    "whole_source_build_snapshot_equals_frozen_owner_map": true,
+    "full_raw_index_untracked_status_HEAD_before_after_match_frozen": true,
+    "main_HEAD": "30fca99a7a015168dfe4f394f576fbe2955fb4ea",
+    "protected_branch": "c1ce5ca16a26fd59984b50500ead45fbafafa5c8",
+    "reviewed_Source_HEAD": "7e3f72ebfaef39d6e6630dd11fa7dc91c8985d4a",
+    "all_refs_unchanged_during_independent_review": true,
+    "freshness_only_mtime_preserves_source_bytes": true
+  },
+  "limits": [
+    "This is an actual successful normal current7e full-app build/link. Native app workflows, SDK sync, Rust import decoding, image fidelity and current full CI are separate pending checks.",
+    "Runtime route/parity counts and phase/IDE completion are not inferred from compilation or ELF existence.",
+    "Only final output relocation is verified; original1206 linker arguments were executed by the real compiler driver with their original order/content. No compiler or SDK process was launched by this reviewer."
+  ],
+  "shared_library_contents_read": false,
+  "reviewer_Source_index_Git_cache_Cargo_SDK_native_alias_raw_log_or_process_mutations": false,
+  "only_new_external_review_files_written": true,
+  "read_holds_released": true,
+  "input_bindings": [
+    {
+      "path": "/workspace/android-studio-artifacts/import-identity-integration/app-build/koda-import-identity-339403.json",
+      "bytes": 182481,
+      "sha256": "27f2b4d7a2d1ef800ae069fdf3ee8efce19ccfafb5a0442ea5a6f5e9b61676e7"
+    },
+    {
+      "path": "/workspace/android-studio-artifacts/import-identity-integration/app-build/new-app-executable.json",
+      "bytes": 733,
+      "sha256": "a1a23bbc74ac62098b0ce0e28d2b9d3867fb98888d1bec0b3bd558c597fa7033"
+    },
+    {
+      "path": "/workspace/android-studio-artifacts/import-identity-integration/app-build/whole-product-guard-result.json",
+      "bytes": 220,
+      "sha256": "3679192ce1a86d352faadecdd4c060c0ab2fbd0cffff495a639a499bc1a4cad8"
+    },
+    {
+      "path": "/workspace/android-studio-artifacts/import-identity-integration/app-build/whole-product-source-snapshot.json",
+      "bytes": 2029573,
+      "sha256": "e29b95a286e28beb5924fe661e9fac5cc194d11d9d9b6404e43a9b322d135b51"
+    },
+    {
+      "path": "/workspace/android-studio-artifacts/import-identity-integration/app-build/app-build-retry-exit.json",
+      "bytes": 315,
+      "sha256": "f7c991ab31fc9df2d14b857a708c20f89c82e0f04c948ccc6949ce7adaadfbe3"
+    },
+    {
+      "path": "/workspace/android-studio-artifacts/import-identity-integration/app-build/build-source-freshness.json",
+      "bytes": 974,
+      "sha256": "6005dfa29e2c6d3648782562ca44890c9fb2ab1051c75bd9707fbe14b8608119"
+    },
+    {
+      "path": "/workspace/android-studio-artifacts/import-identity-integration/app-build/probe-validation.json",
+      "bytes": 2152,
+      "sha256": "3c2f0ee2a1f2afec44b85b8c91cc3a0f3ac35f58d9bd18393da14fab21300d2a"
+    },
+    {
+      "path": "/workspace/android-studio-artifacts/import-identity-integration/app-build/quality-runtime-probe.json",
+      "bytes": 2345,
+      "sha256": "899659c71634a7355d94f9d100a0209dda32dd694e12ce387831d26cd0796c7e"
+    },
+    {
+      "path": "/workspace/android-studio-artifacts/import-identity-integration/app-build/quality-build-recipes-static.json",
+      "bytes": 9450,
+      "sha256": "c23c9e3d63e52aa8544b3bb0533570479d3c52080b189b7fa323da8d131043ec"
+    },
+    {
+      "path": "/workspace/android-studio-artifacts/import-identity-getters/quality-ownership-cleanup/current-source.json",
+      "bytes": 1850434,
+      "sha256": "22c88471ad50da82ede705265412388dbca33f66f5967b9fc3641892cc63cec0"
+    }
+  ]
+}

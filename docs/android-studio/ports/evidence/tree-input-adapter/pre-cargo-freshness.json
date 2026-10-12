@@ -1,0 +1,24 @@
+{
+  "guard_count": 97,
+  "guard_pass": true,
+  "touches": {
+    "crates/android_tools/src/android_tools.rs": {
+      "sha256": "f4b033f8aa13b8141f706a1f24455c1d5500940ef5e4adffa46edd8baf1f2891",
+      "mtime_ns_before": 1791399645282512242,
+      "mtime_ns_after": 1791403122479903087
+    },
+    "crates/android_tools/tests/project_tree_adapter.rs": {
+      "sha256": "98453f194d39b1d7129f35732c76f0718c5b5f072d5904d6004442b942efd047",
+      "mtime_ns_before": 1791402586702902684,
+      "mtime_ns_after": 1791403122479903087
+    },
+    "tooling/xtask/src/main.rs": {
+      "sha256": "dd6a7e3767e46469004c4d613cdea4577a0d25c6721334329f7dffb04a03611c",
+      "mtime_ns_before": 1791399147612957951,
+      "mtime_ns_after": 1791403122479903087
+    }
+  },
+  "head": "ac58815bb268d338bea40a31fff630734cd719f4",
+  "status": " M crates/android_tools/src/android_tools.rs\n?? crates/android_tools/src/project_tree_adapter.rs\n?? crates/android_tools/test_data/project_tree_adapter/\n?? crates/android_tools/tests/project_tree_adapter.rs\n?? docs/android-studio/tree-input-adapter-plan.md\n",
+  "index_sha256": "c47f5022f875fa5dd1aeea5066c3194e545df1e4aa29474fd6ed3751b1ad4f39"
+}

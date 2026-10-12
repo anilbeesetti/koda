@@ -1,0 +1,29 @@
+{
+  "schema_version": 1,
+  "tested_commit": "93155342aa84f5d14d2d75b89d406414110757f3",
+  "previous_dir": "/workspace/android-studio-artifacts/link-redirect-followup",
+  "new_dir": "/workspace/android-studio-artifacts/junit4-link",
+  "changes": "Only owned artifact/probe paths and base output label replaced; Rust linker logic, all inputs/flags, exact match scope, source-guard exclusions and build command unchanged.",
+  "files": {
+    "cc.rs": {
+      "previous_sha256": "46e522b3c6fcb1ef974e1fa3d676c333eb34836cfd6e765a30a8bffd90823054",
+      "new_sha256": "886ce500d20e9e7d0a4845a791aa7fd295b59c7e34e807dd4c535a98fcedfbd0",
+      "unchanged": false
+    },
+    "probe.rs": {
+      "previous_sha256": "e2dcbcec7832d5d82c7e60757ddced1f3fe5db11a96d22091231cd14b68aa941",
+      "new_sha256": "e2dcbcec7832d5d82c7e60757ddced1f3fe5db11a96d22091231cd14b68aa941",
+      "unchanged": true
+    },
+    "retry-app-build.py": {
+      "previous_sha256": "3158f76a304b16fca9ab70604e0db04159b9958aca09761e8431d47905cc6ef9",
+      "new_sha256": "0fe2a8afecc802457fd0bd927019ae4ba70620a827c2d65ff71c1deaf262a9e4",
+      "unchanged": false
+    },
+    "guarded-app-build.py": {
+      "previous_sha256": "55bdda15eb0e5194ef09aa3a0ca69faebccaf7dbb58f980d62e9a7cfb080ffbb",
+      "new_sha256": "80bc859d4b6eb596ef70b12645bdb8dd2b7787f89e691fea48724cba3e039b85",
+      "unchanged": false
+    }
+  }
+}
