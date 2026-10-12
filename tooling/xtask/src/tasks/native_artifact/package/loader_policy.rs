@@ -551,6 +551,31 @@ pub(super) fn plan_dependencies(
 }
 
 #[cfg(target_os = "linux")]
+fn require_copy_input_inverse(
+    source_path: &Path,
+    expected: &FileDigest,
+    original: &Physical13,
+    observed: &FileDigest,
+    after: &Physical13,
+) -> Result<()> {
+    // Preserve the complete fatal invariant. The diagnostic must distinguish a
+    // short/changed stream from a metadata transition before any ELF rewrite.
+    ensure!(
+        observed == expected && after == original,
+        "policy copy input inverse differs for {}: bytes expected={} observed={}; SHA256 expected={} observed={}; physical13 changed={:?}; before={:?}; after={:?}",
+        source_path.display(),
+        expected.bytes,
+        observed.bytes,
+        expected.sha256,
+        observed.sha256,
+        original.changed_fields(after),
+        original,
+        after,
+    );
+    Ok(())
+}
+
+#[cfg(target_os = "linux")]
 pub(super) fn copy(
     source: &File,
     source_path: &Path,
@@ -606,12 +631,18 @@ pub(super) fn copy(
         hash.update(&buffer[..read]);
         output.write_all(&buffer[..read])?;
     }
-    ensure!(
-        count == expected.bytes
-            && format!("{:x}", hash.finalize()) == expected.sha256
-            && original_physical13 == physical(&source.metadata()?)?,
-        "policy copy input inverse differs"
-    );
+    let observed_input = FileDigest {
+        bytes: count,
+        sha256: format!("{:x}", hash.finalize()),
+    };
+    let input_after_copy = physical(&source.metadata()?)?;
+    require_copy_input_inverse(
+        source_path,
+        expected,
+        &original_physical13,
+        &observed_input,
+        &input_after_copy,
+    )?;
     output.sync_all()?;
     let copied_before_transform_digest = descriptor_digest(&output, MAX_BINARY_BYTES)?.0;
     ensure!(
@@ -1346,5 +1377,87 @@ mod tests {
         assert_eq!(resolved.borrow().len(), MAX_POLICY_DEPENDENCIES);
         assert!(resolved.borrow().contains("ld-linux-x86-64.so.2"));
         assert!(resolved.borrow().contains("lib254.so"));
+    }
+
+    #[test]
+    fn policy_copy_input_diagnostic_keeps_size_and_digest_checks_fatal() {
+        let temporary = tempfile::tempdir().unwrap();
+        let source = temporary.path().join("built-input");
+        create_file(&source, &fixture()).unwrap();
+        let input = open_noatime(&source, false).unwrap();
+        let (expected, original) = descriptor_digest(&input, MAX_BINARY_BYTES).unwrap();
+        assert!(
+            require_copy_input_inverse(&source, &expected, &original, &expected, &original).is_ok()
+        );
+        let mut short = expected.clone();
+        short.bytes -= 1;
+        let mut changed = expected.clone();
+        changed.sha256 = "0".repeat(64);
+        assert_ne!(changed.sha256, expected.sha256);
+        for observed in [short, changed] {
+            let error =
+                require_copy_input_inverse(&source, &expected, &original, &observed, &original)
+                    .unwrap_err()
+                    .to_string();
+            assert!(error.starts_with("policy copy input inverse differs for "));
+            assert!(error.contains(source.to_str().unwrap()));
+            assert!(error.contains(&format!(
+                "bytes expected={} observed={}",
+                expected.bytes, observed.bytes
+            )));
+            assert!(error.contains(&format!(
+                "SHA256 expected={} observed={}",
+                expected.sha256, observed.sha256
+            )));
+            assert!(error.contains("physical13 changed=[]"));
+        }
+        assert_eq!(
+            descriptor_digest(&input, MAX_BINARY_BYTES).unwrap(),
+            (expected, original)
+        );
+    }
+
+    #[test]
+    fn policy_copy_input_diagnostic_rejects_every_physical_field_without_exemptions() {
+        let temporary = tempfile::tempdir().unwrap();
+        let source = temporary.path().join("physical-input");
+        create_file(&source, &fixture()).unwrap();
+        let input = open_noatime(&source, false).unwrap();
+        let (expected, original) = descriptor_digest(&input, MAX_BINARY_BYTES).unwrap();
+        macro_rules! changed {
+            ($field:ident) => {{
+                let mut after = original.clone();
+                after.$field ^= 1;
+                (stringify!($field), after)
+            }};
+        }
+        for (field, after) in [
+            changed!(dev),
+            changed!(ino),
+            changed!(mode),
+            changed!(uid),
+            changed!(gid),
+            changed!(nlink),
+            changed!(bytes),
+            changed!(atime_ns),
+            changed!(mtime_ns),
+            changed!(ctime_ns),
+            changed!(blocks),
+            changed!(blksize),
+            changed!(rdev),
+        ] {
+            let error =
+                require_copy_input_inverse(&source, &expected, &original, &expected, &after)
+                    .unwrap_err()
+                    .to_string();
+            assert!(error.starts_with("policy copy input inverse differs for "));
+            assert!(error.contains(&format!("physical13 changed=[\"{field}\"]")));
+            assert!(error.contains(&format!("before={original:?}")));
+            assert!(error.contains(&format!("after={after:?}")));
+        }
+        assert_eq!(
+            descriptor_digest(&input, MAX_BINARY_BYTES).unwrap(),
+            (expected, original)
+        );
     }
 }

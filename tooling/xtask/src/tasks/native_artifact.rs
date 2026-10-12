@@ -615,6 +615,29 @@ fn read_bounded(path: &Path, limit: u64) -> Result<(Vec<u8>, Physical13)> {
     Ok((bytes, before))
 }
 
+// Keep the original digest inverse fatal while identifying its exact failed component.
+fn require_digest_inverse(
+    path: &Path,
+    observed_bytes: u64,
+    before: &Physical13,
+    descriptor_after: &Physical13,
+    path_after: &Physical13,
+) -> Result<()> {
+    ensure!(
+        observed_bytes == before.bytes && descriptor_after == before && path_after == before,
+        "file changed during digest for {}: bytes expected={} observed={}; descriptor physical13 changed={:?}; path physical13 changed={:?}; before={:?}; descriptor_after={:?}; path_after={:?}",
+        path.display(),
+        before.bytes,
+        observed_bytes,
+        before.changed_fields(descriptor_after),
+        before.changed_fields(path_after),
+        before,
+        descriptor_after,
+        path_after,
+    );
+    Ok(())
+}
+
 fn digest_file(path: &Path, maximum: u64) -> Result<(FileDigest, Physical13)> {
     let mut file = open_noatime(path, false)?;
     let metadata = file.metadata()?;
@@ -642,12 +665,9 @@ fn digest_file(path: &Path, maximum: u64) -> Result<(FileDigest, Physical13)> {
         ensure!(count <= maximum, "file grew beyond its budget");
         digest.update(&buffer[..read]);
     }
-    ensure!(
-        count == before.bytes
-            && before == physical(&file.metadata()?)?
-            && before == physical(&fs::symlink_metadata(path)?)?,
-        "file changed during digest"
-    );
+    let descriptor_after = physical(&file.metadata()?)?;
+    let path_after = physical(&fs::symlink_metadata(path)?)?;
+    require_digest_inverse(path, count, &before, &descriptor_after, &path_after)?;
     Ok((
         FileDigest {
             bytes: count,
@@ -1483,5 +1503,93 @@ mod physical_change_diagnostic_regression {
             before.changed_fields(&after),
             vec!["ino", "bytes", "atime_ns"]
         );
+    }
+
+    #[cfg(target_os = "linux")]
+    #[test]
+    fn digest_inverse_diagnostic_keeps_size_and_unchanged_identity_contract() {
+        let directory = tempfile::tempdir().unwrap();
+        let path = directory.path().join("input");
+        let bytes = b"a real bounded digest input";
+        fs::write(&path, bytes).unwrap();
+        let (digest, before) = digest_file(&path, 4096).unwrap();
+        assert_eq!(digest.bytes, bytes.len() as u64);
+        assert_eq!(digest.sha256, format!("{:x}", Sha256::digest(bytes)));
+        assert!(require_digest_inverse(&path, digest.bytes, &before, &before, &before).is_ok());
+        let error = require_digest_inverse(&path, digest.bytes - 1, &before, &before, &before)
+            .unwrap_err()
+            .to_string();
+        assert!(error.starts_with("file changed during digest for "));
+        assert!(error.contains(&format!(
+            "bytes expected={} observed={}",
+            before.bytes,
+            digest.bytes - 1
+        )));
+        assert!(error.contains("descriptor physical13 changed=[]; path physical13 changed=[]"));
+        assert_eq!(digest_file(&path, 4096).unwrap(), (digest, before));
+    }
+
+    #[cfg(target_os = "linux")]
+    #[test]
+    fn digest_inverse_diagnostic_rejects_descriptor_and_path_changes_for_every_field() {
+        let directory = tempfile::tempdir().unwrap();
+        let path = directory.path().join("input");
+        fs::write(&path, b"a real bounded digest input").unwrap();
+        let (digest, before) = digest_file(&path, 4096).unwrap();
+        macro_rules! changed {
+            ($field:ident) => {{
+                let mut after = before.clone();
+                after.$field ^= 1;
+                (stringify!($field), after)
+            }};
+        }
+        for (field, after) in [
+            changed!(dev),
+            changed!(ino),
+            changed!(mode),
+            changed!(uid),
+            changed!(gid),
+            changed!(nlink),
+            changed!(bytes),
+            changed!(atime_ns),
+            changed!(mtime_ns),
+            changed!(ctime_ns),
+            changed!(blocks),
+            changed!(blksize),
+            changed!(rdev),
+        ] {
+            for descriptor_changed in [true, false] {
+                let (descriptor_after, path_after) = if descriptor_changed {
+                    (&after, &before)
+                } else {
+                    (&before, &after)
+                };
+                let error = require_digest_inverse(
+                    &path,
+                    digest.bytes,
+                    &before,
+                    descriptor_after,
+                    path_after,
+                )
+                .unwrap_err()
+                .to_string();
+                let changed = format!("[\"{field}\"]");
+                let (descriptor_changed, path_changed) = if descriptor_changed {
+                    (changed.as_str(), "[]")
+                } else {
+                    ("[]", changed.as_str())
+                };
+                assert!(error.starts_with("file changed during digest for "));
+                assert!(error.contains(path.to_str().unwrap()));
+                assert!(error.contains(&format!(
+                    "descriptor physical13 changed={descriptor_changed}"
+                )));
+                assert!(error.contains(&format!("path physical13 changed={path_changed}")));
+                assert!(error.contains(&format!("before={before:?}")));
+                assert!(error.contains(&format!("descriptor_after={descriptor_after:?}")));
+                assert!(error.contains(&format!("path_after={path_after:?}")));
+            }
+        }
+        assert_eq!(digest_file(&path, 4096).unwrap(), (digest, before));
     }
 }

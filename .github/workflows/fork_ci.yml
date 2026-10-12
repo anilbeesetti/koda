@@ -574,6 +574,133 @@ jobs:
           if-no-files-found: error
           compression-level: 0
           retention-days: 7
+      # Acquire the next Source42 request identity without replacing the active
+      # Source33 request or authorizing an application build for this checkout.
+      - name: Checkout exact next Source42 Git objects for Rust snapshot
+        id: source42_snapshot_checkout
+        timeout-minutes: 5
+        if: ${{ !cancelled() && steps.bootstrap_export.outcome == 'success' }}
+        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd
+        with:
+          repository: anilbeesetti/koda
+          ref: 2c91419ab6fcbd5cd82ef13f0b8ed330d3303809
+          path: next-native-source42-objects
+          fetch-depth: 1
+          # Git omits blobs >=65MiB; every Rust-accepted <=64MiB blob is included.
+          filter: blob:limit=65m
+          persist-credentials: false
+          lfs: false
+          submodules: false
+          sparse-checkout: .rules
+          sparse-checkout-cone-mode: false
+      - name: Produce genuine next Source42 manifest and owner receipt with Rust
+        id: source42_next_snapshot
+        if: ${{ !cancelled() && steps.bootstrap_export.outcome == 'success' && steps.source42_snapshot_checkout.outcome == 'success' }}
+        timeout-minutes: 5
+        env:
+          NEXT_NATIVE_SOURCE_SHA: 2c91419ab6fcbd5cd82ef13f0b8ed330d3303809
+          NEXT_NATIVE_SOURCE_TREE: da8f5c180ea10b5ce2c2e716d325b0005069eb27
+        shell: bash
+        run: |
+          set -euo pipefail
+          snapshot_dir="$RUNNER_TEMP/native-next-source42-provenance"
+          test ! -e "$snapshot_dir"
+          mkdir "$snapshot_dir"
+          controller_cli="$RUNNER_TEMP/native-independent-controller-bootstrap/xtask"
+          sha256sum "$controller_cli" \
+            "$RUNNER_TEMP/native-independent-controller-bootstrap/bootstrap.json" \
+            "$RUNNER_TEMP/native-independent-controller-bootstrap/cargo-build.jsonl" \
+            > "$snapshot_dir/controller-before.sha256"
+          if [[ ! -x /usr/bin/time ]]; then
+            sudo apt-get update
+            sudo apt-get install --no-install-recommends -y time
+          fi
+          test -x /usr/bin/time
+          sha256sum /usr/bin/time > "$snapshot_dir/runtime-time-before.sha256"
+          stream_limit_bytes=33554432
+          snapshot_status=0
+          (
+            set +o posix || exit "$?"
+            export LC_ALL=C
+            ulimit -c 0 || exit "$?"
+            ulimit -f 32768 || exit "$?"
+            # GNU time waits on Bash's PID after that child execs the real Rust
+            # controller. Both time and the controller inherit the file cap.
+            exec /usr/bin/time --output="$snapshot_dir/actual-process-wait.txt" \
+              --format='gnu_time_exit_status=%x\nelapsed_seconds=%e\nmaximum_resident_kib=%M' \
+              -- /bin/bash --noprofile --norc -c '
+                set +o posix || exit "$?"
+                ulimit -c 0 || exit "$?"
+                ulimit -f 32768 || exit "$?"
+                cat /proc/self/limits > "$1" || exit "$?"
+                shift || exit "$?"
+                exec "$@"
+              ' source42-limited-snapshot "$snapshot_dir/actual-child-limits.txt" \
+              "$controller_cli" native-artifact snapshot \
+              --source "$GITHUB_WORKSPACE/next-native-source42-objects" \
+              --sha "$NEXT_NATIVE_SOURCE_SHA" --tree "$NEXT_NATIVE_SOURCE_TREE" \
+              --authentication git-objects \
+              --output "$snapshot_dir/source-manifest.json" \
+              --receipt "$snapshot_dir/source-owner-receipt.json"
+          ) > "$snapshot_dir/snapshot.stdout.log" 2> "$snapshot_dir/snapshot.stderr.log" \
+            || snapshot_status=$?
+          sha256sum /usr/bin/time > "$snapshot_dir/runtime-time-after.sha256"
+          stdout_stat_status=0
+          stdout_bytes=$(stat -c '%s' "$snapshot_dir/snapshot.stdout.log") \
+            || { stdout_stat_status=$?; stdout_bytes=-1; }
+          stderr_stat_status=0
+          stderr_bytes=$(stat -c '%s' "$snapshot_dir/snapshot.stderr.log") \
+            || { stderr_stat_status=$?; stderr_bytes=-1; }
+          wait_report_present=0
+          observed_signal=UNOBSERVED
+          if [[ -s "$snapshot_dir/actual-process-wait.txt" ]]; then
+            wait_report_present=1
+            while IFS= read -r wait_line; do
+              if [[ "$wait_line" =~ ^Command\ terminated\ by\ signal\ ([0-9]+)$ ]]; then
+                observed_signal=${BASH_REMATCH[1]}
+              fi
+            done < "$snapshot_dir/actual-process-wait.txt"
+          fi
+          cap_saturated=0
+          if (( stdout_bytes >= stream_limit_bytes || stderr_bytes >= stream_limit_bytes )); then
+            cap_saturated=1
+          fi
+          # Saturation is rejected even if a child catches EFBIG and exits zero.
+          # A signal is known only from time's report, never inferred from153.
+          printf '{"snapshot_shell_wait_status":%s,"signal_from_gnu_time_report":"%s","stream_cap_bytes":%s,"stdout_bytes":%s,"stderr_bytes":%s,"stdout_stat_exit":%s,"stderr_stat_exit":%s,"cap_saturated":%s,"wait_report_present":%s,"source_sha":"%s","source_tree":"%s","descendant_cleanup":"UNPROVED_BY_CI_WRAPPER_VALIDATE_RUST_RECEIPT_ONLY_ON_SUCCESS","acceptance_credit":0}\n' \
+            "$snapshot_status" "$observed_signal" "$stream_limit_bytes" \
+            "$stdout_bytes" "$stderr_bytes" "$stdout_stat_status" "$stderr_stat_status" \
+            "$cap_saturated" "$wait_report_present" "$NEXT_NATIVE_SOURCE_SHA" "$NEXT_NATIVE_SOURCE_TREE" \
+            > "$snapshot_dir/actual-snapshot-exit.json"
+          sha256sum "$controller_cli" \
+            "$RUNNER_TEMP/native-independent-controller-bootstrap/bootstrap.json" \
+            "$RUNNER_TEMP/native-independent-controller-bootstrap/cargo-build.jsonl" \
+            > "$snapshot_dir/controller-after.sha256"
+          cmp "$snapshot_dir/controller-before.sha256" "$snapshot_dir/controller-after.sha256"
+          cmp "$snapshot_dir/runtime-time-before.sha256" "$snapshot_dir/runtime-time-after.sha256"
+          test "$snapshot_status" -eq 0
+          test "$stdout_stat_status" -eq 0
+          test "$stderr_stat_status" -eq 0
+          test "$wait_report_present" -eq 1
+          test "$observed_signal" = UNOBSERVED
+          test "$cap_saturated" -eq 0
+          sha256sum "$snapshot_dir/source-manifest.json" "$snapshot_dir/source-owner-receipt.json" \
+            > "$snapshot_dir/source-provenance.sha256"
+      - name: Retain actual next Source42 Rust source provenance and failures
+        if: ${{ always() && (steps.source42_next_snapshot.outcome == 'success' || steps.source42_next_snapshot.outcome == 'failure' || steps.source42_next_snapshot.outcome == 'cancelled') }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: next-source42-provenance-2c91419ab6fcbd5cd82ef13f0b8ed330d3303809-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            ${{ runner.temp }}/native-next-source42-provenance/
+            ${{ runner.temp }}/native-independent-controller-bootstrap/bootstrap.json
+            ${{ runner.temp }}/native-independent-controller-bootstrap/cargo-build.jsonl
+            ${{ runner.temp }}/owned-independent-bootstrap-checkout.json
+            ${{ runner.temp }}/native-independent-constructor-compile-exits.json
+            ${{ runner.temp }}/native-independent-bootstrap-compile-exits.json
+          if-no-files-found: error
+          compression-level: 6
+          retention-days: 7
       - name: Retain actual request-independent bootstrap boundary outcomes
         if: always()
         env:

@@ -123,15 +123,42 @@ fn acquire_session(deadline: &Deadline) -> Result<MutexGuard<'static, ()>> {
     }
 }
 #[cfg(target_os = "linux")]
+fn process_stat_disappeared(error: &io::Error) -> bool {
+    error.kind() == io::ErrorKind::NotFound || error.raw_os_error() == Some(libc::ESRCH)
+}
+#[cfg(target_os = "linux")]
 fn identity_until(pid: i32, deadline: &Deadline) -> Result<Option<Identity>> {
+    identity_from_stat_until(pid, deadline, || {
+        fs::File::open(format!("/proc/{pid}/stat"))
+    })
+}
+#[cfg(target_os = "linux")]
+fn identity_from_stat_until<R: Read>(
+    pid: i32,
+    deadline: &Deadline,
+    open: impl FnOnce() -> io::Result<R>,
+) -> Result<Option<Identity>> {
     deadline.check("process identity open")?;
-    let file = match fs::File::open(format!("/proc/{pid}/stat")) {
+    let file = match open() {
         Ok(file) => file,
-        Err(error) if error.kind() == io::ErrorKind::NotFound => return Ok(None),
-        Err(error) => return Err(error.into()),
+        Err(error) if process_stat_disappeared(&error) => {
+            deadline.check("process identity disappearance")?;
+            return Ok(None);
+        }
+        Err(error) => {
+            return Err(error).with_context(|| format!("open process stat for PID {pid}"));
+        }
     };
     let mut stat = String::new();
-    file.take(4097).read_to_string(&mut stat)?;
+    if let Err(error) = file.take(4097).read_to_string(&mut stat) {
+        // A procfs descriptor may outlive its process between open and read.
+        // Partial bytes never authenticate an identity after disappearance.
+        if process_stat_disappeared(&error) {
+            deadline.check("process identity disappearance")?;
+            return Ok(None);
+        }
+        return Err(error).with_context(|| format!("read process stat for PID {pid}"));
+    }
     ensure!(stat.len() <= 4096, "process stat byte budget exhausted");
     deadline.check("process identity decode")?;
     let (_, suffix) = stat.rsplit_once(") ").context("malformed process stat")?;
@@ -1170,6 +1197,178 @@ mod tests {
             reused
                 .iter()
                 .any(|row| row.pid == foreign.pid && row.start != foreign.start)
+        );
+    }
+
+    const STAT_IDENTITY_FIXTURE: &[u8] =
+        b"123 (stat fixture with ) name) R 41 123 123 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 991 0\n";
+
+    struct StatReadFailure<'a> {
+        prefix: io::Cursor<&'a [u8]>,
+        errno: i32,
+        calls: &'a Cell<usize>,
+    }
+    impl Read for StatReadFailure<'_> {
+        fn read(&mut self, buffer: &mut [u8]) -> io::Result<usize> {
+            self.calls.set(self.calls.get() + 1);
+            let count = self.prefix.read(buffer)?;
+            if count == 0 {
+                Err(io::Error::from_raw_os_error(self.errno))
+            } else {
+                Ok(count)
+            }
+        }
+    }
+
+    #[test]
+    fn stat_open_disappearance_is_absent_and_other_errors_remain_fatal() {
+        for errno in [libc::ENOENT, libc::ESRCH] {
+            let result = identity_from_stat_until::<io::Cursor<&[u8]>>(
+                123,
+                &Deadline::after(Duration::from_secs(1)),
+                || Err(io::Error::from_raw_os_error(errno)),
+            )
+            .unwrap();
+            assert!(result.is_none());
+        }
+        for errno in [
+            libc::EPERM,
+            libc::EACCES,
+            libc::EIO,
+            libc::EMFILE,
+            libc::EINTR,
+        ] {
+            let error = identity_from_stat_until::<io::Cursor<&[u8]>>(
+                123,
+                &Deadline::after(Duration::from_secs(1)),
+                || Err(io::Error::from_raw_os_error(errno)),
+            )
+            .unwrap_err();
+            assert_eq!(
+                error.downcast_ref::<io::Error>().unwrap().raw_os_error(),
+                Some(errno)
+            );
+            assert!(error.to_string().contains("open process stat for PID 123"));
+        }
+    }
+
+    #[test]
+    fn stat_read_disappearance_discards_partial_identity_and_other_errors_remain_fatal() {
+        for errno in [
+            libc::ENOENT,
+            libc::ESRCH,
+            libc::EPERM,
+            libc::EACCES,
+            libc::EIO,
+        ] {
+            let calls = Cell::new(0);
+            let result =
+                identity_from_stat_until(123, &Deadline::after(Duration::from_secs(1)), || {
+                    Ok(StatReadFailure {
+                        prefix: io::Cursor::new(STAT_IDENTITY_FIXTURE),
+                        errno,
+                        calls: &calls,
+                    })
+                });
+            assert!(calls.get() >= 2);
+            if errno == libc::ENOENT || errno == libc::ESRCH {
+                assert!(result.unwrap().is_none());
+            } else {
+                let error = result.unwrap_err();
+                assert_eq!(
+                    error.downcast_ref::<io::Error>().unwrap().raw_os_error(),
+                    Some(errno)
+                );
+                assert!(error.to_string().contains("read process stat for PID 123"));
+            }
+        }
+    }
+
+    #[test]
+    fn complete_stat_identity_decodes_and_malformed_or_over_budget_data_remains_fatal() {
+        let row = identity_from_stat_until(123, &Deadline::after(Duration::from_secs(1)), || {
+            Ok(io::Cursor::new(STAT_IDENTITY_FIXTURE))
+        })
+        .unwrap()
+        .unwrap();
+        assert_eq!(
+            (
+                row.pid,
+                row.parent,
+                row.group,
+                row.session,
+                row.start,
+                row.state
+            ),
+            (123, 41, 123, 123, 991, 'R')
+        );
+        for bytes in [
+            b"".as_slice(),
+            b"not a process stat".as_slice(),
+            b"123 (short) R 41 123".as_slice(),
+            b"123 (bad parent) R invalid 123 123 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 991 0".as_slice(),
+            b"\xff".as_slice(),
+        ] {
+            assert!(
+                identity_from_stat_until(123, &Deadline::after(Duration::from_secs(1)), || Ok(
+                    io::Cursor::new(bytes)
+                ),)
+                .is_err()
+            );
+        }
+        let oversized = vec![b'x'; 4097];
+        let error = identity_from_stat_until(123, &Deadline::after(Duration::from_secs(1)), || {
+            Ok(io::Cursor::new(oversized))
+        })
+        .unwrap_err();
+        assert!(
+            error
+                .to_string()
+                .contains("process stat byte budget exhausted")
+        );
+    }
+
+    #[test]
+    fn identity_deadline_prevents_open_and_late_disappearance_cannot_certify_absence() {
+        let opened = Cell::new(false);
+        let error = identity_from_stat_until(123, &Deadline::at(Instant::now()), || {
+            opened.set(true);
+            Ok(io::Cursor::new(STAT_IDENTITY_FIXTURE))
+        })
+        .unwrap_err();
+        assert!(!opened.get());
+        assert!(
+            error
+                .to_string()
+                .contains("deadline exhausted before process identity open")
+        );
+        let mut late_open = Deadline::after(Duration::from_secs(1));
+        late_open.maximum_checks = Some(1);
+        let error = identity_from_stat_until::<io::Cursor<&[u8]>>(123, &late_open, || {
+            Err(io::Error::from_raw_os_error(libc::ESRCH))
+        })
+        .unwrap_err();
+        assert!(
+            error
+                .to_string()
+                .contains("deadline exhausted before process identity disappearance")
+        );
+        let calls = Cell::new(0);
+        let mut late_read = Deadline::after(Duration::from_secs(1));
+        late_read.maximum_checks = Some(1);
+        let error = identity_from_stat_until(123, &late_read, || {
+            Ok(StatReadFailure {
+                prefix: io::Cursor::new(b"".as_slice()),
+                errno: libc::ESRCH,
+                calls: &calls,
+            })
+        })
+        .unwrap_err();
+        assert_eq!(calls.get(), 1);
+        assert!(
+            error
+                .to_string()
+                .contains("deadline exhausted before process identity disappearance")
         );
     }
 }
