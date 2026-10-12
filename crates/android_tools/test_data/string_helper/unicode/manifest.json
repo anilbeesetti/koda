@@ -1,0 +1,72 @@
+[
+  {
+    "version": "13.0.0",
+    "file": "UnicodeData.txt",
+    "url": "https://www.unicode.org/Public/13.0.0/ucd/UnicodeData.txt",
+    "bytes": 1851767,
+    "sha256": "bdbffbbfc8ad4d3a6d01b5891510458f3d36f7170422af4ea2bed3211a73e8bb"
+  },
+  {
+    "version": "13.0.0",
+    "file": "SpecialCasing.txt",
+    "url": "https://www.unicode.org/Public/13.0.0/ucd/SpecialCasing.txt",
+    "bytes": 16830,
+    "sha256": "6424312f1dc39b22e0ff9c0ffb13dfad424d9b03e6a6dc6bca941f6bf5ef1ffd"
+  },
+  {
+    "version": "14.0.0",
+    "file": "UnicodeData.txt",
+    "url": "https://www.unicode.org/Public/14.0.0/ucd/UnicodeData.txt",
+    "bytes": 1897793,
+    "sha256": "36018e68657fdcb3485f636630ffe8c8532e01c977703d2803f5b89d6c5feafb"
+  },
+  {
+    "version": "14.0.0",
+    "file": "SpecialCasing.txt",
+    "url": "https://www.unicode.org/Public/14.0.0/ucd/SpecialCasing.txt",
+    "bytes": 16830,
+    "sha256": "c667b45908fd269af25fd55d2fc5bbc157fb1b77675936e25c513ce32e080334"
+  },
+  {
+    "version": "15.0.0",
+    "file": "UnicodeData.txt",
+    "url": "https://www.unicode.org/Public/15.0.0/ucd/UnicodeData.txt",
+    "bytes": 1913704,
+    "sha256": "806e9aed65037197f1ec85e12be6e8cd870fc5608b4de0fffd990f689f376a73"
+  },
+  {
+    "version": "15.0.0",
+    "file": "SpecialCasing.txt",
+    "url": "https://www.unicode.org/Public/15.0.0/ucd/SpecialCasing.txt",
+    "bytes": 16832,
+    "sha256": "78b29c64b5840d25c11a9f31b665ee551b8a499eca6c70d770fcad7dd710f494"
+  },
+  {
+    "version": "15.1.0",
+    "file": "UnicodeData.txt",
+    "url": "https://www.unicode.org/Public/15.1.0/ucd/UnicodeData.txt",
+    "bytes": 1914200,
+    "sha256": "2fc713e6a31a87c4850a37fe2caffa4218180fadb5de86b43a143ddb4581fb86"
+  },
+  {
+    "version": "15.1.0",
+    "file": "SpecialCasing.txt",
+    "url": "https://www.unicode.org/Public/15.1.0/ucd/SpecialCasing.txt",
+    "bytes": 16832,
+    "sha256": "55a477efd933a52cd27e6a9bf70265bb2d8814af31aab07767abc8eb421f27ef"
+  },
+  {
+    "version": "16.0.0",
+    "file": "UnicodeData.txt",
+    "url": "https://www.unicode.org/Public/16.0.0/ucd/UnicodeData.txt",
+    "bytes": 2175362,
+    "sha256": "ff58e5823bd095166564a006e47d111130813dcf8bf234ef79fa51a870edb48f"
+  },
+  {
+    "version": "16.0.0",
+    "file": "SpecialCasing.txt",
+    "url": "https://www.unicode.org/Public/16.0.0/ucd/SpecialCasing.txt",
+    "bytes": 16809,
+    "sha256": "8d5de354eef79f2395a54c9c7dcebbaf3d30fc962d0f85611ea97aa973a0c451"
+  }
+]

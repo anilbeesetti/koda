@@ -1,0 +1,47 @@
+StringHelper separated-list membership behavior and six original test assertions
+are adapted from Android Open Source Project platform/tools/base, revision
+4a5d2ec9571e2021fc9a4621e24a195f966ee6dd:
+
+  common/src/main/java/com/android/utils/StringHelper.kt
+  Copyright (C) 2013 The Android Open Source Project
+
+  common/src/test/java/com/android/utils/StringHelperTest.kt
+  Copyright (C) 2017 The Android Open Source Project
+
+These complete original files are retained without changes under reference/.
+They and the adapted Rust behavior/assertions are licensed under Apache 2.0;
+the complete license is retained in LICENSE-APACHE. Rust implementation and
+assertion-harness changes preserve UTF-16 indexing and separator semantics.
+The remaining original helper methods are retained for future ports; this
+fixture does not establish that those behaviors have been implemented or run.
+
+Successor scope: all 19 StringHelper original methods now have adapted Rust source
+assertions. No new test execution is claimed. Versioned casing is selected only
+from an explicitly observed JDK; baseline JBR binding remains pending.
+
+The tokenizer Rust module adapts Windows and POSIX token-list behavior from
+Android Open Source Project platform/tools/base revision
+4a5d2ec9571e2021fc9a4621e24a195f966ee6dd:
+
+  common/src/main/java/com/android/utils/TokenizedCommandLine.kt
+  Copyright (C) 2020 The Android Open Source Project
+  Windows tokenizer lines 220-302, POSIX tokenizer lines 327-386, and
+  toTokenList lines 179-196.
+
+  common/src/main/java/com/android/utils/StringHelper.kt
+  Copyright (C) 2013 The Android Open Source Project
+  tokenizeCommandLineToRaw and tokenizeCommandLineToEscaped wrappers.
+
+  common/src/test/java/com/android/utils/StringHelperTest.kt
+  Copyright (C) 2017 The Android Open Source Project
+  testTokenizeCommandLine: both original ordered assertions.
+
+These adapted algorithms and assertions are licensed under Apache 2.0.
+The integration tests explicitly exercise both platforms on every host.
+The remaining tests are supplemental coverage, not additional upstream ports.
+The complete license is available at
+https://www.apache.org/licenses/LICENSE-2.0 and retained by the parent crate.
+
+This module ports token-list wrappers only. Index-buffer generation, token
+removal, matching, normalized length/hash, and string reconstruction APIs are
+outside its scope.

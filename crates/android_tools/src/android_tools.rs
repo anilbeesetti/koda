@@ -11,6 +11,7 @@ pub mod project_tree;
 pub mod project_tree_adapter;
 pub mod project_tree_facts;
 pub mod project_view_preferences;
+pub mod string_helper;
 use anyhow::{Context as _, Result, bail, ensure};
 pub mod java;
 pub mod kotlin;
@@ -248,11 +249,15 @@ impl AndroidTarget {
     }
 
     pub fn gradle_task(&self, prefix: &str, suffix: &str) -> String {
-        let mut characters = self.variant.chars();
-        let capitalized = characters
-            .next()
-            .map(|first| first.to_uppercase().collect::<String>() + characters.as_str())
-            .unwrap_or_default();
+        // Evaluated model variants are validated as ASCII. Use the version-invariant
+        // AOSP naming behavior there; retain the public API's prior Unicode fallback.
+        let capitalized = string_helper::capitalize_ascii(&self.variant).unwrap_or_else(|| {
+            let mut characters = self.variant.chars();
+            characters
+                .next()
+                .map(|first| first.to_uppercase().collect::<String>() + characters.as_str())
+                .unwrap_or_default()
+        });
         format!(
             "{}:{prefix}{capitalized}{suffix}",
             self.module.trim_end_matches(':')

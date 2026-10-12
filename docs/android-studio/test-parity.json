@@ -2172,6 +2172,462 @@
         }
       ],
       "fixtures": []
+    },
+    {
+      "reference_id": "base@4a5d2ec9571e2021fc9a4621e24a195f966ee6dd:common/src/test/java/com/android/utils/StringHelperTest.kt#com.android.utils.StringHelperTest.testBasicCapitalize",
+      "port_status": "adapted",
+      "run_status": "not_run",
+      "reason": "Rust ordered equality/assertions retain every original operand and predicate; Java strings use UTF-16 adapters. Casing fixtures run against all five explicit supported Unicode versions, never an inferred JBR default; collection displays are explicit callbacks; tokenization selects both platforms.",
+      "run_blocker": null,
+      "rust_targets": [
+        {
+          "package": "android_tools",
+          "integration_target": "string_helper",
+          "test_name": "string_helper_basic_capitalize",
+          "manifest": {
+            "path": "crates/android_tools/Cargo.toml",
+            "sha256": "c21fa3f61fafabc38772ec37735546a2c01bbfb48fafe689c4c6ac79470d0bf7"
+          },
+          "source": {
+            "path": "crates/android_tools/tests/string_helper.rs",
+            "sha256": "433da8681d17b76fa929f0299e8cfecdc21320c8e200a997d913370d5d9a85b3"
+          },
+          "run": null
+        }
+      ],
+      "fixtures": []
+    },
+    {
+      "reference_id": "base@4a5d2ec9571e2021fc9a4621e24a195f966ee6dd:common/src/test/java/com/android/utils/StringHelperTest.kt#com.android.utils.StringHelperTest.testNonLetterCapitalize",
+      "port_status": "adapted",
+      "run_status": "not_run",
+      "reason": "Rust ordered equality/assertions retain every original operand and predicate; Java strings use UTF-16 adapters. Casing fixtures run against all five explicit supported Unicode versions, never an inferred JBR default; collection displays are explicit callbacks; tokenization selects both platforms.",
+      "run_blocker": null,
+      "rust_targets": [
+        {
+          "package": "android_tools",
+          "integration_target": "string_helper",
+          "test_name": "string_helper_non_letter_capitalize",
+          "manifest": {
+            "path": "crates/android_tools/Cargo.toml",
+            "sha256": "c21fa3f61fafabc38772ec37735546a2c01bbfb48fafe689c4c6ac79470d0bf7"
+          },
+          "source": {
+            "path": "crates/android_tools/tests/string_helper.rs",
+            "sha256": "433da8681d17b76fa929f0299e8cfecdc21320c8e200a997d913370d5d9a85b3"
+          },
+          "run": null
+        }
+      ],
+      "fixtures": []
+    },
+    {
+      "reference_id": "base@4a5d2ec9571e2021fc9a4621e24a195f966ee6dd:common/src/test/java/com/android/utils/StringHelperTest.kt#com.android.utils.StringHelperTest.testUnicodeCapitalize",
+      "port_status": "adapted",
+      "run_status": "not_run",
+      "reason": "Rust ordered equality/assertions retain every original operand and predicate; Java strings use UTF-16 adapters. Casing fixtures run against all five explicit supported Unicode versions, never an inferred JBR default; collection displays are explicit callbacks; tokenization selects both platforms.",
+      "run_blocker": null,
+      "rust_targets": [
+        {
+          "package": "android_tools",
+          "integration_target": "string_helper",
+          "test_name": "string_helper_unicode_capitalize",
+          "manifest": {
+            "path": "crates/android_tools/Cargo.toml",
+            "sha256": "c21fa3f61fafabc38772ec37735546a2c01bbfb48fafe689c4c6ac79470d0bf7"
+          },
+          "source": {
+            "path": "crates/android_tools/tests/string_helper.rs",
+            "sha256": "433da8681d17b76fa929f0299e8cfecdc21320c8e200a997d913370d5d9a85b3"
+          },
+          "run": null
+        }
+      ],
+      "fixtures": []
+    },
+    {
+      "reference_id": "base@4a5d2ec9571e2021fc9a4621e24a195f966ee6dd:common/src/test/java/com/android/utils/StringHelperTest.kt#com.android.utils.StringHelperTest.testSurrogateValuesCapitalize",
+      "port_status": "adapted",
+      "run_status": "not_run",
+      "reason": "Rust ordered equality/assertions retain every original operand and predicate; Java strings use UTF-16 adapters. Casing fixtures run against all five explicit supported Unicode versions, never an inferred JBR default; collection displays are explicit callbacks; tokenization selects both platforms.",
+      "run_blocker": null,
+      "rust_targets": [
+        {
+          "package": "android_tools",
+          "integration_target": "string_helper",
+          "test_name": "string_helper_surrogate_values_capitalize",
+          "manifest": {
+            "path": "crates/android_tools/Cargo.toml",
+            "sha256": "c21fa3f61fafabc38772ec37735546a2c01bbfb48fafe689c4c6ac79470d0bf7"
+          },
+          "source": {
+            "path": "crates/android_tools/tests/string_helper.rs",
+            "sha256": "433da8681d17b76fa929f0299e8cfecdc21320c8e200a997d913370d5d9a85b3"
+          },
+          "run": null
+        }
+      ],
+      "fixtures": []
+    },
+    {
+      "reference_id": "base@4a5d2ec9571e2021fc9a4621e24a195f966ee6dd:common/src/test/java/com/android/utils/StringHelperTest.kt#com.android.utils.StringHelperTest.testAppendCapitalized",
+      "port_status": "adapted",
+      "run_status": "not_run",
+      "reason": "Rust ordered equality/assertions retain every original operand and predicate; Java strings use UTF-16 adapters. Casing fixtures run against all five explicit supported Unicode versions, never an inferred JBR default; collection displays are explicit callbacks; tokenization selects both platforms.",
+      "run_blocker": null,
+      "rust_targets": [
+        {
+          "package": "android_tools",
+          "integration_target": "string_helper",
+          "test_name": "string_helper_append_capitalized",
+          "manifest": {
+            "path": "crates/android_tools/Cargo.toml",
+            "sha256": "c21fa3f61fafabc38772ec37735546a2c01bbfb48fafe689c4c6ac79470d0bf7"
+          },
+          "source": {
+            "path": "crates/android_tools/tests/string_helper.rs",
+            "sha256": "433da8681d17b76fa929f0299e8cfecdc21320c8e200a997d913370d5d9a85b3"
+          },
+          "run": null
+        }
+      ],
+      "fixtures": []
+    },
+    {
+      "reference_id": "base@4a5d2ec9571e2021fc9a4621e24a195f966ee6dd:common/src/test/java/com/android/utils/StringHelperTest.kt#com.android.utils.StringHelperTest.testAppendCapitalizedVarArgs",
+      "port_status": "adapted",
+      "run_status": "not_run",
+      "reason": "Rust ordered equality/assertions retain every original operand and predicate; Java strings use UTF-16 adapters. Casing fixtures run against all five explicit supported Unicode versions, never an inferred JBR default; collection displays are explicit callbacks; tokenization selects both platforms.",
+      "run_blocker": null,
+      "rust_targets": [
+        {
+          "package": "android_tools",
+          "integration_target": "string_helper",
+          "test_name": "string_helper_append_capitalized_var_args",
+          "manifest": {
+            "path": "crates/android_tools/Cargo.toml",
+            "sha256": "c21fa3f61fafabc38772ec37735546a2c01bbfb48fafe689c4c6ac79470d0bf7"
+          },
+          "source": {
+            "path": "crates/android_tools/tests/string_helper.rs",
+            "sha256": "433da8681d17b76fa929f0299e8cfecdc21320c8e200a997d913370d5d9a85b3"
+          },
+          "run": null
+        }
+      ],
+      "fixtures": []
+    },
+    {
+      "reference_id": "base@4a5d2ec9571e2021fc9a4621e24a195f966ee6dd:common/src/test/java/com/android/utils/StringHelperTest.kt#com.android.utils.StringHelperTest.testDecapitalizeEmpty",
+      "port_status": "adapted",
+      "run_status": "not_run",
+      "reason": "Rust ordered equality/assertions retain every original operand and predicate; Java strings use UTF-16 adapters. Casing fixtures run against all five explicit supported Unicode versions, never an inferred JBR default; collection displays are explicit callbacks; tokenization selects both platforms.",
+      "run_blocker": null,
+      "rust_targets": [
+        {
+          "package": "android_tools",
+          "integration_target": "string_helper",
+          "test_name": "string_helper_decapitalize_empty",
+          "manifest": {
+            "path": "crates/android_tools/Cargo.toml",
+            "sha256": "c21fa3f61fafabc38772ec37735546a2c01bbfb48fafe689c4c6ac79470d0bf7"
+          },
+          "source": {
+            "path": "crates/android_tools/tests/string_helper.rs",
+            "sha256": "433da8681d17b76fa929f0299e8cfecdc21320c8e200a997d913370d5d9a85b3"
+          },
+          "run": null
+        }
+      ],
+      "fixtures": []
+    },
+    {
+      "reference_id": "base@4a5d2ec9571e2021fc9a4621e24a195f966ee6dd:common/src/test/java/com/android/utils/StringHelperTest.kt#com.android.utils.StringHelperTest.testDecapitalizeNonLetter",
+      "port_status": "adapted",
+      "run_status": "not_run",
+      "reason": "Rust ordered equality/assertions retain every original operand and predicate; Java strings use UTF-16 adapters. Casing fixtures run against all five explicit supported Unicode versions, never an inferred JBR default; collection displays are explicit callbacks; tokenization selects both platforms.",
+      "run_blocker": null,
+      "rust_targets": [
+        {
+          "package": "android_tools",
+          "integration_target": "string_helper",
+          "test_name": "string_helper_decapitalize_non_letter",
+          "manifest": {
+            "path": "crates/android_tools/Cargo.toml",
+            "sha256": "c21fa3f61fafabc38772ec37735546a2c01bbfb48fafe689c4c6ac79470d0bf7"
+          },
+          "source": {
+            "path": "crates/android_tools/tests/string_helper.rs",
+            "sha256": "433da8681d17b76fa929f0299e8cfecdc21320c8e200a997d913370d5d9a85b3"
+          },
+          "run": null
+        }
+      ],
+      "fixtures": []
+    },
+    {
+      "reference_id": "base@4a5d2ec9571e2021fc9a4621e24a195f966ee6dd:common/src/test/java/com/android/utils/StringHelperTest.kt#com.android.utils.StringHelperTest.testDecapitalizeUnicode",
+      "port_status": "adapted",
+      "run_status": "not_run",
+      "reason": "Rust ordered equality/assertions retain every original operand and predicate; Java strings use UTF-16 adapters. Casing fixtures run against all five explicit supported Unicode versions, never an inferred JBR default; collection displays are explicit callbacks; tokenization selects both platforms.",
+      "run_blocker": null,
+      "rust_targets": [
+        {
+          "package": "android_tools",
+          "integration_target": "string_helper",
+          "test_name": "string_helper_decapitalize_unicode",
+          "manifest": {
+            "path": "crates/android_tools/Cargo.toml",
+            "sha256": "c21fa3f61fafabc38772ec37735546a2c01bbfb48fafe689c4c6ac79470d0bf7"
+          },
+          "source": {
+            "path": "crates/android_tools/tests/string_helper.rs",
+            "sha256": "433da8681d17b76fa929f0299e8cfecdc21320c8e200a997d913370d5d9a85b3"
+          },
+          "run": null
+        }
+      ],
+      "fixtures": []
+    },
+    {
+      "reference_id": "base@4a5d2ec9571e2021fc9a4621e24a195f966ee6dd:common/src/test/java/com/android/utils/StringHelperTest.kt#com.android.utils.StringHelperTest.testSurrogateValuesDecapitalize",
+      "port_status": "adapted",
+      "run_status": "not_run",
+      "reason": "Rust ordered equality/assertions retain every original operand and predicate; Java strings use UTF-16 adapters. Casing fixtures run against all five explicit supported Unicode versions, never an inferred JBR default; collection displays are explicit callbacks; tokenization selects both platforms.",
+      "run_blocker": null,
+      "rust_targets": [
+        {
+          "package": "android_tools",
+          "integration_target": "string_helper",
+          "test_name": "string_helper_surrogate_values_decapitalize",
+          "manifest": {
+            "path": "crates/android_tools/Cargo.toml",
+            "sha256": "c21fa3f61fafabc38772ec37735546a2c01bbfb48fafe689c4c6ac79470d0bf7"
+          },
+          "source": {
+            "path": "crates/android_tools/tests/string_helper.rs",
+            "sha256": "433da8681d17b76fa929f0299e8cfecdc21320c8e200a997d913370d5d9a85b3"
+          },
+          "run": null
+        }
+      ],
+      "fixtures": []
+    },
+    {
+      "reference_id": "base@4a5d2ec9571e2021fc9a4621e24a195f966ee6dd:common/src/test/java/com/android/utils/StringHelperTest.kt#com.android.utils.StringHelperTest.testAsSeparatedListContains",
+      "port_status": "adapted",
+      "run_status": "not_run",
+      "reason": "Rust ordered equality/assertions retain every original operand and predicate; Java strings use UTF-16 adapters. Casing fixtures run against all five explicit supported Unicode versions, never an inferred JBR default; collection displays are explicit callbacks; tokenization selects both platforms.",
+      "run_blocker": null,
+      "rust_targets": [
+        {
+          "package": "android_tools",
+          "integration_target": "string_helper",
+          "test_name": "string_helper_as_separated_list_contains",
+          "manifest": {
+            "path": "crates/android_tools/Cargo.toml",
+            "sha256": "c21fa3f61fafabc38772ec37735546a2c01bbfb48fafe689c4c6ac79470d0bf7"
+          },
+          "source": {
+            "path": "crates/android_tools/tests/string_helper.rs",
+            "sha256": "433da8681d17b76fa929f0299e8cfecdc21320c8e200a997d913370d5d9a85b3"
+          },
+          "run": null
+        }
+      ],
+      "fixtures": []
+    },
+    {
+      "reference_id": "base@4a5d2ec9571e2021fc9a4621e24a195f966ee6dd:common/src/test/java/com/android/utils/StringHelperTest.kt#com.android.utils.StringHelperTest.testStringBuilderAppendCapitalized",
+      "port_status": "adapted",
+      "run_status": "not_run",
+      "reason": "Rust ordered equality/assertions retain every original operand and predicate; Java strings use UTF-16 adapters. Casing fixtures run against all five explicit supported Unicode versions, never an inferred JBR default; collection displays are explicit callbacks; tokenization selects both platforms.",
+      "run_blocker": null,
+      "rust_targets": [
+        {
+          "package": "android_tools",
+          "integration_target": "string_helper",
+          "test_name": "string_helper_string_builder_append_capitalized",
+          "manifest": {
+            "path": "crates/android_tools/Cargo.toml",
+            "sha256": "c21fa3f61fafabc38772ec37735546a2c01bbfb48fafe689c4c6ac79470d0bf7"
+          },
+          "source": {
+            "path": "crates/android_tools/tests/string_helper.rs",
+            "sha256": "433da8681d17b76fa929f0299e8cfecdc21320c8e200a997d913370d5d9a85b3"
+          },
+          "run": null
+        }
+      ],
+      "fixtures": []
+    },
+    {
+      "reference_id": "base@4a5d2ec9571e2021fc9a4621e24a195f966ee6dd:common/src/test/java/com/android/utils/StringHelperTest.kt#com.android.utils.StringHelperTest.testAppendCapitalizedOverloads",
+      "port_status": "adapted",
+      "run_status": "not_run",
+      "reason": "Rust ordered equality/assertions retain every original operand and predicate; Java strings use UTF-16 adapters. Casing fixtures run against all five explicit supported Unicode versions, never an inferred JBR default; collection displays are explicit callbacks; tokenization selects both platforms.",
+      "run_blocker": null,
+      "rust_targets": [
+        {
+          "package": "android_tools",
+          "integration_target": "string_helper",
+          "test_name": "string_helper_append_capitalized_overloads",
+          "manifest": {
+            "path": "crates/android_tools/Cargo.toml",
+            "sha256": "c21fa3f61fafabc38772ec37735546a2c01bbfb48fafe689c4c6ac79470d0bf7"
+          },
+          "source": {
+            "path": "crates/android_tools/tests/string_helper.rs",
+            "sha256": "433da8681d17b76fa929f0299e8cfecdc21320c8e200a997d913370d5d9a85b3"
+          },
+          "run": null
+        }
+      ],
+      "fixtures": []
+    },
+    {
+      "reference_id": "base@4a5d2ec9571e2021fc9a4621e24a195f966ee6dd:common/src/test/java/com/android/utils/StringHelperTest.kt#com.android.utils.StringHelperTest.testCapitalizeAndAppend",
+      "port_status": "adapted",
+      "run_status": "not_run",
+      "reason": "Rust ordered equality/assertions retain every original operand and predicate; Java strings use UTF-16 adapters. Casing fixtures run against all five explicit supported Unicode versions, never an inferred JBR default; collection displays are explicit callbacks; tokenization selects both platforms.",
+      "run_blocker": null,
+      "rust_targets": [
+        {
+          "package": "android_tools",
+          "integration_target": "string_helper",
+          "test_name": "string_helper_capitalize_and_append",
+          "manifest": {
+            "path": "crates/android_tools/Cargo.toml",
+            "sha256": "c21fa3f61fafabc38772ec37735546a2c01bbfb48fafe689c4c6ac79470d0bf7"
+          },
+          "source": {
+            "path": "crates/android_tools/tests/string_helper.rs",
+            "sha256": "433da8681d17b76fa929f0299e8cfecdc21320c8e200a997d913370d5d9a85b3"
+          },
+          "run": null
+        }
+      ],
+      "fixtures": []
+    },
+    {
+      "reference_id": "base@4a5d2ec9571e2021fc9a4621e24a195f966ee6dd:common/src/test/java/com/android/utils/StringHelperTest.kt#com.android.utils.StringHelperTest.testAppendCamelCase",
+      "port_status": "adapted",
+      "run_status": "not_run",
+      "reason": "Rust ordered equality/assertions retain every original operand and predicate; Java strings use UTF-16 adapters. Casing fixtures run against all five explicit supported Unicode versions, never an inferred JBR default; collection displays are explicit callbacks; tokenization selects both platforms.",
+      "run_blocker": null,
+      "rust_targets": [
+        {
+          "package": "android_tools",
+          "integration_target": "string_helper",
+          "test_name": "string_helper_append_camel_case",
+          "manifest": {
+            "path": "crates/android_tools/Cargo.toml",
+            "sha256": "c21fa3f61fafabc38772ec37735546a2c01bbfb48fafe689c4c6ac79470d0bf7"
+          },
+          "source": {
+            "path": "crates/android_tools/tests/string_helper.rs",
+            "sha256": "433da8681d17b76fa929f0299e8cfecdc21320c8e200a997d913370d5d9a85b3"
+          },
+          "run": null
+        }
+      ],
+      "fixtures": []
+    },
+    {
+      "reference_id": "base@4a5d2ec9571e2021fc9a4621e24a195f966ee6dd:common/src/test/java/com/android/utils/StringHelperTest.kt#com.android.utils.StringHelperTest.testCombineAsCamelCase",
+      "port_status": "adapted",
+      "run_status": "not_run",
+      "reason": "Rust ordered equality/assertions retain every original operand and predicate; Java strings use UTF-16 adapters. Casing fixtures run against all five explicit supported Unicode versions, never an inferred JBR default; collection displays are explicit callbacks; tokenization selects both platforms.",
+      "run_blocker": null,
+      "rust_targets": [
+        {
+          "package": "android_tools",
+          "integration_target": "string_helper",
+          "test_name": "string_helper_combine_as_camel_case",
+          "manifest": {
+            "path": "crates/android_tools/Cargo.toml",
+            "sha256": "c21fa3f61fafabc38772ec37735546a2c01bbfb48fafe689c4c6ac79470d0bf7"
+          },
+          "source": {
+            "path": "crates/android_tools/tests/string_helper.rs",
+            "sha256": "433da8681d17b76fa929f0299e8cfecdc21320c8e200a997d913370d5d9a85b3"
+          },
+          "run": null
+        }
+      ],
+      "fixtures": []
+    },
+    {
+      "reference_id": "base@4a5d2ec9571e2021fc9a4621e24a195f966ee6dd:common/src/test/java/com/android/utils/StringHelperTest.kt#com.android.utils.StringHelperTest.testToStrings",
+      "port_status": "adapted",
+      "run_status": "not_run",
+      "reason": "Rust ordered equality/assertions retain every original operand and predicate; Java strings use UTF-16 adapters. Casing fixtures run against all five explicit supported Unicode versions, never an inferred JBR default; collection displays are explicit callbacks; tokenization selects both platforms.",
+      "run_blocker": null,
+      "rust_targets": [
+        {
+          "package": "android_tools",
+          "integration_target": "string_helper",
+          "test_name": "string_helper_to_strings",
+          "manifest": {
+            "path": "crates/android_tools/Cargo.toml",
+            "sha256": "c21fa3f61fafabc38772ec37735546a2c01bbfb48fafe689c4c6ac79470d0bf7"
+          },
+          "source": {
+            "path": "crates/android_tools/tests/string_helper.rs",
+            "sha256": "433da8681d17b76fa929f0299e8cfecdc21320c8e200a997d913370d5d9a85b3"
+          },
+          "run": null
+        }
+      ],
+      "fixtures": []
+    },
+    {
+      "reference_id": "base@4a5d2ec9571e2021fc9a4621e24a195f966ee6dd:common/src/test/java/com/android/utils/StringHelperTest.kt#com.android.utils.StringHelperTest.testTokenizeCommandLine",
+      "port_status": "adapted",
+      "run_status": "not_run",
+      "reason": "Rust ordered equality/assertions retain every original operand and predicate; Java strings use UTF-16 adapters. Casing fixtures run against all five explicit supported Unicode versions, never an inferred JBR default; collection displays are explicit callbacks; tokenization selects both platforms.",
+      "run_blocker": null,
+      "rust_targets": [
+        {
+          "package": "android_tools",
+          "integration_target": "string_helper_tokenize",
+          "test_name": "test_tokenize_command_line",
+          "manifest": {
+            "path": "crates/android_tools/Cargo.toml",
+            "sha256": "c21fa3f61fafabc38772ec37735546a2c01bbfb48fafe689c4c6ac79470d0bf7"
+          },
+          "source": {
+            "path": "crates/android_tools/tests/string_helper_tokenize.rs",
+            "sha256": "41b9bcee3076eb6d7589b7d9fbb6243838cf402a4f86c892ac7dce10c92f25ab"
+          },
+          "run": null
+        }
+      ],
+      "fixtures": []
+    },
+    {
+      "reference_id": "base@4a5d2ec9571e2021fc9a4621e24a195f966ee6dd:common/src/test/java/com/android/utils/StringHelperTest.kt#com.android.utils.StringHelperTest.testToSystemLineSeparator",
+      "port_status": "adapted",
+      "run_status": "not_run",
+      "reason": "Rust ordered equality/assertions retain every original operand and predicate; Java strings use UTF-16 adapters. Casing fixtures run against all five explicit supported Unicode versions, never an inferred JBR default; collection displays are explicit callbacks; tokenization selects both platforms.",
+      "run_blocker": null,
+      "rust_targets": [
+        {
+          "package": "android_tools",
+          "integration_target": "string_helper",
+          "test_name": "string_helper_to_system_line_separator",
+          "manifest": {
+            "path": "crates/android_tools/Cargo.toml",
+            "sha256": "c21fa3f61fafabc38772ec37735546a2c01bbfb48fafe689c4c6ac79470d0bf7"
+          },
+          "source": {
+            "path": "crates/android_tools/tests/string_helper.rs",
+            "sha256": "433da8681d17b76fa929f0299e8cfecdc21320c8e200a997d913370d5d9a85b3"
+          },
+          "run": null
+        }
+      ],
+      "fixtures": []
     }
   ]
 }

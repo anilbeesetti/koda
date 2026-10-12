@@ -30,7 +30,7 @@
         "sha256": "0cbac492c1e2b47273fc9a1e2929caa6460660cf475cbd7773256f443cb30bb4"
       },
       "coverage": "canonical",
-      "coverage_reason": "Pinned canonical AOSP archive retained externally; no per-method test inventory has been reviewed yet.",
+      "coverage_reason": "Pinned canonical AOSP archive retained externally. All19 declared methods in the bounded StringHelperTest suite are individually catalogued with preserved original source. Other suites, inherited/generated runtime instances and global discovery remain incomplete.",
       "coverage_evidence": null,
       "census_complete": false,
       "census_evidence": null
@@ -2732,6 +2732,310 @@
       "copyright": "Copyright (C) 2024 The Android Open Source Project",
       "fixtures": [],
       "fixture_reason": "The original ordinary JUnit4 method constructs model versions and AGP versions in memory; its complete pinned source is retained unchanged under generated_artifacts/ModelVersionsTest.kt."
+    },
+    {
+      "id": "base@4a5d2ec9571e2021fc9a4621e24a195f966ee6dd:common/src/test/java/com/android/utils/StringHelperTest.kt#com.android.utils.StringHelperTest.testBasicCapitalize",
+      "source": "base",
+      "suite": "com.android.utils.StringHelperTest",
+      "method": "testBasicCapitalize",
+      "case": null,
+      "file": {
+        "path": "common/src/test/java/com/android/utils/StringHelperTest.kt",
+        "sha256": "64c78dd2d8717c43b555760b578b9eaa5b5136eac2434d0a3f2a3d6246fa3950"
+      },
+      "line": 25,
+      "declaration": "fun testBasicCapitalize() {",
+      "copyright": "Copyright (C) 2017 The Android Open Source Project",
+      "fixtures": [],
+      "fixture_reason": "Original test constructs strings, lists and custom object displays in memory; complete original source is retained unchanged under test_data/string_helper/reference."
+    },
+    {
+      "id": "base@4a5d2ec9571e2021fc9a4621e24a195f966ee6dd:common/src/test/java/com/android/utils/StringHelperTest.kt#com.android.utils.StringHelperTest.testNonLetterCapitalize",
+      "source": "base",
+      "suite": "com.android.utils.StringHelperTest",
+      "method": "testNonLetterCapitalize",
+      "case": null,
+      "file": {
+        "path": "common/src/test/java/com/android/utils/StringHelperTest.kt",
+        "sha256": "64c78dd2d8717c43b555760b578b9eaa5b5136eac2434d0a3f2a3d6246fa3950"
+      },
+      "line": 30,
+      "declaration": "fun testNonLetterCapitalize() {",
+      "copyright": "Copyright (C) 2017 The Android Open Source Project",
+      "fixtures": [],
+      "fixture_reason": "Original test constructs strings, lists and custom object displays in memory; complete original source is retained unchanged under test_data/string_helper/reference."
+    },
+    {
+      "id": "base@4a5d2ec9571e2021fc9a4621e24a195f966ee6dd:common/src/test/java/com/android/utils/StringHelperTest.kt#com.android.utils.StringHelperTest.testUnicodeCapitalize",
+      "source": "base",
+      "suite": "com.android.utils.StringHelperTest",
+      "method": "testUnicodeCapitalize",
+      "case": null,
+      "file": {
+        "path": "common/src/test/java/com/android/utils/StringHelperTest.kt",
+        "sha256": "64c78dd2d8717c43b555760b578b9eaa5b5136eac2434d0a3f2a3d6246fa3950"
+      },
+      "line": 35,
+      "declaration": "fun testUnicodeCapitalize() {",
+      "copyright": "Copyright (C) 2017 The Android Open Source Project",
+      "fixtures": [],
+      "fixture_reason": "Original test constructs strings, lists and custom object displays in memory; complete original source is retained unchanged under test_data/string_helper/reference."
+    },
+    {
+      "id": "base@4a5d2ec9571e2021fc9a4621e24a195f966ee6dd:common/src/test/java/com/android/utils/StringHelperTest.kt#com.android.utils.StringHelperTest.testSurrogateValuesCapitalize",
+      "source": "base",
+      "suite": "com.android.utils.StringHelperTest",
+      "method": "testSurrogateValuesCapitalize",
+      "case": null,
+      "file": {
+        "path": "common/src/test/java/com/android/utils/StringHelperTest.kt",
+        "sha256": "64c78dd2d8717c43b555760b578b9eaa5b5136eac2434d0a3f2a3d6246fa3950"
+      },
+      "line": 40,
+      "declaration": "fun testSurrogateValuesCapitalize() {",
+      "copyright": "Copyright (C) 2017 The Android Open Source Project",
+      "fixtures": [],
+      "fixture_reason": "Original test constructs strings, lists and custom object displays in memory; complete original source is retained unchanged under test_data/string_helper/reference."
+    },
+    {
+      "id": "base@4a5d2ec9571e2021fc9a4621e24a195f966ee6dd:common/src/test/java/com/android/utils/StringHelperTest.kt#com.android.utils.StringHelperTest.testAppendCapitalized",
+      "source": "base",
+      "suite": "com.android.utils.StringHelperTest",
+      "method": "testAppendCapitalized",
+      "case": null,
+      "file": {
+        "path": "common/src/test/java/com/android/utils/StringHelperTest.kt",
+        "sha256": "64c78dd2d8717c43b555760b578b9eaa5b5136eac2434d0a3f2a3d6246fa3950"
+      },
+      "line": 47,
+      "declaration": "fun testAppendCapitalized() {",
+      "copyright": "Copyright (C) 2017 The Android Open Source Project",
+      "fixtures": [],
+      "fixture_reason": "Original test constructs strings, lists and custom object displays in memory; complete original source is retained unchanged under test_data/string_helper/reference."
+    },
+    {
+      "id": "base@4a5d2ec9571e2021fc9a4621e24a195f966ee6dd:common/src/test/java/com/android/utils/StringHelperTest.kt#com.android.utils.StringHelperTest.testAppendCapitalizedVarArgs",
+      "source": "base",
+      "suite": "com.android.utils.StringHelperTest",
+      "method": "testAppendCapitalizedVarArgs",
+      "case": null,
+      "file": {
+        "path": "common/src/test/java/com/android/utils/StringHelperTest.kt",
+        "sha256": "64c78dd2d8717c43b555760b578b9eaa5b5136eac2434d0a3f2a3d6246fa3950"
+      },
+      "line": 52,
+      "declaration": "fun testAppendCapitalizedVarArgs() {",
+      "copyright": "Copyright (C) 2017 The Android Open Source Project",
+      "fixtures": [],
+      "fixture_reason": "Original test constructs strings, lists and custom object displays in memory; complete original source is retained unchanged under test_data/string_helper/reference."
+    },
+    {
+      "id": "base@4a5d2ec9571e2021fc9a4621e24a195f966ee6dd:common/src/test/java/com/android/utils/StringHelperTest.kt#com.android.utils.StringHelperTest.testDecapitalizeEmpty",
+      "source": "base",
+      "suite": "com.android.utils.StringHelperTest",
+      "method": "testDecapitalizeEmpty",
+      "case": null,
+      "file": {
+        "path": "common/src/test/java/com/android/utils/StringHelperTest.kt",
+        "sha256": "64c78dd2d8717c43b555760b578b9eaa5b5136eac2434d0a3f2a3d6246fa3950"
+      },
+      "line": 57,
+      "declaration": "fun testDecapitalizeEmpty() {",
+      "copyright": "Copyright (C) 2017 The Android Open Source Project",
+      "fixtures": [],
+      "fixture_reason": "Original test constructs strings, lists and custom object displays in memory; complete original source is retained unchanged under test_data/string_helper/reference."
+    },
+    {
+      "id": "base@4a5d2ec9571e2021fc9a4621e24a195f966ee6dd:common/src/test/java/com/android/utils/StringHelperTest.kt#com.android.utils.StringHelperTest.testDecapitalizeNonLetter",
+      "source": "base",
+      "suite": "com.android.utils.StringHelperTest",
+      "method": "testDecapitalizeNonLetter",
+      "case": null,
+      "file": {
+        "path": "common/src/test/java/com/android/utils/StringHelperTest.kt",
+        "sha256": "64c78dd2d8717c43b555760b578b9eaa5b5136eac2434d0a3f2a3d6246fa3950"
+      },
+      "line": 62,
+      "declaration": "fun testDecapitalizeNonLetter() {",
+      "copyright": "Copyright (C) 2017 The Android Open Source Project",
+      "fixtures": [],
+      "fixture_reason": "Original test constructs strings, lists and custom object displays in memory; complete original source is retained unchanged under test_data/string_helper/reference."
+    },
+    {
+      "id": "base@4a5d2ec9571e2021fc9a4621e24a195f966ee6dd:common/src/test/java/com/android/utils/StringHelperTest.kt#com.android.utils.StringHelperTest.testDecapitalizeUnicode",
+      "source": "base",
+      "suite": "com.android.utils.StringHelperTest",
+      "method": "testDecapitalizeUnicode",
+      "case": null,
+      "file": {
+        "path": "common/src/test/java/com/android/utils/StringHelperTest.kt",
+        "sha256": "64c78dd2d8717c43b555760b578b9eaa5b5136eac2434d0a3f2a3d6246fa3950"
+      },
+      "line": 67,
+      "declaration": "fun testDecapitalizeUnicode() {",
+      "copyright": "Copyright (C) 2017 The Android Open Source Project",
+      "fixtures": [],
+      "fixture_reason": "Original test constructs strings, lists and custom object displays in memory; complete original source is retained unchanged under test_data/string_helper/reference."
+    },
+    {
+      "id": "base@4a5d2ec9571e2021fc9a4621e24a195f966ee6dd:common/src/test/java/com/android/utils/StringHelperTest.kt#com.android.utils.StringHelperTest.testSurrogateValuesDecapitalize",
+      "source": "base",
+      "suite": "com.android.utils.StringHelperTest",
+      "method": "testSurrogateValuesDecapitalize",
+      "case": null,
+      "file": {
+        "path": "common/src/test/java/com/android/utils/StringHelperTest.kt",
+        "sha256": "64c78dd2d8717c43b555760b578b9eaa5b5136eac2434d0a3f2a3d6246fa3950"
+      },
+      "line": 72,
+      "declaration": "fun testSurrogateValuesDecapitalize() {",
+      "copyright": "Copyright (C) 2017 The Android Open Source Project",
+      "fixtures": [],
+      "fixture_reason": "Original test constructs strings, lists and custom object displays in memory; complete original source is retained unchanged under test_data/string_helper/reference."
+    },
+    {
+      "id": "base@4a5d2ec9571e2021fc9a4621e24a195f966ee6dd:common/src/test/java/com/android/utils/StringHelperTest.kt#com.android.utils.StringHelperTest.testAsSeparatedListContains",
+      "source": "base",
+      "suite": "com.android.utils.StringHelperTest",
+      "method": "testAsSeparatedListContains",
+      "case": null,
+      "file": {
+        "path": "common/src/test/java/com/android/utils/StringHelperTest.kt",
+        "sha256": "64c78dd2d8717c43b555760b578b9eaa5b5136eac2434d0a3f2a3d6246fa3950"
+      },
+      "line": 77,
+      "declaration": "fun testAsSeparatedListContains() {",
+      "copyright": "Copyright (C) 2017 The Android Open Source Project",
+      "fixtures": [],
+      "fixture_reason": "Original test constructs strings, lists and custom object displays in memory; complete original source is retained unchanged under test_data/string_helper/reference."
+    },
+    {
+      "id": "base@4a5d2ec9571e2021fc9a4621e24a195f966ee6dd:common/src/test/java/com/android/utils/StringHelperTest.kt#com.android.utils.StringHelperTest.testStringBuilderAppendCapitalized",
+      "source": "base",
+      "suite": "com.android.utils.StringHelperTest",
+      "method": "testStringBuilderAppendCapitalized",
+      "case": null,
+      "file": {
+        "path": "common/src/test/java/com/android/utils/StringHelperTest.kt",
+        "sha256": "64c78dd2d8717c43b555760b578b9eaa5b5136eac2434d0a3f2a3d6246fa3950"
+      },
+      "line": 87,
+      "declaration": "fun testStringBuilderAppendCapitalized() {",
+      "copyright": "Copyright (C) 2017 The Android Open Source Project",
+      "fixtures": [],
+      "fixture_reason": "Original test constructs strings, lists and custom object displays in memory; complete original source is retained unchanged under test_data/string_helper/reference."
+    },
+    {
+      "id": "base@4a5d2ec9571e2021fc9a4621e24a195f966ee6dd:common/src/test/java/com/android/utils/StringHelperTest.kt#com.android.utils.StringHelperTest.testAppendCapitalizedOverloads",
+      "source": "base",
+      "suite": "com.android.utils.StringHelperTest",
+      "method": "testAppendCapitalizedOverloads",
+      "case": null,
+      "file": {
+        "path": "common/src/test/java/com/android/utils/StringHelperTest.kt",
+        "sha256": "64c78dd2d8717c43b555760b578b9eaa5b5136eac2434d0a3f2a3d6246fa3950"
+      },
+      "line": 94,
+      "declaration": "fun testAppendCapitalizedOverloads() {",
+      "copyright": "Copyright (C) 2017 The Android Open Source Project",
+      "fixtures": [],
+      "fixture_reason": "Original test constructs strings, lists and custom object displays in memory; complete original source is retained unchanged under test_data/string_helper/reference."
+    },
+    {
+      "id": "base@4a5d2ec9571e2021fc9a4621e24a195f966ee6dd:common/src/test/java/com/android/utils/StringHelperTest.kt#com.android.utils.StringHelperTest.testCapitalizeAndAppend",
+      "source": "base",
+      "suite": "com.android.utils.StringHelperTest",
+      "method": "testCapitalizeAndAppend",
+      "case": null,
+      "file": {
+        "path": "common/src/test/java/com/android/utils/StringHelperTest.kt",
+        "sha256": "64c78dd2d8717c43b555760b578b9eaa5b5136eac2434d0a3f2a3d6246fa3950"
+      },
+      "line": 100,
+      "declaration": "fun testCapitalizeAndAppend() {",
+      "copyright": "Copyright (C) 2017 The Android Open Source Project",
+      "fixtures": [],
+      "fixture_reason": "Original test constructs strings, lists and custom object displays in memory; complete original source is retained unchanged under test_data/string_helper/reference."
+    },
+    {
+      "id": "base@4a5d2ec9571e2021fc9a4621e24a195f966ee6dd:common/src/test/java/com/android/utils/StringHelperTest.kt#com.android.utils.StringHelperTest.testAppendCamelCase",
+      "source": "base",
+      "suite": "com.android.utils.StringHelperTest",
+      "method": "testAppendCamelCase",
+      "case": null,
+      "file": {
+        "path": "common/src/test/java/com/android/utils/StringHelperTest.kt",
+        "sha256": "64c78dd2d8717c43b555760b578b9eaa5b5136eac2434d0a3f2a3d6246fa3950"
+      },
+      "line": 106,
+      "declaration": "fun testAppendCamelCase() {",
+      "copyright": "Copyright (C) 2017 The Android Open Source Project",
+      "fixtures": [],
+      "fixture_reason": "Original test constructs strings, lists and custom object displays in memory; complete original source is retained unchanged under test_data/string_helper/reference."
+    },
+    {
+      "id": "base@4a5d2ec9571e2021fc9a4621e24a195f966ee6dd:common/src/test/java/com/android/utils/StringHelperTest.kt#com.android.utils.StringHelperTest.testCombineAsCamelCase",
+      "source": "base",
+      "suite": "com.android.utils.StringHelperTest",
+      "method": "testCombineAsCamelCase",
+      "case": null,
+      "file": {
+        "path": "common/src/test/java/com/android/utils/StringHelperTest.kt",
+        "sha256": "64c78dd2d8717c43b555760b578b9eaa5b5136eac2434d0a3f2a3d6246fa3950"
+      },
+      "line": 113,
+      "declaration": "fun testCombineAsCamelCase() {",
+      "copyright": "Copyright (C) 2017 The Android Open Source Project",
+      "fixtures": [],
+      "fixture_reason": "Original test constructs strings, lists and custom object displays in memory; complete original source is retained unchanged under test_data/string_helper/reference."
+    },
+    {
+      "id": "base@4a5d2ec9571e2021fc9a4621e24a195f966ee6dd:common/src/test/java/com/android/utils/StringHelperTest.kt#com.android.utils.StringHelperTest.testToStrings",
+      "source": "base",
+      "suite": "com.android.utils.StringHelperTest",
+      "method": "testToStrings",
+      "case": null,
+      "file": {
+        "path": "common/src/test/java/com/android/utils/StringHelperTest.kt",
+        "sha256": "64c78dd2d8717c43b555760b578b9eaa5b5136eac2434d0a3f2a3d6246fa3950"
+      },
+      "line": 123,
+      "declaration": "fun testToStrings() {",
+      "copyright": "Copyright (C) 2017 The Android Open Source Project",
+      "fixtures": [],
+      "fixture_reason": "Original test constructs strings, lists and custom object displays in memory; complete original source is retained unchanged under test_data/string_helper/reference."
+    },
+    {
+      "id": "base@4a5d2ec9571e2021fc9a4621e24a195f966ee6dd:common/src/test/java/com/android/utils/StringHelperTest.kt#com.android.utils.StringHelperTest.testTokenizeCommandLine",
+      "source": "base",
+      "suite": "com.android.utils.StringHelperTest",
+      "method": "testTokenizeCommandLine",
+      "case": null,
+      "file": {
+        "path": "common/src/test/java/com/android/utils/StringHelperTest.kt",
+        "sha256": "64c78dd2d8717c43b555760b578b9eaa5b5136eac2434d0a3f2a3d6246fa3950"
+      },
+      "line": 137,
+      "declaration": "fun testTokenizeCommandLine() {",
+      "copyright": "Copyright (C) 2017 The Android Open Source Project",
+      "fixtures": [],
+      "fixture_reason": "Original test constructs strings, lists and custom object displays in memory; complete original source is retained unchanged under test_data/string_helper/reference."
+    },
+    {
+      "id": "base@4a5d2ec9571e2021fc9a4621e24a195f966ee6dd:common/src/test/java/com/android/utils/StringHelperTest.kt#com.android.utils.StringHelperTest.testToSystemLineSeparator",
+      "source": "base",
+      "suite": "com.android.utils.StringHelperTest",
+      "method": "testToSystemLineSeparator",
+      "case": null,
+      "file": {
+        "path": "common/src/test/java/com/android/utils/StringHelperTest.kt",
+        "sha256": "64c78dd2d8717c43b555760b578b9eaa5b5136eac2434d0a3f2a3d6246fa3950"
+      },
+      "line": 146,
+      "declaration": "fun testToSystemLineSeparator() {",
+      "copyright": "Copyright (C) 2017 The Android Open Source Project",
+      "fixtures": [],
+      "fixture_reason": "Original test constructs strings, lists and custom object displays in memory; complete original source is retained unchanged under test_data/string_helper/reference."
     }
   ]
 }
