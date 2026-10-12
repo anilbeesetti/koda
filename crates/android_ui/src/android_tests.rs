@@ -124,6 +124,16 @@ impl TestPanel {
             message: "Discover tests or run the selected variant's suite.".into(),
         }
     }
+    pub(super) fn for_workspace(
+        workspace: WeakEntity<Workspace>,
+        cx: &mut Context<Self>,
+    ) -> Self {
+        Self {
+            workspace: Some(workspace),
+            ..Self::new(cx)
+        }
+    }
+
     fn eligible(&self, cx: &App) -> bool {
         self.workspace.as_ref().is_some_and(|workspace| {
             workspace
@@ -1045,10 +1055,11 @@ impl AndroidPanel {
                     project
                         .worktree_for_id(file.worktree_id(cx), cx)
                         .is_some_and(|worktree| {
+                            let worktree = worktree.read(cx);
                             dirty_test_source(
                                 root,
-                                worktree.read(cx).abs_path().as_ref(),
-                                &file.abs_path(cx),
+                                worktree.abs_path().as_ref(),
+                                &worktree.absolutize(file.path()),
                                 &sources,
                             )
                         })

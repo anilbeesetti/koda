@@ -382,8 +382,7 @@ impl AndroidPanel {
         cx: &mut Context<Self>,
     ) -> Self {
         let build_panel = cx.new(|cx| BuildPanel::new(workspace.clone(), cx));
-        let test_panel = cx.new(TestPanel::new);
-        test_panel.update(cx, |tests, _| tests.workspace = Some(workspace.clone()));
+        let test_panel = cx.new(|cx| TestPanel::for_workspace(workspace.clone(), cx));
         let build_subscription =
             cx.subscribe(
                 &build_panel,
