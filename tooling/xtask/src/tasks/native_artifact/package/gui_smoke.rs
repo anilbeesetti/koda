@@ -172,42 +172,197 @@ fn require_read_transitions(before: &[RuntimeBinding], after: &[RuntimeBinding])
     Ok(())
 }
 
-fn effective_available_memory() -> Result<u64> {
-    let info = fs::read_to_string("/proc/meminfo")?;
-    let available = info
-        .lines()
-        .find_map(|line| line.strip_prefix("MemAvailable:"))
-        .context("MemAvailable missing")?
-        .split_whitespace()
-        .next()
-        .context("MemAvailable value missing")?
-        .parse::<u64>()?
-        .checked_mul(1024)
-        .context("MemAvailable overflow")?;
-    let groups = fs::read_to_string("/proc/self/cgroup")?;
-    let relative = groups
-        .lines()
-        .find_map(|line| line.strip_prefix("0::"))
-        .context("cgroup v2 identity missing")?;
-    let mut directory = Path::new("/sys/fs/cgroup").join(relative.trim_start_matches('/'));
+const MEMORY_METADATA_BYTES: u64 = MIB;
+const MEMORY_VALUE_BYTES: u64 = 4096;
+const MEMORY_PATH_BYTES: usize = 4096;
+const MEMORY_ANCESTOR_LIMIT: usize = 256;
+const MEMORY_MOUNT_LIMIT: usize = 256;
+
+fn read_memory_input(path: &Path, limit: u64) -> io::Result<String> {
+    use std::io::Read as _;
+    let probe_limit = limit.checked_add(1)
+        .ok_or_else(|| io::Error::new(io::ErrorKind::InvalidInput, "memory input byte budget overflow"))?;
+    let mut bytes = Vec::new();
+    File::open(path)?.take(probe_limit).read_to_end(&mut bytes)?;
+    if bytes.len() as u64 > limit {
+        return Err(io::Error::new(io::ErrorKind::InvalidData,
+            format!("memory preflight input exceeds its {limit}-byte budget")));
+    }
+    String::from_utf8(bytes).map_err(|error| io::Error::new(io::ErrorKind::InvalidData, error))
+}
+
+#[derive(Debug)]
+struct UnifiedMemoryMount {
+    hierarchy_root: PathBuf,
+    mount_point: PathBuf,
+}
+
+fn absolute_cgroup_path(value: &str) -> Result<PathBuf> {
+    use std::path::Component;
+    ensure!(value.len() <= MEMORY_PATH_BYTES, "memory preflight path exceeds its byte budget");
+    let path = PathBuf::from(value);
+    ensure!(path.components().count() <= MEMORY_ANCESTOR_LIMIT, "memory preflight path exceeds its ancestor budget");
+    ensure!(path.is_absolute(), "cgroup path must be absolute: {value}");
+    ensure!(
+        path.components()
+            .all(|component| matches!(component, Component::RootDir | Component::Normal(_))),
+        "cgroup path escapes its visible hierarchy: {value}"
+    );
+    Ok(path)
+}
+
+fn mountinfo_cgroup_path(value: &str) -> Result<PathBuf> {
+    let mut bytes = Vec::with_capacity(value.len());
+    let mut remaining = value.as_bytes();
+    while let Some((&byte, rest)) = remaining.split_first() {
+        if byte == b'\\' {
+            ensure!(rest.len() >= 3, "truncated mountinfo path escape");
+            let escaped = &rest[..3];
+            bytes.push(match escaped {
+                b"040" => b' ',
+                b"011" => b'\t',
+                b"012" => b'\n',
+                b"134" => b'\\',
+                _ => bail!("unsupported mountinfo path escape"),
+            });
+            remaining = &rest[3..];
+        } else {
+            bytes.push(byte);
+            remaining = rest;
+        }
+    }
+    absolute_cgroup_path(&String::from_utf8(bytes).context("non-UTF8 cgroup mount path")?)
+}
+
+fn unified_memory_mount(groups: &str, mounts: &str) -> Result<(UnifiedMemoryMount, PathBuf)> {
+    // A unified hierarchy may coexist with legacy controllers. Never use host
+    // availability as a substitute for a separately enforced v1 memory bound.
+    for line in groups.lines() {
+        let (hierarchy, membership) = line.split_once(':')
+            .with_context(|| format!("parse cgroup membership row {line}"))?;
+        let (controllers, _) = membership.split_once(':')
+            .with_context(|| format!("parse cgroup controller membership row {line}"))?;
+        ensure!(
+            hierarchy == "0" || !controllers.split(',').any(|controller| controller == "memory"),
+            "unsupported cgroup v1 or hybrid memory-controller layout: {line}"
+        );
+    }
+    let mut identities = groups.lines().filter_map(|line| line.strip_prefix("0::"));
+    let identity = absolute_cgroup_path(identities.next().context("usable cgroup v2 identity missing; v1/hybrid memory admission unsupported")?)?;
+    ensure!(identities.next().is_none(), "multiple cgroup v2 identities");
+    let mut selected: Option<UnifiedMemoryMount> = None;
+    let mut matching_mounts = 0usize;
+    for line in mounts.lines() {
+        let (left, right) = line.split_once(" - ").context("malformed mountinfo row")?;
+        if right.split_whitespace().next() != Some("cgroup2") {
+            continue;
+        }
+        let mut fields = left.split_whitespace();
+        let hierarchy_root = mountinfo_cgroup_path(fields.nth(3).context("cgroup mount root missing")?)?;
+        let mount_point = mountinfo_cgroup_path(fields.next().context("cgroup mount point missing")?)?;
+        if identity.starts_with(&hierarchy_root) {
+            matching_mounts += 1;
+            ensure!(matching_mounts <= MEMORY_MOUNT_LIMIT, "memory preflight matching-mount budget exceeded");
+            let candidate = UnifiedMemoryMount { hierarchy_root, mount_point };
+            if selected.as_ref().is_none_or(|current| {
+                candidate.hierarchy_root.components().count()
+                    .cmp(&current.hierarchy_root.components().count())
+                    .then_with(|| candidate.mount_point.cmp(&current.mount_point))
+                    .is_lt()
+            }) {
+                selected = Some(candidate);
+            }
+        }
+    }
+    // Prefer the widest visible hierarchy so a more specific bind mount cannot
+    // hide a tighter accessible ancestor limit. Namespace roots with controller
+    // files keep their real bounds; they are not treated as unlimited roots.
+    // Retain one minimum covering mount rather than allocating and sorting every candidate.
+    let mount = selected.context("no visible unified cgroup mount covers this process")?;
+    let directory = mount.mount_point.join(identity.strip_prefix(&mount.hierarchy_root)?);
+    Ok((mount, directory))
+}
+
+fn available_memory_from(
+    info: &str,
+    groups: &str,
+    mounts: &str,
+    read: impl Fn(&Path) -> io::Result<String>,
+) -> Result<u64> {
+    ensure!(info.len() as u64 <= MEMORY_METADATA_BYTES, "memory preflight /proc/meminfo byte budget exceeded");
+    ensure!(groups.len() as u64 <= MEMORY_METADATA_BYTES, "memory preflight /proc/self/cgroup byte budget exceeded");
+    ensure!(mounts.len() as u64 <= MEMORY_METADATA_BYTES, "memory preflight /proc/self/mountinfo byte budget exceeded");
+    let mut values = info.lines().filter_map(|line| line.strip_prefix("MemAvailable:"));
+    let mut fields = values.next().context("MemAvailable missing")?.split_whitespace();
+    let available = fields.next().context("MemAvailable value missing")?
+        .parse::<u64>()?.checked_mul(1024).context("MemAvailable overflow")?;
+    ensure!(fields.next() == Some("kB") && fields.next().is_none(), "invalid MemAvailable unit");
+    ensure!(values.next().is_none(), "multiple MemAvailable values");
+    let (mount, mut directory) = unified_memory_mount(groups, mounts)?;
     let mut result = available;
     loop {
-        let maximum = fs::read_to_string(directory.join("memory.max"))?;
-        let current: u64 = fs::read_to_string(directory.join("memory.current"))?
-            .trim()
-            .parse()?;
-        if maximum.trim() != "max" {
-            result = result.min(maximum.trim().parse::<u64>()?.saturating_sub(current));
+        let maximum_path = directory.join("memory.max");
+        let current_path = directory.join("memory.current");
+        let maximum = read(&maximum_path);
+        let current = read(&current_path);
+        match (maximum, current) {
+            (Ok(maximum), Ok(current)) => {
+                ensure!(maximum.len() as u64 <= MEMORY_VALUE_BYTES, "memory preflight value byte budget exceeded: {}", maximum_path.display());
+                ensure!(current.len() as u64 <= MEMORY_VALUE_BYTES, "memory preflight value byte budget exceeded: {}", current_path.display());
+                let current = current.trim().parse::<u64>()
+                    .with_context(|| format!("parse cgroup usage {}", current_path.display()))?;
+                if maximum.trim() != "max" {
+                    let maximum = maximum.trim().parse::<u64>()
+                        .with_context(|| format!("parse cgroup limit {}", maximum_path.display()))?;
+                    result = result.min(maximum.saturating_sub(current));
+                }
+            }
+            (Err(maximum), Err(current))
+                if maximum.kind() == io::ErrorKind::NotFound
+                    && current.kind() == io::ErrorKind::NotFound
+                    && directory == mount.mount_point
+                    && mount.hierarchy_root == Path::new("/") =>
+            {
+                // Linux documents both interfaces as non-root-only. Requiring
+                // an available memory controller distinguishes that genuine
+                // root case from disabled/missing child or delegated controls.
+                // Reference: Linux v6.12 Documentation/admin-guide/cgroup-v2.rst.
+                let controllers_path = directory.join("cgroup.controllers");
+                let controllers = read(&controllers_path)
+                    .with_context(|| format!("read root controllers {}", controllers_path.display()))?;
+                ensure!(controllers.len() as u64 <= MEMORY_VALUE_BYTES, "memory preflight controller byte budget exceeded: {}", controllers_path.display());
+                ensure!(
+                    controllers.split_whitespace().any(|controller| controller == "memory"),
+                    "root memory interfaces absent without an available memory controller: {}",
+                    directory.display()
+                );
+            }
+            (Err(error), _) => {
+                return Err(error).with_context(|| format!("read cgroup memory limit {}", maximum_path.display()));
+            }
+            (_, Err(error)) => {
+                return Err(error).with_context(|| format!("read cgroup memory usage {}", current_path.display()));
+            }
         }
-        if directory == Path::new("/sys/fs/cgroup") {
+        if directory == mount.mount_point {
             break;
         }
         ensure!(
-            directory.pop() && directory.starts_with("/sys/fs/cgroup"),
-            "cgroup parent escaped mount"
+            directory.pop() && directory.starts_with(&mount.mount_point),
+            "cgroup parent escaped its resolved mount"
         );
     }
     Ok(result)
+}
+
+/// Bound admission by host availability and every visible cgroup ancestor.
+/// Shared with owned-source acquisition through the package parent.
+pub(super) fn effective_available_memory() -> Result<u64> {
+    let info = read_memory_input(Path::new("/proc/meminfo"), MEMORY_METADATA_BYTES).context("read GUI host memory availability /proc/meminfo")?;
+    let groups = read_memory_input(Path::new("/proc/self/cgroup"), MEMORY_METADATA_BYTES).context("read GUI cgroup membership /proc/self/cgroup")?;
+    let mounts = read_memory_input(Path::new("/proc/self/mountinfo"), MEMORY_METADATA_BYTES).context("read GUI cgroup mounts /proc/self/mountinfo")?;
+    available_memory_from(&info, &groups, &mounts, |path| read_memory_input(path, MEMORY_VALUE_BYTES))
+        .context("inspect GUI host and cgroup ancestor memory before admission")
 }
 
 #[cfg(target_os = "linux")]
@@ -1611,6 +1766,174 @@ mod tests {
         File::create(&file)?.set_len(OUTPUT_LIMIT + 1)?;
         assert!(require_output_budget(directory.path()).is_err());
         assert_eq!(MAX_SCREENSHOTS, 8);
+        Ok(())
+    }
+}
+
+#[cfg(test)]
+mod memory_preflight_regression {
+    use super::*;
+
+    fn mount_row(root: &str, point: &Path) -> String {
+        let point = point.to_string_lossy().replace('\\', "\\134").replace(' ', "\\040");
+        format!("1 0 0:1 {root} {point} rw - cgroup2 cgroup rw\n")
+    }
+
+    fn fixture() -> Result<tempfile::TempDir> {
+        let directory = tempfile::tempdir()?;
+        fs::write(directory.path().join("cgroup.controllers"), "cpu memory pids\n")?;
+        Ok(directory)
+    }
+
+    fn limits(directory: &Path, maximum: &str, current: &str) -> Result<()> {
+        fs::create_dir_all(directory)?;
+        fs::write(directory.join("memory.max"), maximum)?;
+        fs::write(directory.join("memory.current"), current)?;
+        Ok(())
+    }
+
+    fn available(directory: &Path, groups: &str, root: &str) -> Result<u64> {
+        available_memory_from("MemAvailable: 65536 kB\n", groups, &mount_row(root, directory), |path| fs::read_to_string(path))
+    }
+
+    #[test]
+    fn true_root_without_non_root_interfaces_retains_host_memory_bound() -> Result<()> {
+        let directory = fixture()?;
+        assert_eq!(available(directory.path(), "0::/\n", "/")?, 64 * MIB);
+        Ok(())
+    }
+
+    #[test]
+    fn every_visible_child_and_ancestor_limit_survives_legal_root_absence() -> Result<()> {
+        let directory = fixture()?;
+        limits(&directory.path().join("parent"), &(16 * MIB).to_string(), &(8 * MIB).to_string())?;
+        limits(&directory.path().join("parent/child"), "max", &(2 * MIB).to_string())?;
+        assert_eq!(available(directory.path(), "0::/parent/child\n", "/")?, 8 * MIB);
+        Ok(())
+    }
+
+    #[test]
+    fn namespace_root_with_real_interfaces_preserves_its_limit_and_host_bound() -> Result<()> {
+        let directory = fixture()?;
+        limits(directory.path(), &(24 * MIB).to_string(), &(9 * MIB).to_string())?;
+        assert_eq!(available(directory.path(), "0::/\n", "/")?, 15 * MIB);
+        let result = available_memory_from("MemAvailable: 4096 kB\n", "0::/\n", &mount_row("/", directory.path()), |path| fs::read_to_string(path))?;
+        assert_eq!(result, 4 * MIB);
+        Ok(())
+    }
+
+    #[test]
+    fn bind_mount_roots_and_escaped_mountpoints_resolve_to_actual_files() -> Result<()> {
+        let temporary = tempfile::tempdir()?;
+        let point = temporary.path().join("cgroup mount");
+        limits(&point, &(20 * MIB).to_string(), &(15 * MIB).to_string())?;
+        limits(&point.join("child"), "max", "0")?;
+        assert_eq!(available(&point, "0::/delegated/child\n", "/delegated")?, 5 * MIB);
+        Ok(())
+    }
+
+    #[test]
+    fn narrower_bind_mount_cannot_hide_a_tighter_visible_ancestor() -> Result<()> {
+        let full = fixture()?;
+        let narrow = fixture()?;
+        limits(&full.path().join("parent"), &(12 * MIB).to_string(), &(9 * MIB).to_string())?;
+        limits(&full.path().join("parent/child"), "max", "0")?;
+        limits(narrow.path(), "max", "0")?;
+        let mounts = format!("{}{}", mount_row("/parent/child", narrow.path()), mount_row("/", full.path()));
+        assert_eq!(available_memory_from("MemAvailable: 65536 kB\n", "0::/parent/child\n", &mounts, |path| fs::read_to_string(path))?, 3 * MIB);
+        Ok(())
+    }
+
+    #[test]
+    fn child_and_partial_root_missing_interfaces_are_fatal() -> Result<()> {
+        let directory = fixture()?;
+        fs::create_dir(directory.path().join("child"))?;
+        assert!(available(directory.path(), "0::/child\n", "/").is_err());
+        fs::write(directory.path().join("memory.max"), "max")?;
+        let error = available(directory.path(), "0::/\n", "/").expect_err("partial root pair must fail");
+        assert!(format!("{error:#}").contains("memory.current"));
+        assert_eq!(error.downcast_ref::<io::Error>().map(io::Error::kind), Some(io::ErrorKind::NotFound));
+        Ok(())
+    }
+
+    #[test]
+    fn disabled_controller_and_delegated_missing_root_never_fall_back_to_host() -> Result<()> {
+        let directory = fixture()?;
+        fs::write(directory.path().join("cgroup.controllers"), "cpu pids")?;
+        assert!(available(directory.path(), "0::/\n", "/").is_err());
+        fs::write(directory.path().join("cgroup.controllers"), "memory")?;
+        assert!(available(directory.path(), "0::/delegated\n", "/delegated").is_err());
+        Ok(())
+    }
+
+    #[test]
+    fn permission_malformed_usage_and_overlimit_errors_preserve_strict_admission() -> Result<()> {
+        let directory = fixture()?;
+        limits(directory.path(), &(2 * MIB).to_string(), &(3 * MIB).to_string())?;
+        assert_eq!(available(directory.path(), "0::/\n", "/")?, 0);
+        let denied = available_memory_from("MemAvailable: 65536 kB\n", "0::/\n", &mount_row("/", directory.path()), |path| {
+            if path.file_name() == Some(std::ffi::OsStr::new("memory.max")) {
+                Err(io::Error::from(io::ErrorKind::PermissionDenied))
+            } else {
+                fs::read_to_string(path)
+            }
+        }).expect_err("permission failure must remain fatal");
+        assert_eq!(denied.downcast_ref::<io::Error>().map(io::Error::kind), Some(io::ErrorKind::PermissionDenied));
+        fs::write(directory.path().join("memory.current"), "not-a-number")?;
+        assert!(available(directory.path(), "0::/\n", "/").is_err());
+        assert!(available(directory.path(), "0::/../../outside\n", "/").is_err());
+        Ok(())
+    }
+
+    #[test]
+    fn legacy_memory_controller_layouts_fail_before_unified_limits_can_be_used() -> Result<()> {
+        let directory = fixture()?;
+        limits(directory.path(), &(16 * MIB).to_string(), &(8 * MIB).to_string())?;
+        for groups in [
+            "5:memory:/legacy\n",
+            "5:memory:/legacy\n0::/\n",
+            "5:cpu,memory:/legacy\n0::/\n",
+        ] {
+            let error = available(directory.path(), groups, "/")
+                .expect_err("legacy memory limits must never become host-only admission");
+            assert!(format!("{error:#}").contains("unsupported cgroup v1 or hybrid memory"));
+        }
+        assert_eq!(available(directory.path(), "5:cpu:/legacy\n0::/\n", "/")?, 8 * MIB);
+        Ok(())
+    }
+
+    #[test]
+    fn metadata_reads_and_mount_bursts_fail_closed_at_their_explicit_budgets() -> Result<()> {
+        let directory = fixture()?;
+        limits(directory.path(), &(16 * MIB).to_string(), &(8 * MIB).to_string())?;
+        let row = mount_row("/", directory.path());
+        let mounts = row.repeat(MEMORY_MOUNT_LIMIT);
+        assert_eq!(available_memory_from("MemAvailable: 65536 kB\n", "0::/\n", &mounts, |path| fs::read_to_string(path))?, 8 * MIB);
+        let overflow = format!("{mounts}{row}");
+        assert!(format!("{:#}", available_memory_from("MemAvailable: 65536 kB\n", "0::/\n", &overflow, |path| fs::read_to_string(path)).expect_err("mount burst must be bounded")).contains("matching-mount budget"));
+        let file = directory.path().join("metadata-overflow");
+        File::create(&file)?.set_len(MEMORY_METADATA_BYTES + 1)?;
+        assert_eq!(read_memory_input(&file, MEMORY_METADATA_BYTES).expect_err("bounded read must reject overflow").kind(), io::ErrorKind::InvalidData);
+        let oversized = "x".repeat(MEMORY_METADATA_BYTES as usize + 1);
+        assert!(format!("{:#}", available_memory_from("MemAvailable: 65536 kB\n", "0::/\n", &oversized, |path| fs::read_to_string(path)).expect_err("injected mountinfo must have the same cap")).contains("mountinfo byte budget"));
+        Ok(())
+    }
+
+    #[test]
+    fn path_depth_and_controller_values_cannot_bypass_preflight_budgets() -> Result<()> {
+        assert!(absolute_cgroup_path(&format!("/{}", "x".repeat(MEMORY_PATH_BYTES))).is_err());
+        assert!(absolute_cgroup_path(&"/child".repeat(MEMORY_ANCESTOR_LIMIT)).is_err());
+        let directory = fixture()?;
+        limits(directory.path(), "max", "0")?;
+        let error = available_memory_from("MemAvailable: 65536 kB\n", "0::/\n", &mount_row("/", directory.path()), |path| {
+            if path.file_name() == Some(std::ffi::OsStr::new("memory.max")) {
+                Ok("9".repeat(MEMORY_VALUE_BYTES as usize + 1))
+            } else {
+                fs::read_to_string(path)
+            }
+        }).expect_err("injected values must obey the production read budget");
+        assert!(format!("{error:#}").contains("value byte budget"));
+        assert!(format!("{error:#}").contains("memory.max"));
         Ok(())
     }
 }
