@@ -23996,6 +23996,10 @@ async fn test_android_resource_completion_gates_generic_and_unowned_sources_befo
         "/android-resources/unowned/UnownedParserCounter.kt",
     ] {
         filesystem
+            .create_dir(std::path::Path::new(path).parent().expect("Source parent"))
+            .await
+            .expect("Create the generic or unowned source directory");
+        filesystem
             .insert_file(std::path::Path::new(path), text.as_bytes().to_vec())
             .await;
         let source = project
@@ -24567,6 +24571,14 @@ async fn test_android_resource_legacy_navigation_parses_only_gradle_sources_in_b
     );
     let nongradle = path!("/android-resources/unowned/src/main/code/NonGradleLegacyWorker.kt");
     filesystem
+        .create_dir(
+            Path::new(nongradle)
+                .parent()
+                .expect("Non-Gradle source parent"),
+        )
+        .await
+        .expect("Create the non-Gradle source directory");
+    filesystem
         .insert_file(nongradle, b"val value = R.string.legacy".to_vec())
         .await;
     let nongradle_source = project
@@ -24912,4 +24924,42 @@ async fn test_android_resource_legacy_navigation_rejects_an_earlier_input_change
         "<resources></resources>"
     );
     drop(subscription);
+}
+
+#[gpui::test]
+async fn test_android_resource_unavailable_routing_drop_cancels_before_cursor_parsing(
+    cx: &mut TestAppContext,
+) {
+    let (project, filesystem, _) = android_resource_semantics_fixture(cx).await;
+    let path = path!("/android-resources/app/code/DroppedUnavailableRoutingWorker.kt");
+    let text = format!("/*{}*/\nval value = R.string.title", "x".repeat(1_000_000));
+    filesystem.insert_file(path, text.as_bytes().to_vec()).await;
+    let source = project
+        .update(cx, |project, cx| project.open_local_buffer(path, cx))
+        .await
+        .expect("Unavailable-model cancellation source");
+    project.update(cx, |project, cx| {
+        project.invalidate_android_model(Some(PathBuf::from(path!("/android-resources"))), cx);
+    });
+    assert!(project.read_with(cx, |project, _| project.android_model().selected.is_none()));
+    let request = project.update(cx, |project, cx| {
+        project.completions(
+            &source,
+            source.read(cx).len() - 2,
+            lsp::CompletionContext {
+                trigger_kind: lsp::CompletionTriggerKind::INVOKED,
+                trigger_character: None,
+            },
+            cx,
+        )
+    });
+    drop(request);
+    cx.executor().run_until_parked();
+    assert_eq!(
+        project.read_with(cx, |project, _| project
+            .android_resource_context_parse_count_for_test(path)),
+        0,
+        "Dropped unavailable-model request must own its queued cursor work"
+    );
+    assert_eq!(source.read_with(cx, |buffer, _| buffer.text()), text);
 }

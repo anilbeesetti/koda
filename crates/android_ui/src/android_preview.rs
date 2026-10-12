@@ -5351,10 +5351,12 @@ mod tests {
                 )
             }))
         })?;
-        // Keep the source hidden; this exercises refresh/save without launching a renderer.
-        pane.update_in(visual, |pane, window, cx| {
+        // Keep the source hidden while preparing fixtures and saving resources.
+        // Manual Refresh later needs the actual source editor to own the action.
+        let hidden = pane.update_in(visual, |pane, window, cx| {
             let item = cx.new(TestItem::new);
-            pane.add_item(Box::new(item), true, false, None, window, cx);
+            pane.add_item(Box::new(item.clone()), true, false, None, window, cx);
+            item
         });
         let mut excluded = Vec::new();
         for path in [
@@ -5396,6 +5398,19 @@ mod tests {
         resource.update(visual, |buffer, cx| {
             buffer.edit([(0..0, "<!-- resource rename -->\n")], None, cx)
         });
+        pane.update_in(visual, |pane, window, cx| {
+            pane.activate_item(
+                pane.index_for_item(&editor).expect("Source editor tab"),
+                true,
+                true,
+                window,
+                cx,
+            );
+        });
+        visual.run_until_parked();
+        assert!(panel.read_with(visual, |panel, cx| {
+            panel.operation_owner(AndroidOperation::Preview, cx).is_ok()
+        }));
         view.update_in(visual, |view, window, cx| {
             let selected = view
                 .project
@@ -5421,6 +5436,23 @@ mod tests {
             );
         });
         assert!(resource.read_with(visual, |buffer, _| buffer.is_dirty()));
+        // Hide the source again before saving, so pending invalidation cannot
+        // launch a renderer in this save-state fixture. Ownership gates stay enabled.
+        pane.update_in(visual, |pane, window, cx| {
+            pane.activate_item(
+                pane.index_for_item(&hidden).expect("Hidden-source tab"),
+                true,
+                true,
+                window,
+                cx,
+            );
+        });
+        visual.run_until_parked();
+        assert!(panel.read_with(visual, |panel, cx| {
+            panel
+                .operation_owner(AndroidOperation::Preview, cx)
+                .is_err()
+        }));
         let revision = view.read_with(visual, |view, _| view.revision);
         project
             .update(visual, |project, cx| {

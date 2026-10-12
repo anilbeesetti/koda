@@ -10,13 +10,19 @@ use std::{ops::Range, sync::LazyLock};
 static NAMESPACE: LazyLock<Result<Regex, regex::Error>> =
     LazyLock::new(|| Regex::new(r#"\bnamespace\s*(?:=\s*|\(\s*)?["']([^"']+)["']"#));
 
+#[cfg(any(test, feature = "test-support"))]
+fn resource_trace_text(bytes: &[u8]) -> std::borrow::Cow<'_, str> {
+    // Bound diagnostic input before formatting, including malformed UTF-8 paths.
+    String::from_utf8_lossy(&bytes[..bytes.len().min(256)])
+}
+
 impl Project {
     pub(crate) fn android_resource_model_unavailable(
         &self,
         buffer: &Entity<Buffer>,
         position: PointUtf16,
         cx: &mut Context<Self>,
-    ) -> Option<Task<Result<bool>>> {
+    ) -> Option<futures::future::LocalBoxFuture<'static, Result<bool>>> {
         let root = self.android_model.root()?;
         if self.android_model.selected.is_some()
             || !self.is_local()
@@ -44,7 +50,12 @@ impl Project {
         let offset = position.to_offset(&snapshot);
         let token = self.android_model.token();
         let buffer = buffer.clone();
-        Some(cx.spawn(async move |project, cx| {
+        // The returned request owns this future before any cursor work is queued.
+        // Dropping an unpolled outer request cannot start an independent parser task.
+        let project = cx.weak_entity();
+        let mut cx = cx.to_async();
+        Some(Box::pin(async move {
+            let cx = &mut cx;
             if !source_request_current(&project, &token, &buffer, &snapshot, &path, cx).await? {
                 return Ok(true);
             }
@@ -179,6 +190,13 @@ impl Project {
         };
         let worktree_id = file.worktree_id(cx);
         let worktree = self.worktree_for_id(worktree_id, cx)?.read(cx).snapshot();
+        #[cfg(any(test, feature = "test-support"))]
+        log::info!(
+            "Legacy Android lookup eligibility: source={}, relative={}, module={}",
+            resource_trace_text(source_path.as_os_str().as_encoded_bytes()),
+            resource_trace_text(relative_path.as_bytes()),
+            resource_trace_text(module.as_bytes())
+        );
         let build = ["build.gradle.kts", "build.gradle"]
             .into_iter()
             .find_map(|name| {
@@ -187,7 +205,13 @@ impl Project {
                 worktree
                     .entry_for_path(path)
                     .map(|entry| entry.path.clone())
-            })?;
+            });
+        #[cfg(any(test, feature = "test-support"))]
+        log::info!(
+            "Legacy Android lookup Gradle metadata: build_present={}",
+            build.is_some()
+        );
+        let build = build?;
         let offset = position.to_offset(&snapshot);
         let token = self.android_model.token();
         let source_buffer = buffer.clone();
@@ -210,7 +234,7 @@ impl Project {
                 input_invalidated.clone(),
                 cx,
                 move |control| {
-                    let Some((reference, _, _)) = parse_seed_source(
+                    let parsed = parse_seed_source(
                         &worker_snapshot,
                         &worker_path,
                         offset,
@@ -218,8 +242,10 @@ impl Project {
                         "",
                         false,
                         control,
-                    )?
-                    else {
+                    )?;
+                    #[cfg(any(test, feature = "test-support"))]
+                    log::info!("Legacy Android cursor parse: offset={offset}, bytes={}, matched={}", worker_snapshot.len(), parsed.is_some());
+                    let Some((reference, _, _)) = parsed else {
                         return Ok(None);
                     };
                     if reference.namespace.as_deref() == Some("android") {
@@ -267,9 +293,15 @@ impl Project {
                 },
             )
             .await?;
+            #[cfg(any(test, feature = "test-support"))]
+            let stale_lookup = lookup.is_none();
             let Some(Some((reference, paths))) = lookup else {
+                #[cfg(any(test, feature = "test-support"))]
+                log::info!("Legacy Android lookup ended before target enumeration: source={}, stale={stale_lookup}", resource_trace_text(source_path.as_os_str().as_encoded_bytes()));
                 return Ok(Vec::new());
             };
+            #[cfg(any(test, feature = "test-support"))]
+            log::info!("Legacy Android lookup cursor resolved: source={}, kind={}, name={}, namespace={}, targets={}", resource_trace_text(source_path.as_os_str().as_encoded_bytes()), resource_trace_text(reference.kind.as_bytes()), resource_trace_text(reference.name.as_bytes()), resource_trace_text(reference.namespace.as_deref().unwrap_or_default().as_bytes()), paths.len());
             let origin = Location {
                 buffer: source_buffer.clone(),
                 range: snapshot.anchor_before(reference.range.start)
@@ -431,6 +463,8 @@ impl Project {
                 }
                 targets.push((buffer, target_snapshot, path));
             }
+            #[cfg(any(test, feature = "test-support"))]
+            log::info!("Legacy Android lookup validation: targets={}, locations={}", targets.len(), locations.len());
             for batch in targets.chunks(128) {
                 resource_foreground_yield().await;
                 if !legacy_cursor_inputs_current(
@@ -1333,9 +1367,14 @@ impl Project {
         buffer: &Entity<Buffer>,
         position: PointUtf16,
         cx: &mut Context<Self>,
-    ) -> Option<Task<Result<CompletionResponse>>> {
+    ) -> Option<futures::future::LocalBoxFuture<'static, Result<CompletionResponse>>> {
         let seed = self.android_query_seed(buffer, position, cx)?;
-        Some(cx.spawn(async move |project, cx| {
+        // The returned request owns this future before any cursor work is queued.
+        // Dropping an unpolled outer request cannot start an independent parser task.
+        let project = cx.weak_entity();
+        let mut cx = cx.to_async();
+        Some(Box::pin(async move {
+            let cx = &mut cx;
             let ResourceCursorResult::Resource(query) =
                 parse_query_seed(&project, seed, true, cx).await?
             else {
@@ -2092,7 +2131,7 @@ async fn legacy_cursor_inputs_current(
     invalidated: &std::sync::atomic::AtomicBool,
     cx: &mut AsyncApp,
 ) -> Result<bool> {
-    if !source_request_current(
+    let source_current = source_request_current(
         project,
         token,
         &source.buffer,
@@ -2100,8 +2139,24 @@ async fn legacy_cursor_inputs_current(
         &source.path,
         cx,
     )
-    .await?
-    {
+    .await?;
+    if !source_current {
+        #[cfg(any(test, feature = "test-support"))]
+        project.read_with(cx, |project, cx| {
+            let buffer = source.buffer.read(cx);
+            let file = buffer.file();
+            log::info!(
+                "Legacy Android source guard rejected: model_current={}, local={}, restricted={}, version_current={}, file_present={}, deleted={}, worktree_present={}, path_current={}",
+                project.android_model.is_current(token),
+                project.is_local(),
+                crate::trusted_worktrees::TrustedWorktrees::has_restricted_worktrees(&project.worktree_store(), cx),
+                buffer.version() == *source.snapshot.version(),
+                file.is_some(),
+                file.is_some_and(|file| file.disk_state().is_deleted()),
+                file.is_some_and(|file| project.worktree_for_id(file.worktree_id(cx), cx).is_some()),
+                file.is_some_and(|file| project.android_file_path(file.as_ref(), cx) == source.path),
+            );
+        })?;
         return Ok(false);
     }
     if let Some(namespace) = namespace {

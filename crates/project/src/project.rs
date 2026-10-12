@@ -4812,6 +4812,9 @@ impl Project {
             lsp_store.completions(buffer, position, context, cx)
         });
         cx.spawn(async move |project, cx| {
+            // Queue the resource provider only after this request is polled;
+            // the existing LSP task runs concurrently.
+            let resources = resources.map(|future| cx.foreground_executor().spawn(future));
             let mut responses = lsp.await?;
             if let Some(resources) = resources {
                 responses.push(resources.await?);
