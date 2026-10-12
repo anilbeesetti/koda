@@ -124,10 +124,7 @@ impl TestPanel {
             message: "Discover tests or run the selected variant's suite.".into(),
         }
     }
-    pub(super) fn for_workspace(
-        workspace: WeakEntity<Workspace>,
-        cx: &mut Context<Self>,
-    ) -> Self {
+    pub(super) fn for_workspace(workspace: WeakEntity<Workspace>, cx: &mut Context<Self>) -> Self {
         Self {
             workspace: Some(workspace),
             ..Self::new(cx)
