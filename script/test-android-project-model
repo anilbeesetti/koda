@@ -253,6 +253,13 @@ kotlin { androidLibrary { namespace = 'dev.koda.util'; compileSdk = 35; minSdk =
     assert {"kind": "project", "module": ":sharedUtil", "variant": "androidMain"} in components["main"]["dependencies"], components
     assert any(source["kind"] == "resources" and Path(source["path"]) == root / "sharedLogic/src/androidMain/res" for source in components["main"]["sources"]), components
     assert any(source["generated"] and Path(source["path"]) == root / "sharedLogic/generated/kotlin" for source in components["main"]["sources"]), components
+    resource_models = model["resourceModels"]
+    assert all(f":sharedLogic/{component['name']}" in resource_models for component in components.values()), resource_models
+    resource_model = resource_models[f":sharedLogic/{components['main']['name']}"]
+    assert str(root / "sharedLogic/src/androidMain/res") in [path for layer in resource_model["layers"] for path in layer], resource_model
+    assert Path(resource_model["framework"]) == Path(sdk).resolve() / "platforms/android-35/data/res", resource_model
+    assert resource_model["mergedManifest"] is None, resource_model
+    assert any("merged-manifest resource navigation is unavailable for KMP" in diagnostic for diagnostic in model["diagnostics"]), model["diagnostics"]
     assert (root / "sharedLogic/generated/kotlin/Generated.kt").is_file()
     assert not any("kotlin-test" in dependency.get("coordinate", "") for dependency in components["main"]["dependencies"]), components
     for selected in ["debug", "release"]:

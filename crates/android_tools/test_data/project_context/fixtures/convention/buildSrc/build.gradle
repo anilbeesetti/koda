@@ -1,0 +1,7 @@
+plugins { id 'java-gradle-plugin' }
+layout.buildDirectory = layout.projectDirectory.dir('convention-output')
+gradlePlugin {
+    plugins {
+        contextConvention { id = 'dev.koda.context.convention'; implementationClass = 'ContextConvention' }
+    }
+}

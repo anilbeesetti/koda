@@ -357,3 +357,146 @@ pub fn app_menus(cx: &mut App) -> Vec<Menu> {
         },
     ]
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use android_tools::project_context::{ActiveContext, PluginId, decode_context_record};
+    use gpui::{OwnedMenuItem, TestAppContext};
+    use project::{
+        Project,
+        trusted_worktrees::{self, PathTrust, TrustedWorktrees},
+    };
+    use serde_json::json;
+    use std::path::{Path, PathBuf};
+    use workspace::{AppState, Workspace};
+
+    fn android_run_items(workspace: &gpui::WeakEntity<Workspace>, cx: &App) -> Vec<OwnedMenuItem> {
+        android_ui::application_menus(Some(workspace), cx)
+            .into_iter()
+            .find(|menu| menu.name.as_ref() == "Run")
+            .map(|menu| {
+                menu.items
+                    .into_iter()
+                    .filter(|item| {
+                        let OwnedMenuItem::Action { action, .. } = item else {
+                            return false;
+                        };
+                        let action = action.as_any();
+                        action.is::<android_ui::Run>()
+                            || action.is::<android_ui::Debug>()
+                            || action.is::<android_ui::ComposePreview>()
+                            || action.is::<android_ui::Build>()
+                            || action.is::<android_ui::Test>()
+                            || action.is::<android_ui::Lint>()
+                            || action.is::<android_ui::SyncProject>()
+                            || action.is::<android_ui::ToggleFocus>()
+                            || action.is::<android_ui::ConfigureKotlin>()
+                            || action.is::<android_ui::RefreshDevices>()
+                            || action.is::<android_ui::StopEmulator>()
+                            || action.is::<android_ui::ToggleBuild>()
+                            || action.is::<android_ui::Logcat>()
+                    })
+                    .collect()
+            })
+            .unwrap_or_default()
+    }
+
+    // Adapted from PR42 at 1dadd5d2c5e0. The two original assertions and all
+    // seven labels are unchanged; the bool below only selects actual captured
+    // per-workspace menu results, rather than controlling a production menu.
+    #[gpui::test]
+    async fn android_run_menu_requires_an_android_project(cx: &mut TestAppContext) {
+        cx.update(|cx| {
+            let state = AppState::test(cx);
+            editor::init(cx);
+            workspace::init(state, cx);
+            trusted_worktrees::init(Default::default(), cx);
+            android_ui::init(cx);
+            let templates = app_menus(cx);
+            android_ui::install_application_menus(templates, cx);
+        });
+        let filesystem = project::FakeFs::new(cx.executor());
+        // The root exists only in FakeFs. No SDK, Gradle, or ADB is launched.
+        filesystem
+            .insert_tree("/pr42-menu-owner", json!({"main.py":"print(1)"}))
+            .await;
+        let project =
+            Project::test_with_worktree_trust(filesystem, [Path::new("/pr42-menu-owner")], cx)
+                .await;
+        let (multi, visual) = cx.add_window_view(|window, cx| {
+            workspace::MultiWorkspace::test_new(project.clone(), window, cx)
+        });
+        let workspace = multi.read_with(visual, |multi, _| multi.workspace().clone());
+        visual.run_until_parked();
+        let generic_items = visual.update(|_, cx| android_run_items(&workspace.downgrade(), cx));
+        let generic_menus =
+            visual.update(|_, cx| android_ui::application_menus(Some(&workspace.downgrade()), cx));
+        for label in ["Spawn Task", "Start Debugger"] {
+            assert!(generic_menus.iter().any(|menu| menu.items.iter().any(|item| matches!(item, OwnedMenuItem::Action { name, .. } if name.as_str() == label))), "Generic Run menu lost {label}");
+        }
+        visual.update(|_, cx| {
+            let store = project.read(cx).worktree_store();
+            TrustedWorktrees::try_get_global(cx).expect("Trust store").update(cx, |trust, cx| {
+                trust.trust(&store, [PathTrust::AbsPath(PathBuf::from("/pr42-menu-owner"))].into_iter().collect(), cx);
+            });
+            let root = Path::new("/pr42-menu-owner");
+            let record = json!({"schema":1,"root":root,"gradleVersion":"9.6.1","phase":"complete",
+                "modules":[{"path":":","directory":root,
+                    "plugins":PluginId::ALL.map(|plugin|json!({"plugin":plugin,"applied":matches!(plugin, PluginId::AndroidApplication | PluginId::KotlinAndroid)})),
+                    "targets":{"status":"available","value":[{"name":"android","platform":"androidJvm"}]}}]});
+            let snapshot = decode_context_record(&serde_json::to_vec(&record).expect("Catalogue bytes"), root).expect("Evaluated fixture catalogue");
+            project.update(cx, |project, cx| {
+                let worktree = project.visible_worktrees(cx).next().expect("Fixture worktree").read(cx).id();
+                let handle = project.ensure_android_context(worktree, true, cx).expect("Owner handle");
+                let discovery = project.begin_android_context_import(handle, cx).expect("Import generation");
+                let mut active = ActiveContext::default();
+                active.select(Some(handle), None).expect("Selected owner");
+                let owner = active.discovery_token(project.android_context()).expect("Current owner");
+                project.publish_android_context(&active, &owner, &discovery, snapshot, cx).expect("Publish catalogue");
+            });
+        });
+        // Publishing the catalogue schedules startup sync, which invalidates the
+        // current model. Settle that work before simulating its completed model.
+        visual.run_until_parked();
+        visual.update(|_, cx| {
+            let root = Path::new("/pr42-menu-owner");
+            let model = serde_json::from_value(json!({"version":1,"root":root,"diagnostics":[],
+                "modules":[{"path":":","directory":root,"namespace":"example.app","kind":"application",
+                    "variants":[{"name":"debug","outputListing":root.join("output.json"),"components":[]}]}]})).expect("Application model");
+            project.update(cx, |project, cx| {
+                let token = project.invalidate_android_model(Some(root.to_path_buf()), cx);
+                project.publish_android_model(&token, model, cx).expect("Publish model");
+                project.select_android_variant(Some(android_tools::project_model::VariantId { module:":".into(), variant:"debug".into() }), cx).expect("Selected model variant");
+            });
+        });
+        visual.run_until_parked();
+        let qualified_items = visual.update(|_, cx| android_run_items(&workspace.downgrade(), cx));
+        let android_run_items = |qualified| {
+            if qualified {
+                qualified_items.as_slice()
+            } else {
+                generic_items.as_slice()
+            }
+        };
+        assert!(android_run_items(false).is_empty());
+        let names = android_run_items(true)
+            .iter()
+            .filter_map(|item| match item {
+                OwnedMenuItem::Action { name, .. } => Some(name.to_string()),
+                _ => None,
+            })
+            .collect::<Vec<_>>();
+        for name in [
+            "Run App",
+            "Build Selected Variant",
+            "Sync Android Project",
+            "Android Tools",
+            "Build Window",
+            "Stop Selected Emulator",
+            "Logcat",
+        ] {
+            assert!(names.iter().any(|actual| actual == name), "Missing {name}");
+        }
+    }
+}
