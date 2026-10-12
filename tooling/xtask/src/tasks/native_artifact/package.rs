@@ -45,6 +45,11 @@ pub(super) fn inspect_bootstrap(path: &Path) -> Result<serde_json::Value> {
     Ok(serde_json::to_value(elf::inspect(path)?)?)
 }
 
+/// Fixed native builds sync only the executable reported by successful owned
+/// Cargo before its first immutable digest. Configured CARGO_TARGET_DIR paths
+/// resolve relative to Cargo's source cwd and are passed back as the validated
+/// absolute path; when unset, the actual Cargo artifact
+/// determines the generated target root. Controller UID is not artifact ownership.
 #[derive(Args)]
 pub struct BuildArgs {
     #[command(flatten)]
@@ -452,6 +457,149 @@ fn validate_features(receipts: &[FeatureReceipt]) -> Result<()> {
     Ok(())
 }
 
+// Native Cargo owns generation until its successful CLOSED0 receipt. Only its
+// unique compiler-artifact executable can enter this binding. Directory identity
+// checks describe that mutable generation phase; every file full13 field is
+// immutable after sync_all has completed and the first baseline is captured.
+#[cfg(target_os = "linux")]
+#[derive(Debug)]
+struct GeneratedExecutable {
+    target_path: PathBuf,
+    target: File,
+    target_identity: Physical13,
+    debug: File,
+    debug_identity: Physical13,
+    file: File,
+    baseline: Physical13,
+}
+
+#[cfg(target_os = "linux")]
+impl GeneratedExecutable {
+    fn require_digest_identity(&self, digest_identity: &Physical13) -> Result<()> {
+        ensure!(
+            self.baseline == *digest_identity,
+            "generated executable digest identity differs from synchronized baseline: changed_fields={:?}",
+            self.baseline.changed_fields(digest_identity)
+        );
+        Ok(())
+    }
+
+    fn require_current(&self, executable: &Path) -> Result<()> {
+        let target = open_absolute_directory(&self.target_path)?;
+        let debug = open_directory_at(&target, c"debug")?;
+        let file = open_beneath(&debug, "koda", false)?;
+        ensure!(
+            same_created_directory(&self.target_identity, &physical(&self.target.metadata()?)?)
+                && same_created_directory(&self.target_identity, &physical(&target.metadata()?)?)
+                && same_created_directory(&self.debug_identity, &physical(&self.debug.metadata()?)?)
+                && same_created_directory(&self.debug_identity, &physical(&debug.metadata()?)?),
+            "generated executable target/debug directory identity changed"
+        );
+        ensure!(
+            self.baseline == physical(&self.file.metadata()?)?
+                && self.baseline == physical(&file.metadata()?)?
+                && self.baseline == physical(&fs::symlink_metadata(executable)?)?,
+            "generated executable full13 changed after synchronization"
+        );
+        Ok(())
+    }
+}
+
+#[cfg(target_os = "linux")]
+fn configured_generated_target(source: &Path, configured: Option<&std::ffi::OsStr>) -> Result<Option<PathBuf>> {
+    use std::path::Component;
+    let Some(configured) = configured else { return Ok(None); };
+    ensure!(!configured.is_empty(), "configured CARGO_TARGET_DIR must not be empty");
+    let requested = PathBuf::from(configured);
+    // Cargo resolves relative target paths against its actual source cwd.
+    let absolute = if requested.is_absolute() { requested } else { fs::canonicalize(source)?.join(requested) };
+    let mut target = PathBuf::new();
+    for component in absolute.components() {
+        match component {
+            Component::RootDir | Component::Normal(_) => target.push(component.as_os_str()),
+            Component::CurDir => {},
+            Component::ParentDir => { ensure!(target.pop(), "CARGO_TARGET_DIR escapes its absolute root"); },
+            Component::Prefix(_) => bail!("native target root is not a Linux absolute path"),
+        }
+    }
+    ensure!(target.is_absolute(), "native target root must resolve to an absolute path");
+    // Validate existing components before Cargo. Cargo can create missing ones;
+    // the completed root/debug/file are all opened no-follow before any sync.
+    let mut existing = target.as_path();
+    loop {
+        match fs::symlink_metadata(existing) {
+            Ok(_) => { open_absolute_directory(existing)?; break; },
+            Err(error) if error.kind() == std::io::ErrorKind::NotFound => {
+                existing = existing.parent().context("configured target has no existing ancestor")?;
+            },
+            Err(error) => return Err(error.into()),
+        }
+    }
+    let target_exists = match fs::symlink_metadata(&target) {
+        Ok(_) => true,
+        Err(error) if error.kind() == std::io::ErrorKind::NotFound => false,
+        Err(error) => return Err(error.into()),
+    };
+    if target_exists {
+        let root = open_absolute_directory(&target)?;
+        match fs::symlink_metadata(target.join("debug")) {
+            Ok(_) => {
+                let debug = open_directory_at(&root, c"debug")?;
+                match fs::symlink_metadata(target.join("debug/koda")) {
+                    Ok(_) => { open_beneath(&debug, "koda", false)?; },
+                    Err(error) if error.kind() == std::io::ErrorKind::NotFound => {},
+                    Err(error) => return Err(error.into()),
+                }
+            },
+            Err(error) if error.kind() == std::io::ErrorKind::NotFound => {},
+            Err(error) => return Err(error.into()),
+        }
+    }
+    Ok(Some(target))
+}
+
+// Cargo receives exactly the explicit path that was validated. Its inherited
+// relative/parent spelling cannot change the filesystem traversal after checks.
+#[cfg(target_os = "linux")]
+fn bind_configured_generated_target(command: &mut Command, configured_target: Option<&Path>) {
+    if let Some(target) = configured_target {
+        command.env("CARGO_TARGET_DIR", target);
+    }
+}
+
+#[cfg(target_os = "linux")]
+fn synchronize_generated_executable(
+    executable: &Path,
+    configured_target: Option<&Path>,
+    sync: impl FnOnce(&File) -> std::io::Result<()>,
+) -> Result<GeneratedExecutable> {
+    ensure!(executable.is_absolute(), "generated executable must be absolute");
+    let debug_path = executable.parent().context("generated executable has no debug directory")?;
+    let inferred = debug_path.parent().context("generated executable has no target root")?;
+    let target_path = configured_target.unwrap_or(inferred);
+    ensure!(
+        executable == target_path.join("debug/koda"),
+        "actual Cargo executable is outside the bound generated target/debug/koda"
+    );
+    let target = open_absolute_directory(target_path)?;
+    let target_identity = physical(&target.metadata()?)?;
+    let debug = open_directory_at(&target, c"debug")?;
+    let debug_identity = physical(&debug.metadata()?)?;
+    let file = open_beneath(&debug, "koda", false)?;
+    let initializing = file.metadata()?;
+    ensure!(
+        initializing.is_file() && initializing.len() > 0 && initializing.len() <= MAX_BINARY_BYTES,
+        "generated executable must be a bounded regular file before synchronization"
+    );
+    sync(&file).with_context(|| format!("sync owned Cargo executable before initial digest: {}", executable.display()))?;
+    // This is the first immutable file snapshot. No pre-sync blocks/timestamps
+    // are restored, exempted or admitted as a frozen baseline.
+    let baseline = physical(&file.metadata()?)?;
+    let generated = GeneratedExecutable { target_path: target_path.to_owned(), target, target_identity, debug, debug_identity, file, baseline };
+    generated.require_current(executable)?;
+    Ok(generated)
+}
+
 pub(super) fn build(args: BuildArgs) -> Result<()> {
     let output = args.output_dir.clone();
     let mut owned = false;
@@ -526,7 +674,14 @@ fn build_inner(args: BuildArgs, owned: &mut bool) -> Result<()> {
         .open(&build_log_path)?;
     let observed_command = fixed_build_command();
     let start = Instant::now();
+    #[cfg(target_os = "linux")]
+    let configured_target = configured_generated_target(
+        &args.source.source,
+        std::env::var_os("CARGO_TARGET_DIR").as_deref(),
+    )?;
     let mut cargo_command = Command::new(&observed_command[0]);
+    #[cfg(target_os = "linux")]
+    bind_configured_generated_target(&mut cargo_command, configured_target.as_deref());
     cargo_command
         .args(&observed_command[1..])
         .current_dir(&args.source.source)
@@ -654,6 +809,12 @@ fn build_inner(args: BuildArgs, owned: &mut bool) -> Result<()> {
     );
     let feature_receipts: Vec<_> = features.into_values().collect();
     validate_features(&feature_receipts)?;
+    #[cfg(target_os = "linux")]
+    let generated_executable = synchronize_generated_executable(
+        &executable,
+        configured_target.as_deref(),
+        File::sync_all,
+    )?;
     let (_, after) = observe(&args.source, Authentication::Materialized)?;
     ensure!(
         after.canonical_manifest == before.canonical_manifest,
@@ -704,7 +865,17 @@ fn build_inner(args: BuildArgs, owned: &mut bool) -> Result<()> {
             path: args.output_dir.join("cargo-process-closure.json"),
         },
         binary: BoundFile {
-            digest: digest_file(&executable, MAX_BINARY_BYTES)?.0,
+            digest: {
+                let (digest, identity) = digest_file(&executable, MAX_BINARY_BYTES)?;
+                #[cfg(target_os = "linux")]
+                {
+                    generated_executable.require_digest_identity(&identity)?;
+                    generated_executable.require_current(&executable)?;
+                }
+                #[cfg(not(target_os = "linux"))]
+                let _ = identity;
+                digest
+            },
             path: executable,
         },
         feature_receipts,
@@ -5635,5 +5806,143 @@ mod borrowed_receipt_capacity_regression {
         assert_eq!(guard.snapshot().unwrap(), original);
         assert!(!parent.join("before.json").exists());
         assert!(!retained.join("before.json").exists());
+    }
+}
+
+#[cfg(all(test, target_os = "linux"))]
+mod generated_executable_stabilization_regression {
+    use super::*;
+    use std::{cell::Cell, os::unix::fs::symlink};
+
+    fn fixture() -> (tempfile::TempDir, PathBuf) {
+        let target = tempfile::tempdir().unwrap();
+        fs::create_dir(target.path().join("debug")).unwrap();
+        let executable = target.path().join("debug/koda");
+        fs::write(&executable, b"actual newly generated executable").unwrap();
+        fs::hard_link(&executable, target.path().join("cargo-executable-alias")).unwrap();
+        (target, executable)
+    }
+
+    #[test]
+    fn sync_precedes_the_first_baseline_and_preserves_cargo_hardlinks_and_digest() {
+        let (target, executable) = fixture();
+        let synchronized = Cell::new(false);
+        let generated = synchronize_generated_executable(&executable, Some(target.path()), |file| {
+            file.sync_all()?; synchronized.set(true); Ok(())
+        }).unwrap();
+        assert!(synchronized.get());
+        assert_eq!(generated.baseline.nlink, 2);
+        let (digest, identity) = digest_file(&executable, MAX_BINARY_BYTES).unwrap();
+        assert_eq!(digest.sha256, format!("{:x}", Sha256::digest(b"actual newly generated executable")));
+        assert_eq!(identity, generated.baseline);
+        generated.require_current(&executable).unwrap();
+    }
+
+    #[test]
+    fn configured_relative_and_unset_target_paths_preserve_cargo_resolution() {
+        let (target, executable) = fixture();
+        let source = tempfile::tempdir().unwrap();
+        fs::create_dir(source.path().join("relative-target")).unwrap();
+        assert_eq!(configured_generated_target(source.path(), Some(std::ffi::OsStr::new("relative-target"))).unwrap(), Some(fs::canonicalize(source.path()).unwrap().join("relative-target")));
+        assert_eq!(configured_generated_target(source.path(), None).unwrap(), None);
+        let generated = synchronize_generated_executable(&executable, None, File::sync_all).unwrap();
+        assert_eq!(generated.target_path, target.path());
+        generated.require_current(&executable).unwrap();
+    }
+
+    #[test]
+    fn foreign_executable_is_refused_before_the_sync_callback() {
+        let (target, _executable) = fixture();
+        let (foreign, executable) = fixture();
+        let called = Cell::new(false);
+        let error = synchronize_generated_executable(&executable, Some(target.path()), |_| {
+            called.set(true); Ok(())
+        }).unwrap_err().to_string();
+        assert!(error.contains("outside the bound generated target"));
+        assert!(!called.get());
+        assert_eq!(fs::read(foreign.path().join("debug/koda")).unwrap(), b"actual newly generated executable");
+    }
+
+    #[test]
+    fn debug_and_executable_symlinks_are_refused_before_any_sync() {
+        let target = tempfile::tempdir().unwrap();
+        let foreign = tempfile::tempdir().unwrap();
+        fs::write(foreign.path().join("koda"), b"foreign artifact remains unchanged").unwrap();
+        symlink(foreign.path(), target.path().join("debug")).unwrap();
+        let called = Cell::new(false);
+        assert!(synchronize_generated_executable(&target.path().join("debug/koda"), Some(target.path()), |_| { called.set(true); Ok(()) }).is_err());
+        assert!(!called.get());
+        fs::remove_file(target.path().join("debug")).unwrap();
+        fs::create_dir(target.path().join("debug")).unwrap();
+        symlink(foreign.path().join("koda"), target.path().join("debug/koda")).unwrap();
+        assert!(synchronize_generated_executable(&target.path().join("debug/koda"), Some(target.path()), |_| { called.set(true); Ok(()) }).is_err());
+        assert!(!called.get());
+        assert_eq!(fs::read(foreign.path().join("koda")).unwrap(), b"foreign artifact remains unchanged");
+    }
+
+    #[test]
+    fn sync_failure_is_propagated_before_a_baseline_or_success_receipt() {
+        let (target, executable) = fixture();
+        let error = synchronize_generated_executable(&executable, Some(target.path()), |_| Err(std::io::Error::from_raw_os_error(libc::EIO))).unwrap_err();
+        assert!(error.to_string().contains("sync owned Cargo executable before initial digest"));
+        assert_eq!(error.downcast_ref::<std::io::Error>().unwrap().raw_os_error(), Some(libc::EIO));
+    }
+
+    #[test]
+    fn replacement_during_sync_cannot_substitute_another_generated_inode() {
+        let (target, executable) = fixture();
+        let retained = target.path().join("retained");
+        let result = synchronize_generated_executable(&executable, Some(target.path()), |file| {
+            file.sync_all()?;
+            fs::rename(&executable, &retained)?;
+            fs::write(&executable, b"replacement must not be authenticated")?;
+            Ok(())
+        });
+        assert!(result.is_err());
+        assert_eq!(fs::read(&retained).unwrap(), b"actual newly generated executable");
+        assert_eq!(fs::read(&executable).unwrap(), b"replacement must not be authenticated");
+    }
+
+    #[test]
+    fn post_sync_metadata_changes_keep_the_complete_file_inverse_fatal() {
+        let (target, executable) = fixture();
+        let mut generated = synchronize_generated_executable(&executable, Some(target.path()), File::sync_all).unwrap();
+        generated.baseline.blocks += 1;
+        assert!(generated.require_current(&executable).is_err());
+    }
+    #[test]
+    fn foreign_digest_during_debug_substitution_is_refused_after_the_original_is_restored() {
+        let (target, executable) = fixture();
+        let generated = synchronize_generated_executable(&executable, Some(target.path()), File::sync_all).unwrap();
+        let retained_debug = target.path().join("retained-debug");
+        fs::rename(target.path().join("debug"), &retained_debug).unwrap();
+        fs::create_dir(target.path().join("debug")).unwrap();
+        fs::write(&executable, b"foreign digest during temporary debug substitution").unwrap();
+        let (foreign_digest, foreign_identity) = digest_file(&executable, MAX_BINARY_BYTES).unwrap();
+        fs::remove_file(&executable).unwrap();
+        fs::remove_dir(target.path().join("debug")).unwrap();
+        fs::rename(&retained_debug, target.path().join("debug")).unwrap();
+        generated.require_current(&executable).unwrap();
+        assert!(generated.require_digest_identity(&foreign_identity).is_err());
+        let (original_digest, original_identity) = digest_file(&executable, MAX_BINARY_BYTES).unwrap();
+        assert_ne!(foreign_digest.sha256, original_digest.sha256);
+        assert_eq!(original_identity, generated.baseline);
+        generated.require_digest_identity(&original_identity).unwrap();
+        assert_eq!(fs::read(&executable).unwrap(), b"actual newly generated executable");
+    }
+
+    #[test]
+    fn actual_cargo_command_uses_the_validated_target_and_preserves_unset_configuration() {
+        let source = tempfile::tempdir().unwrap();
+        let inherited = std::ffi::OsStr::new("intermediate/../relative-target");
+        let validated = configured_generated_target(source.path(), Some(inherited)).unwrap();
+        let mut command = Command::new("cargo");
+        command.env("CARGO_TARGET_DIR", inherited);
+        bind_configured_generated_target(&mut command, validated.as_deref());
+        assert_eq!(command.get_envs().find(|(name, _)| *name == std::ffi::OsStr::new("CARGO_TARGET_DIR")).unwrap().1, validated.as_deref().map(Path::as_os_str));
+        assert_ne!(validated.as_deref().unwrap().as_os_str(), inherited);
+        let mut default_command = Command::new("cargo");
+        bind_configured_generated_target(&mut default_command, None);
+        assert!(default_command.get_envs().all(|(name, _)| name != std::ffi::OsStr::new("CARGO_TARGET_DIR")));
     }
 }
