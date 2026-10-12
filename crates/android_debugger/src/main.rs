@@ -48,7 +48,10 @@ fn install(root: PathBuf) -> Result<()> {
             existing_installation_matches(&root, &source)?,
             "installation already exists; move it aside explicitly before upgrading"
         );
-        println!("Already installed Rust Android debugger: {}", root.display());
+        println!(
+            "Already installed Rust Android debugger: {}",
+            root.display()
+        );
         return Ok(());
     }
     let parent = root.parent().context("invalid installation directory")?;
@@ -187,7 +190,10 @@ fn open_regular(path: &Path) -> Result<fs::File> {
         options.custom_flags(libc::O_NOFOLLOW | libc::O_NONBLOCK);
     }
     let file = options.open(path)?;
-    ensure!(file.metadata()?.is_file(), "installer input is not a regular file");
+    ensure!(
+        file.metadata()?.is_file(),
+        "installer input is not a regular file"
+    );
     Ok(file)
 }
 
@@ -298,7 +304,10 @@ mod tests {
         drop(changed);
         assert!(install(root.clone()).is_err());
         let mut prefix = [0; 7];
-        fs::File::open(executable).unwrap().read_exact(&mut prefix).unwrap();
+        fs::File::open(executable)
+            .unwrap()
+            .read_exact(&mut prefix)
+            .unwrap();
         assert_eq!(&prefix, b"changed");
         assert_eq!(
             fs::read_to_string(root.join(".revision")).unwrap(),
@@ -336,11 +345,19 @@ mod tests {
         let root = temporary.path().join("installed");
         install(root.clone()).unwrap();
         let outside = temporary.path().join("outside-marker");
-        fs::write(&outside, format!("{}\n", android_debugger::INSTALL_REVISION)).unwrap();
+        fs::write(
+            &outside,
+            format!("{}\n", android_debugger::INSTALL_REVISION),
+        )
+        .unwrap();
         fs::remove_file(root.join(".revision")).unwrap();
         symlink(&outside, root.join(".revision")).unwrap();
         assert!(install(root.clone()).is_err());
-        assert!(fs::symlink_metadata(root.join(".revision")).unwrap().is_symlink());
+        assert!(
+            fs::symlink_metadata(root.join(".revision"))
+                .unwrap()
+                .is_symlink()
+        );
         assert_eq!(
             fs::read_to_string(outside).unwrap(),
             format!("{}\n", android_debugger::INSTALL_REVISION)
