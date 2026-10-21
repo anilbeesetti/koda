@@ -342,11 +342,6 @@ impl Render for TabbedToolbar {
         let scroll = self.scroll.clone();
         let toolbar = cx.entity().downgrade();
         h_flex()
-            .id("tabbed-toolbar")
-            .debug_selector(|| "tabbed-toolbar".into())
-            .h(px(36.))
-            .w_full()
-            .flex_none()
             .on_children_prepainted({
                 let toolbar = toolbar.clone();
                 move |bounds, window, cx| {
@@ -372,6 +367,11 @@ impl Render for TabbedToolbar {
                     }
                 }
             })
+            .id("tabbed-toolbar")
+            .debug_selector(|| "tabbed-toolbar".into())
+            .h(px(36.))
+            .w_full()
+            .flex_none()
             .on_key_down(
                 cx.listener(|toolbar, event: &gpui::KeyDownEvent, window, cx| {
                     let modifiers = event.keystroke.modifiers;
@@ -1681,9 +1681,9 @@ mod tests {
             cx.update(|window, cx| {
                 let toolbar = toolbar.read(cx);
                 let focus = if right {
-                    &toolbar.scroll_right_focus
+                    toolbar.scroll_right_focus.clone()
                 } else {
-                    &toolbar.scroll_left_focus
+                    toolbar.scroll_left_focus.clone()
                 };
                 focus.focus(window, cx);
             });
