@@ -1,3 +1,4 @@
+pub mod debugging;
 pub mod deployment;
 pub mod logcat;
 pub mod managed;
@@ -5,6 +6,7 @@ pub mod preview;
 pub mod project_model;
 pub mod provision;
 pub(crate) mod shared_sdk;
+pub mod testing;
 use anyhow::{Context as _, Result, bail, ensure};
 pub mod java;
 pub mod kotlin;
@@ -295,7 +297,7 @@ impl AndroidTarget {
         self.select_apk(Some(abis))
     }
 
-    fn select_apk(&self, abis: Option<&[String]>) -> Result<AndroidApk> {
+    fn apk_metadata(&self) -> Result<(ApkMetadata, PathBuf)> {
         let listing = fs::read_to_string(&self.output_listing).with_context(|| {
             format!(
                 "Build {} before running it: the APK listing is missing",
@@ -329,6 +331,20 @@ impl AndroidTarget {
             metadata.variant_name == self.variant,
             "The APK metadata belongs to a different build variant; sync and build again"
         );
+        Ok((metadata, metadata_path))
+    }
+
+    pub fn application_id(&self) -> Result<String> {
+        let (metadata, _) = self.apk_metadata()?;
+        let apk = AndroidApk {
+            paths: Vec::new(),
+            application_id: metadata.application_id,
+        };
+        Ok(apk.debug_application_id()?.to_owned())
+    }
+
+    fn select_apk(&self, abis: Option<&[String]>) -> Result<AndroidApk> {
+        let (metadata, metadata_path) = self.apk_metadata()?;
         ensure!(!metadata.elements.is_empty(), "The build produced no APKs");
         let element = select_apk_element(&metadata.elements, abis)?;
         let directory = metadata_path
@@ -805,6 +821,11 @@ mod tests {
             serde_json::json!([{"filterType": "ABI", "value": "x86"}]);
         fs::write(&metadata_path, serde_json::to_vec(&invalid)?)?;
         assert!(target.apk_paths().is_err());
+        fs::remove_file(root.join("app.apk"))?;
+        assert_eq!(target.application_id()?, "dev.zed.sample");
+        invalid["variantName"] = "release".into();
+        fs::write(&metadata_path, serde_json::to_vec(&invalid)?)?;
+        assert!(target.application_id().is_err());
         Ok(())
     }
 }

@@ -714,6 +714,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "android_debugger"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "libc",
+ "quick-xml 0.41.0",
+ "serde_json",
+ "tempfile",
+]
+
+[[package]]
 name = "android_system_properties"
 version = "0.1.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -734,6 +745,7 @@ dependencies = [
  "libc",
  "paths",
  "regex",
+ "roxmltree 0.21.1",
  "serde",
  "serde_json",
  "sha1",
