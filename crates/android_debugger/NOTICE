@@ -1,0 +1,13 @@
+The adapter is a new Rust implementation of the Debug Adapter Protocol and
+Java Debug Wire Protocol. It contains no Java/JDI debugger runtime or copied
+Kotlin engine implementation.
+
+Test behavior and the sample/workspace/App.kt fixture are adapted from
+fwcd/kotlin-debug-adapter at 7f05669b642d21afa46ac7b75307fa5d523a7263:
+SampleWorkspaceTest.testBreakpointsAndVariables,
+PathUtilsTest.testFilePathToJVMClassNames and ObjectPoolTest.testObjectPool.
+Copyright (c) 2018 fwcd. The original MIT license is in LICENSE.fwcd.
+
+This optional Rust adapter is separate from Koda's default managed Kotlin
+adapter. Its JVM fixtures do not establish Android ART, device integration,
+interactive UI acceptance, or complete Android Studio debugger parity.

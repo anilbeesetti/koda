@@ -65,7 +65,9 @@ Library source and decompiled `jar:`/`jrt:` tabs support navigation, but their
 diagnostics are currently ignored.
 
 The Run menu's Android unit tests and lint actions operate on the selected
-variant. To check the fixture directly:
+variant. The [Tests panel and debugging guide](TESTING.md) covers structured
+results, reruns, process attachment and reusable launch configurations.
+To check the fixture directly:
 
 ```sh
 cd examples/android-ide
