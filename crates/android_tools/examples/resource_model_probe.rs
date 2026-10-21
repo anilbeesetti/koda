@@ -122,6 +122,10 @@ fn gradle_arguments(repository: &Path) -> Vec<OsString> {
     ]
 }
 
+#[expect(
+    clippy::disallowed_methods,
+    reason = "Standalone synchronous CLI probe; these commands are never converted into async commands"
+)]
 fn successful(command: &mut Command, description: &str) -> Result<()> {
     let status = command
         .status()
@@ -302,6 +306,10 @@ fn verify_resources(root: &Path, model: &Value) -> Result<()> {
     Ok(())
 }
 
+#[expect(
+    clippy::disallowed_methods,
+    reason = "Standalone synchronous CLI probe; these commands are never converted into async commands"
+)]
 fn run(options: Options) -> Result<()> {
     let repository = Path::new(env!("CARGO_MANIFEST_DIR"))
         .parent()

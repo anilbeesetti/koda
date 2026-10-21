@@ -325,6 +325,7 @@ mod tests {
             "escape",
             "repeat",
             "read-only",
+            "excerpt",
             "unchanged",
         ] {
             let mut test = EditorLspTestContext::new_rust(
@@ -338,7 +339,7 @@ mod tests {
                 cx,
             )
             .await;
-            test.set_state("let loˇcal = 1;");
+            test.set_state("let loˇcal = 1;\nlet second = 2;");
             let (first_complete, first_pending) = oneshot::channel();
             let (second_complete, second_pending) = oneshot::channel();
             let mut pending = VecDeque::from([first_pending, second_pending]);
@@ -366,7 +367,20 @@ mod tests {
                     editor.select_all(&actions::SelectAll, window, cx);
                     editor.insert("x", window, cx);
                 }),
-                "cursor" => test.set_selections_state("let local = 1;ˇ"),
+                "cursor" => {
+                    test.set_selections_state("let local = 1;ˇ\nlet second = 2;");
+                }
+                "excerpt" => test.update_multibuffer(|multibuffer, cx| {
+                    let source = multibuffer.as_singleton().expect("Original source buffer");
+                    let path = multi_buffer::PathKey::for_buffer(&source, cx);
+                    multibuffer.set_excerpts_for_path(
+                        path,
+                        source,
+                        [language::Point::new(1, 0)..language::Point::new(1, 15)],
+                        0,
+                        cx,
+                    );
+                }),
                 "escape" => test.update_editor(|editor, window, cx| {
                     editor.cancel(&actions::Cancel, window, cx);
                 }),
@@ -390,7 +404,12 @@ mod tests {
                 drop(second_complete);
             }
             // Cancellation may already have dropped the server-side response receiver.
-            drop(first_complete.send(()));
+            if first_complete.send(()).is_err() {
+                assert_ne!(
+                    scenario, "unchanged",
+                    "Current preparation must retain its response receiver"
+                );
+            }
             first
                 .await
                 .expect("Stale preparation completes without an error");

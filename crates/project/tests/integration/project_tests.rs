@@ -23100,6 +23100,64 @@ async fn test_android_resource_rename_rejects_new_unsaved_reference_after_review
 }
 
 #[gpui::test]
+async fn test_android_resource_rename_rejects_saved_model_inputs_with_watcher_events_paused(
+    cx: &mut TestAppContext,
+) {
+    let (project, filesystem, source) = android_resource_semantics_fixture(cx).await;
+    filesystem
+        .insert_file(
+            path!("/android-resources/app/build.gradle.kts"),
+            b"android { namespace = \"example.app\" }".to_vec(),
+        )
+        .await;
+    let plan = prepare_android_title_rename(&project, &source, cx).await;
+    let before = android_resource_buffer_texts(&project, cx);
+    filesystem.pause_events();
+    filesystem
+        .insert_file(
+            path!("/android-resources/app/build.gradle.kts"),
+            b"android { namespace = \"changed.app\" }".to_vec(),
+        )
+        .await;
+    let error = project
+        .update(cx, |project, cx| {
+            project.apply_android_resource_rename(plan, cx)
+        })
+        .await
+        .err()
+        .expect("Saved Gradle edit must invalidate review before watcher delivery");
+    assert!(
+        error.to_string().contains("Gradle model inputs changed"),
+        "{error:#}"
+    );
+    for (buffer, text) in &before {
+        assert_eq!(buffer.read_with(cx, |buffer, _| buffer.text()), *text);
+    }
+    let plan = prepare_android_title_rename(&project, &source, cx).await;
+    filesystem
+        .insert_file(
+            path!("/android-resources/gradle.properties"),
+            b"android.nonTransitiveRClass=false".to_vec(),
+        )
+        .await;
+    let error = project
+        .update(cx, |project, cx| {
+            project.apply_android_resource_rename(plan, cx)
+        })
+        .await
+        .err()
+        .expect("Creating a previously absent model input must invalidate review");
+    assert!(
+        error.to_string().contains("Gradle model inputs changed"),
+        "{error:#}"
+    );
+    for (buffer, text) in before {
+        assert_eq!(buffer.read_with(cx, |buffer, _| buffer.text()), text);
+    }
+    filesystem.unpause_events_and_flush();
+}
+
+#[gpui::test]
 async fn test_android_resource_rename_rejects_enlarged_disk_file_after_review(
     cx: &mut TestAppContext,
 ) {

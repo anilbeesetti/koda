@@ -2339,7 +2339,7 @@ impl Render for ComposePreviewView {
                     .child(
                         div()
                             .id("compose-status")
-                            .debug_selector(move || status_selector.clone())
+                            .debug_selector(move || status_selector)
                             .min_w_0()
                             .tooltip(Tooltip::text(self.status.clone()))
                             .child(

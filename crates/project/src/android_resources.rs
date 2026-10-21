@@ -521,17 +521,6 @@ impl Project {
     }
 }
 
-#[cfg(test)]
-fn value_ranges(text: &str, kind: &str, name: &str) -> Result<Vec<Range<usize>>> {
-    let mut checkpoint = || Ok(());
-    value_ranges_controlled(
-        text,
-        kind,
-        name,
-        &mut resources::ResourceParserControl::new(&mut checkpoint, usize::MAX),
-    )
-}
-
 #[derive(Debug)]
 struct LegacyXmlStructureError(&'static str);
 
@@ -754,6 +743,7 @@ struct ResourceQuery {
 
 pub struct AndroidResourceRename {
     index: ResourceIndex,
+    model_inputs: ResourceModelInputs,
     edits: BTreeMap<PathBuf, Vec<Range<usize>>>,
     new_name: String,
 }
@@ -1665,6 +1655,7 @@ impl Project {
             let Some(query) = parse_rename_query_seed(&project, seed, cx).await? else {
                 return Ok(None);
             };
+            let model_inputs = capture_resource_model_inputs(&project, cx).await?;
             let roots = component_roots(&query.selected, true, "", SourceScope::Main);
             resources::valid_rename(&query.reference.kind, &query.reference.name, &new_name)?;
             let selected_index = build_index(&project, query.roots.clone(), query.token.clone(), false, cx).await?;
@@ -1772,8 +1763,9 @@ impl Project {
             for ranges in edits.values_mut() { control.checkpoint()?; ranges.sort_by_key(|range| range.start); ranges.dedup(); }
                 anyhow::Ok(edits)
             }).await?;
+            ensure!(capture_resource_model_inputs(&project, cx).await? == model_inputs, "Gradle model inputs changed while preparing rename; sync and prepare a new preview");
             ensure!(query_current(&project, &query, &index, cx).await?, "Android model or source changed while preparing rename; try again");
-            Ok(Some(AndroidResourceRename { index, edits, new_name }))
+            Ok(Some(AndroidResourceRename { index, model_inputs, edits, new_name }))
         }))
     }
 
@@ -1890,6 +1882,10 @@ impl Project {
                     path.display()
                 );
             }
+            ensure!(
+                capture_resource_model_inputs(&project, cx).await? == plan.model_inputs,
+                "Gradle model inputs changed after resource rename preview; sync and prepare a new preview"
+            );
             // Disk validation yields to other work. Recheck membership after it so
             // files added while inspecting earlier documents invalidate this plan.
             let mut current_files = enumerate_files_in_background(
@@ -3019,6 +3015,109 @@ struct ResourceScanDelivery {
     owned_byte_limit: usize,
 }
 
+type ResourceModelInputs = BTreeMap<PathBuf, Option<((u64, fs::MTime, u64), String)>>;
+
+async fn capture_resource_model_inputs(
+    project: &WeakEntity<Project>,
+    cx: &mut AsyncApp,
+) -> Result<ResourceModelInputs> {
+    const MAX_INPUT_PATHS: usize = 4096;
+    const MAX_INPUT_BYTES: u64 = 8 * 1024 * 1024;
+    let (filesystem, root, mut paths, snapshots) = project.read_with(cx, |project, cx| {
+        let selected = project
+            .android_model
+            .selected
+            .as_ref()
+            .context("Android resource model is unavailable")?;
+        let root = &selected.model.root;
+        let mut paths = BTreeSet::new();
+        for directory in std::iter::once(root).chain(
+            selected
+                .model
+                .modules
+                .iter()
+                .map(|module| &module.directory),
+        ) {
+            for name in [
+                "build.gradle",
+                "build.gradle.kts",
+                "settings.gradle",
+                "settings.gradle.kts",
+                "gradle.properties",
+                "local.properties",
+                "gradle.lockfile",
+                "gradle/libs.versions.toml",
+                "gradle/wrapper/gradle-wrapper.properties",
+            ] {
+                paths.insert(directory.join(name));
+            }
+            ensure!(
+                paths.len() <= MAX_INPUT_PATHS,
+                "Android resource model input path limit exceeded"
+            );
+        }
+        let mut snapshots = Vec::new();
+        for worktree in project.worktrees(cx) {
+            let snapshot = worktree.read(cx).snapshot();
+            let opened_root = snapshot.abs_path();
+            let boundary = if project.android_model.root() == Some(opened_root.as_ref()) {
+                root.clone()
+            } else {
+                opened_root.to_path_buf()
+            };
+            if boundary.starts_with(root) {
+                snapshots.push((boundary, snapshot));
+            }
+        }
+        anyhow::Ok((project.fs.clone(), root.clone(), paths, snapshots))
+    })??;
+    cx.background_executor()
+        .spawn(async move {
+            let mut inspected = 0_usize;
+            for (boundary, snapshot) in snapshots {
+                for entry in snapshot.files(true, 0) {
+                    inspected += 1;
+                    ensure!(
+                        inspected <= MAX_RESOURCE_FILES * 4,
+                        "Android resource model input scan limit exceeded"
+                    );
+                    let path = boundary.join(entry.path.as_std_path());
+                    if path.strip_prefix(&root).is_ok_and(resource_model_input) {
+                        paths.insert(path);
+                        ensure!(
+                            paths.len() <= MAX_INPUT_PATHS,
+                            "Android resource model input path limit exceeded"
+                        );
+                    }
+                }
+            }
+            let mut inputs = BTreeMap::new();
+            let mut remaining = MAX_INPUT_BYTES;
+            for path in paths {
+                let metadata = canonical_resource_metadata(&filesystem, &path).await?;
+                let input = if let Some(metadata) = metadata {
+                    ensure!(
+                        metadata.2 <= remaining,
+                        "Android resource model inputs exceed text size limit"
+                    );
+                    let text = load_resource_text_bounded(&filesystem, &path, remaining).await?;
+                    remaining = remaining.saturating_sub(text.len() as u64);
+                    ensure!(
+                        canonical_resource_metadata(&filesystem, &path).await? == Some(metadata),
+                        "Gradle model input changed while validating rename: {}",
+                        path.display()
+                    );
+                    Some((metadata, text))
+                } else {
+                    None
+                };
+                inputs.insert(path, input);
+            }
+            anyhow::Ok(inputs)
+        })
+        .await
+}
+
 fn resource_model_input(path: &std::path::Path) -> bool {
     let components = path
         .iter()
@@ -3696,28 +3795,44 @@ mod resource_worker_budget_tests {
     #[gpui::test]
     async fn bounded_resource_reads_reject_growth_without_loading_the_whole_file(
         cx: &mut gpui::TestAppContext,
-    ) -> Result<()> {
-        let filesystem = fs::FakeFs::new(cx.background_executor.clone());
-        filesystem
-            .insert_tree("/bounded", serde_json::json!({"value.xml": "12345"}))
-            .await;
-        let filesystem: Arc<dyn fs::Fs> = filesystem;
-        assert_eq!(
-            load_resource_text_bounded(&filesystem, std::path::Path::new("/bounded/value.xml"), 5)
+    ) {
+        let result: Result<()> = async {
+            let filesystem = fs::FakeFs::new(cx.background_executor.clone());
+            filesystem
+                .insert_tree("/bounded", serde_json::json!({"value.xml": "12345"}))
+                .await;
+            let filesystem: Arc<dyn fs::Fs> = filesystem;
+            assert_eq!(
+                load_resource_text_bounded(
+                    &filesystem,
+                    std::path::Path::new("/bounded/value.xml"),
+                    5
+                )
                 .await?,
-            "12345"
-        );
-        assert!(
-            load_resource_text_bounded(&filesystem, std::path::Path::new("/bounded/value.xml"), 4)
+                "12345"
+            );
+            assert!(
+                load_resource_text_bounded(
+                    &filesystem,
+                    std::path::Path::new("/bounded/value.xml"),
+                    4
+                )
                 .await
                 .is_err()
-        );
-        assert!(
-            load_resource_text_bounded(&filesystem, std::path::Path::new("/bounded/value.xml"), 0)
+            );
+            assert!(
+                load_resource_text_bounded(
+                    &filesystem,
+                    std::path::Path::new("/bounded/value.xml"),
+                    0
+                )
                 .await
                 .is_err()
-        );
-        Ok(())
+            );
+            Ok(())
+        }
+        .await;
+        result.expect("Bounded resource read fixture");
     }
 
     #[test]
@@ -3795,9 +3910,13 @@ mod resource_worker_budget_tests {
         );
         assert!(text.text.len() <= 128);
         assert!(text.text.capacity() <= 128);
-        assert!(resource_documentation(&scan, &[symbol.clone()], 128, &mut control).is_err());
+        assert!(
+            resource_documentation(&scan, std::slice::from_ref(&symbol), 128, &mut control)
+                .is_err()
+        );
         let (scan, symbol) = repeated_ids(1);
-        let single = resource_documentation(&scan, &[symbol.clone()], 1_024, &mut control)?;
+        let single =
+            resource_documentation(&scan, std::slice::from_ref(&symbol), 1_024, &mut control)?;
         assert_eq!(
             single,
             "app: id/view\nSelected: /app/res/layout/0.xml [default]\n"
@@ -3893,66 +4012,70 @@ mod resource_scan_delivery_tests {
 
     #[gpui::test]
     #[ignore = "Opt-in large-project latency and memory probe"]
-    async fn resource_scan_ten_thousand_files(cx: &mut TestAppContext) -> Result<()> {
-        let filesystem = fs::FakeFs::new(cx.executor());
-        let mut files = serde_json::Map::new();
-        for index in 0..10_000 {
-            files.insert(
-                format!("strings_{index}.xml"),
-                serde_json::Value::String(format!(
-                    "<resources><string name='title_{index}'>Title {index}</string></resources>"
-                )),
+    async fn resource_scan_ten_thousand_files(cx: &mut TestAppContext) {
+        let result: Result<()> = async {
+            let filesystem = fs::FakeFs::new(cx.executor());
+            let mut files = serde_json::Map::new();
+            for index in 0..10_000 {
+                files.insert(
+                    format!("strings_{index}.xml"),
+                    serde_json::Value::String(format!(
+                        "<resources><string name='title_{index}'>Title {index}</string></resources>"
+                    )),
+                );
+            }
+            filesystem
+                .insert_tree("/large/res/values", serde_json::Value::Object(files))
+                .await;
+            let filesystem: Arc<dyn fs::Fs> = filesystem;
+            let roots = vec![ResourceRoot {
+                path: "/large/res".into(),
+                namespace: "large.app".into(),
+                priority: 0,
+                generated: false,
+                external: false,
+                kind: SourceKind::Resources,
+                domain: ":app/debug".into(),
+            }];
+            let started = std::time::Instant::now();
+            let files = enumerate_files(&filesystem, &roots, false).await?;
+            assert_eq!(files.len(), 10_000);
+            let (sender, receiver) = async_channel::bounded(1);
+            let task = cx.executor().spawn(scan_resource_files(
+                filesystem,
+                roots,
+                files,
+                BTreeMap::new(),
+                None,
+                false,
+                sender,
+            ));
+            let mut deliveries = 0;
+            while receiver.recv().await.is_ok() {
+                deliveries += 1;
+            }
+            let scan = task.await?;
+            assert_eq!(scan.declarations.len(), 10_000);
+            assert_eq!(scan.symbol_declarations.len(), 10_000);
+            assert_eq!(scan.supporting_metadata.len(), 10_000);
+            assert!(
+                scan.documents.is_empty(),
+                "Unopened source text must not be retained"
             );
+            assert!(
+                deliveries >= 313,
+                "Large scans must retain bounded progress delivery"
+            );
+            eprintln!(
+                "RESOURCE_SCAN_STRESS files=10000 declarations={} deliveries={} elapsed_ms={}",
+                scan.declarations.len(),
+                deliveries,
+                started.elapsed().as_millis()
+            );
+            Ok(())
         }
-        filesystem
-            .insert_tree("/large/res/values", serde_json::Value::Object(files))
-            .await;
-        let filesystem: Arc<dyn fs::Fs> = filesystem;
-        let roots = vec![ResourceRoot {
-            path: "/large/res".into(),
-            namespace: "large.app".into(),
-            priority: 0,
-            generated: false,
-            external: false,
-            kind: SourceKind::Resources,
-            domain: ":app/debug".into(),
-        }];
-        let started = std::time::Instant::now();
-        let files = enumerate_files(&filesystem, &roots, false).await?;
-        assert_eq!(files.len(), 10_000);
-        let (sender, receiver) = async_channel::bounded(1);
-        let task = cx.executor().spawn(scan_resource_files(
-            filesystem,
-            roots,
-            files,
-            BTreeMap::new(),
-            None,
-            false,
-            sender,
-        ));
-        let mut deliveries = 0;
-        while receiver.recv().await.is_ok() {
-            deliveries += 1;
-        }
-        let scan = task.await?;
-        assert_eq!(scan.declarations.len(), 10_000);
-        assert_eq!(scan.symbol_declarations.len(), 10_000);
-        assert_eq!(scan.supporting_metadata.len(), 10_000);
-        assert!(
-            scan.documents.is_empty(),
-            "Unopened source text must not be retained"
-        );
-        assert!(
-            deliveries >= 313,
-            "Large scans must retain bounded progress delivery"
-        );
-        eprintln!(
-            "RESOURCE_SCAN_STRESS files=10000 declarations={} deliveries={} elapsed_ms={}",
-            scan.declarations.len(),
-            deliveries,
-            started.elapsed().as_millis()
-        );
-        Ok(())
+        .await;
+        result.expect("Large resource scan fixture");
     }
 
     #[gpui::test]

@@ -9,7 +9,7 @@ on:
       - Cargo.toml
       - Cargo.lock
       - rust-toolchain.toml
-      - crates/**
+      - crates/android_tools/**
       - extensions/test-extension/**
       - script/linux
       - script/download-wasi-sdk

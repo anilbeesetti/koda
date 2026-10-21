@@ -95,10 +95,25 @@ sources, catalogues, lockfiles and properties that could change ownership.
 The review is cancelled by Escape, another rename or releasing its editor.
 A completed background request does not replace an existing modal.
 Changed files are checked before bounded reads and all participating buffers are
-validated together before the grouped unsaved edits.
+validated together before the grouped unsaved edits. Standard Gradle configuration
+inputs are also snapshotted before preparation and rechecked before review and
+apply, including while file watcher events are delayed. This adds limits of
+4,096 configuration paths / 8 MiB configuration text / 80,000 inspected worktree
+files. It does not replace main's sync invalidation or track arbitrary external
+configuration inputs.
 
 Mixed XML/image resource qualifiers remain available in ordinary definition
 navigation. Text and binary providers currently scan independently; large-project
 measurements should account for that repeated work. Scans are bounded rather than
 persistently cached. Software-rendered UI checks do not establish hardware GPU
 performance or device resource selection.
+
+A model containing Compose receiver scopes, inheritance or other ambiguous JVM
+bindings may refuse the whole resource rename even when the selected resource is
+used in a simpler source file. This is a conservative lexer boundary; general
+server-backed resource refactoring is still required for those projects.
+
+The opt-in Project unit test `resource_scan_ten_thousand_files --ignored
+--nocapture` traverses and parses 10,000 XML files, checks all declarations and
+progress deliveries, and verifies unopened document text is not retained. Run it
+under an external process monitor to measure wall time and peak resident memory.

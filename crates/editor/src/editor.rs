@@ -8213,6 +8213,21 @@ impl Editor {
                         return;
                     }
                     let range = buffer.anchor_before(rename_start)..buffer.anchor_after(rename_end);
+                    if ![
+                        (range.start, rename_buffer_range.start),
+                        (range.end, rename_buffer_range.end),
+                    ]
+                    .into_iter()
+                    .all(|(anchor, offset)| {
+                        buffer
+                            .anchor_to_buffer_anchor(anchor)
+                            .is_some_and(|(anchor, source)| {
+                                source.remote_id() == snapshot.remote_id()
+                                    && anchor.to_offset(source) == offset
+                            })
+                    }) {
+                        return;
+                    }
                     let mut old_highlight_id = None;
                     let old_name: Arc<str> = buffer
                         .chunks(
