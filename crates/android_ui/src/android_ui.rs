@@ -1459,6 +1459,9 @@ impl AndroidPanel {
     }
 
     fn sync_project(&mut self, window: &mut Window, cx: &mut Context<Self>) {
+        if self.test_operation_id.is_some() && !self.tests_waiting_for_model() {
+            return;
+        }
         if self.syncing || self.running || self.tool_setup.choosing {
             return;
         }

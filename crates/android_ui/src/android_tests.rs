@@ -64,6 +64,14 @@ struct TestRun {
     session: u64,
     revision: u64,
 }
+#[derive(Debug)]
+struct UnconfirmedTestCleanup;
+impl std::fmt::Display for UnconfirmedTestCleanup {
+    fn fmt(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        formatter.write_str("Gradle test cleanup is unconfirmed. Confirm the previous test process has stopped, then reopen this workspace before rerunning.")
+    }
+}
+
 type TestOutcome = (
     Vec<TestCase>,
     Vec<TestCase>,
@@ -87,6 +95,7 @@ pub struct TestPanel {
     selected: TestRow,
     scroll: UniformListScrollHandle,
     pub(super) busy: bool,
+    cleanup_blocked: bool,
     waiting_for_model: bool,
     stale: bool,
     revision: u64,
@@ -111,6 +120,7 @@ impl TestPanel {
             selected: TestRow::Suite,
             scroll: UniformListScrollHandle::new(),
             busy: false,
+            cleanup_blocked: false,
             waiting_for_model: false,
             stale: false,
             revision: 0,
@@ -522,7 +532,7 @@ impl Render for TestPanel {
                     .tab_index(0isize)
                     .aria_label("Cancel tests")
                     .tooltip(Tooltip::text("Cancel tests"))
-                    .disabled(!busy)
+                    .disabled(!busy || self.cleanup_blocked)
                     .on_click(cx.listener(|_, _, _, cx| cx.emit(TestEvent::Stop))),
             )
             .child(div().flex_1())
@@ -1196,9 +1206,15 @@ impl AndroidPanel {
         let current = run.request.context_matches(self, cx)
             && self.project.read(cx).android_model().is_current(&run.token);
         let (sources, results, result, report_error) = outcome;
+        let cleanup_unconfirmed = result
+            .as_ref()
+            .is_err_and(|error| error.is::<UnconfirmedTestCleanup>());
         self.test_cancel = None;
-        self.test_operation_id = None;
+        if !cleanup_unconfirmed {
+            self.test_operation_id = None;
+        }
         let (status, mut message) = match result {
+            Err(error) if cleanup_unconfirmed => (BuildStatus::Failed, format!("{error:#}. See Build Output.")),
             _ if !current => (BuildStatus::Cancelled, "The Android test model or selection changed; previous completed results retained as stale".to_owned()),
             Ok(ProcessOutput::Cancelled) => (BuildStatus::Cancelled, "Test run cancelled; completed results retained".to_owned()),
             Err(error) => (BuildStatus::Failed, format!("Test process failed: {error:#}. See Build Output.")),
@@ -1213,16 +1229,17 @@ impl AndroidPanel {
         }
         if self.active_build_session == Some((BuildTab::Output, run.session)) {
             self.active_build_session = None;
-            self.running = false;
+            self.running = cleanup_unconfirmed;
             self.status = message.clone().into();
         }
         self.build_panel.update(cx, |build, cx| {
             build.finish(BuildTab::Output, run.session, status, message.clone(), cx)
         });
         self.test_panel.update(cx, |tests, cx| {
-            tests.busy = false;
+            tests.busy = cleanup_unconfirmed;
+            tests.cleanup_blocked = cleanup_unconfirmed;
             tests.waiting_for_model = false;
-            tests.stale |= !current || tests.revision != run.revision;
+            tests.stale |= cleanup_unconfirmed || !current || tests.revision != run.revision;
             if current {
                 tests.sources = sources;
                 tests.replace_cases(if run.request.discover_only {
@@ -1235,7 +1252,7 @@ impl AndroidPanel {
             cx.notify();
         });
         cx.notify();
-        true
+        !cleanup_unconfirmed
     }
 
     fn publish_test_progress(
@@ -1371,6 +1388,7 @@ async fn execute_tests_with_discovery(
     let mut sources = Vec::new();
     let mut reports = testing::TestResults::default();
     let process_started = std::sync::atomic::AtomicBool::new(false);
+    let cancellation_requested = std::sync::atomic::AtomicBool::new(false);
     let operation = async {
         sources = discovery.await?;
         if execution.discover_only {
@@ -1397,7 +1415,10 @@ async fn execute_tests_with_discovery(
                     let directory = execution.directory.path().to_path_buf();
                     let source_locations = sources.clone();
                     let scan_control = control.clone();
-                    reports = executor
+                    if cancellation_requested.load(std::sync::atomic::Ordering::Relaxed) {
+                        continue;
+                    }
+                    let snapshot = executor
                         .spawn(async move {
                             testing::read_results_with_control(
                                 &directory,
@@ -1406,6 +1427,10 @@ async fn execute_tests_with_discovery(
                             )
                         })
                         .await;
+                    if cancellation_requested.load(std::sync::atomic::Ordering::Relaxed) {
+                        continue;
+                    }
+                    reports = snapshot;
                     if reports.cases.len() != last_count {
                         let count = reports.cases.len();
                         match progress.try_send(reports.cases.clone()) {
@@ -1421,6 +1446,7 @@ async fn execute_tests_with_discovery(
     .boxed();
     let mut result = match select(&mut cancelled, operation).await {
         Either::Left((_, operation)) => {
+            cancellation_requested.store(true, std::sync::atomic::Ordering::Relaxed);
             control.cancel();
             if process_started.load(std::sync::atomic::Ordering::Relaxed) {
                 // Gradle's single-use daemon can leave the launcher's process
@@ -1439,8 +1465,9 @@ async fn execute_tests_with_discovery(
                             .is_file()
                         {
                             Err(anyhow::anyhow!(
-                                "Gradle could not cancel test execution; check Build Output before retrying"
-                            ))
+                                "Gradle cancellation watcher failed; see Build Output"
+                            )
+                            .context(UnconfirmedTestCleanup))
                         } else if execution
                             .directory
                             .path()
@@ -1450,11 +1477,12 @@ async fn execute_tests_with_discovery(
                             Ok(ProcessOutput::Cancelled)
                         } else {
                             result.and_then(|_| anyhow::bail!("Gradle did not acknowledge test cancellation; check Build Output before retrying"))
-                                .map_err(|error| error.context("Could not confirm Gradle test cancellation"))
+                                .map_err(|error| error.context(UnconfirmedTestCleanup))
                         }
                     }
                     Err(error) => Err(anyhow::Error::from(error)
-                        .context("Could not request Gradle test cancellation")),
+                        .context("Could not request Gradle test cancellation")
+                        .context(UnconfirmedTestCleanup)),
                 }
             } else {
                 drop(operation);
@@ -1464,12 +1492,17 @@ async fn execute_tests_with_discovery(
         Either::Right((result, _)) => result,
     };
     // A completed discovery future can enqueue cancellation during its last poll.
-    if !matches!(&result, Ok(ProcessOutput::Cancelled)) && !matches!(cancelled.try_recv(), Ok(None))
+    if !process_started.load(std::sync::atomic::Ordering::Relaxed)
+        && !matches!(&result, Ok(ProcessOutput::Cancelled))
+        && !matches!(cancelled.try_recv(), Ok(None))
     {
         control.cancel();
         result = Ok(ProcessOutput::Cancelled);
     }
-    if !execution.discover_only && !matches!(&result, Ok(ProcessOutput::Cancelled)) {
+    if !execution.discover_only
+        && !cancellation_requested.load(std::sync::atomic::Ordering::Relaxed)
+        && !matches!(&result, Ok(ProcessOutput::Cancelled))
+    {
         let directory = execution.directory.path().to_path_buf();
         let source_locations = sources.clone();
         let scan_control = control.clone();
@@ -1480,7 +1513,9 @@ async fn execute_tests_with_discovery(
             Either::Left((_, pending_report)) => {
                 control.cancel();
                 drop(pending_report);
-                result = Ok(ProcessOutput::Cancelled);
+                if result.is_ok() {
+                    result = Ok(ProcessOutput::Cancelled);
+                }
             }
             Either::Right((complete, _)) => reports = complete,
         }
@@ -1514,6 +1549,17 @@ mod tests {
     #[cfg(unix)]
     #[test]
     fn cancelling_test_execution_waits_for_gradle_acknowledgement() -> Result<()> {
+        cancellation_acknowledgement(true)
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn missing_cancellation_acknowledgement_is_reported_as_an_error() -> Result<()> {
+        cancellation_acknowledgement(false)
+    }
+
+    #[cfg(unix)]
+    fn cancellation_acknowledgement(write_acknowledgement: bool) -> Result<()> {
         let executor = BackgroundExecutor::new(Arc::new(gpui::ThreadedDispatcher::new()));
         let root = tempfile::tempdir()?;
         let directory = tempfile::tempdir()?;
@@ -1524,13 +1570,14 @@ mod tests {
 printf 'started\n'
 while [ ! -f "$KODA_CANCEL_FILE" ]; do sleep 0.01; done
 printf done > "$KODA_DRAINED"
-printf done > "$KODA_ACK_FILE"
+if [ "$KODA_WRITE_ACK" = "true" ]; then printf done > "$KODA_ACK_FILE"; fi
 exit 1
 "#,
         )?;
         let execution = TestExecution {
             root: root.path().into(),
             environment: [
+                ("KODA_WRITE_ACK".into(), write_acknowledgement.to_string()),
                 (
                     "KODA_CANCEL_FILE".into(),
                     directory
@@ -1578,10 +1625,19 @@ exit 1
                 },
                 async { while snapshots.next().await.is_some() {} },
             );
-            assert!(
-                matches!(outcome.2, Ok(ProcessOutput::Cancelled)),
-                "Expected cancellation after the worker acknowledgement"
-            );
+            if write_acknowledgement {
+                assert!(
+                    matches!(outcome.2, Ok(ProcessOutput::Cancelled)),
+                    "Expected cancellation after the worker acknowledgement"
+                );
+            } else {
+                assert!(
+                    outcome
+                        .2
+                        .is_err_and(|error| error.is::<UnconfirmedTestCleanup>()),
+                    "Missing acknowledgement must not be hidden by the consumed cancellation receiver"
+                );
+            }
             assert!(
                 drained.is_file(),
                 "Cancellation must await the test worker's acknowledgement"
@@ -1882,6 +1938,76 @@ exit 1
             }
             panel.pending_gradle_operation = None;
             panel.test_operation_id = None;
+        });
+        cx.run_until_parked();
+    }
+
+    #[gpui::test]
+    async fn unconfirmed_cleanup_blocks_replacement_tests_and_gradle_work(
+        cx: &mut gpui::TestAppContext,
+    ) {
+        let (_state, panel, cx) = runner_fixture(cx).await;
+        panel.update_in(cx, |panel, window, cx| {
+            let token = publish_runner_model(panel, cx);
+            let request = request(panel, 1, cx);
+            let revision = panel.test_panel.update(cx, |tests, cx| {
+                tests.begin(
+                    request.root.clone(),
+                    request.target.clone(),
+                    request.kind,
+                    request.serial.clone(),
+                    Some(request.selectors.clone()),
+                    cx,
+                )
+            });
+            let (session, output, logs) = panel.build_panel.update(cx, |build, cx| {
+                build.begin(BuildTab::Output, "Tests".into(), false, window, cx)
+            });
+            drop(output);
+            logs.detach();
+            panel.test_operation_id = Some(1);
+            panel.active_build_session = Some((BuildTab::Output, session));
+            panel.running = true;
+            assert!(
+                !panel.finish_test_run(
+                    TestRun {
+                        request,
+                        token,
+                        session,
+                        revision
+                    },
+                    (
+                        Vec::new(),
+                        Vec::new(),
+                        Err(anyhow::anyhow!("No completion acknowledgement")
+                            .context(UnconfirmedTestCleanup)),
+                        None
+                    ),
+                    cx
+                )
+            );
+            assert_eq!(panel.test_operation_id, Some(1));
+            assert!(panel.running);
+            assert!(panel.test_panel.read(cx).cleanup_blocked);
+            assert!(
+                panel
+                    .test_panel
+                    .read(cx)
+                    .message
+                    .contains("reopen this workspace")
+            );
+            let sequence = panel.next_operation_id;
+            panel.start_tests(TestKind::Unit, Vec::new(), true, window, cx);
+            panel.gradle(GradleOperation::Run, window, cx);
+            panel.gradle(GradleOperation::Debug, window, cx);
+            panel.sync_project(window, cx);
+            panel.cancel_tests(cx);
+            assert_eq!(panel.next_operation_id, sequence);
+            assert_eq!(panel.test_operation_id, Some(1));
+            assert!(panel.test_task.is_none());
+            assert!(panel.build_task.is_none());
+            assert!(panel.sync_task.is_none());
+            assert!(panel.pending_test.is_none());
         });
         cx.run_until_parked();
     }
@@ -2561,7 +2687,8 @@ run)
 printf '{"id":{"class":"dev.Tests","method":"completed"},"status":"Passed"}\n' > "$KODA_TEST_OUTPUT/events.jsonl"
 mkdir "$KODA_TEST_OUTPUT/unit"
 printf '<testsuite><testcase' > "$KODA_TEST_OUTPUT/unit/TEST-interrupted.xml"
-sleep 30 ;;
+while [ ! -f "$KODA_TEST_OUTPUT/cancel-requested" ]; do sleep 0.01; done
+printf done > "$KODA_TEST_OUTPUT/execution-finished" ;;
 esac
 "#).unwrap();
         let environment = collections::HashMap::from_iter([(

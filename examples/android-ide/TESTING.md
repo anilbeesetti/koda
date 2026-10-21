@@ -15,7 +15,9 @@ Generated/dynamic cases can therefore appear only after execution.
 Each run uses a fresh report directory. Stop retains completed results while the
 process and scanner finish cancellation. Gradle acknowledges cancellation through
 its build cancellation service before a replacement run is admitted (validated
-with Gradle 8.11.1 and 9.6.1). Unsupported cancellation services fail explicitly.
+with Gradle 8.11.1 and 9.6.1). Unsupported cancellation services fail explicitly. If completion cannot be
+confirmed, reruns stay blocked: confirm the old test process has stopped, then
+reopen the workspace.
 Saving, selected-model refresh, variant/device changes and edits invalidate old
 results; interrupted runs and incomplete reports remain visible as such.
 
