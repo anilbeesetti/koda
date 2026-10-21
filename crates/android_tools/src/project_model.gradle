@@ -90,7 +90,7 @@ gradle.projectsEvaluated {
     def sources = { project, component ->
         def result = []
         def compilation = androidKotlinCompilation(project, component)
-        ['java': 'java', 'kotlin': 'kotlin', 'res': 'resources'].each { property, kind ->
+        ['java': 'java', 'kotlin': 'kotlin', 'res': 'resources', 'assets': 'assets'].each { property, kind ->
             def source = optional(component.sources, property)
             def provider = optional(source, 'all')
             def staticProvider = optional(source, 'static')
@@ -181,7 +181,7 @@ gradle.projectsEvaluated {
                             inputs.files(sourceSet.kotlin)
                         }
                     }
-                    ['java', 'kotlin', 'res', 'manifests'].each { kind ->
+                    ['java', 'kotlin', 'res', 'assets', 'manifests'].each { kind ->
                         def provider = optional(optional(component.sources, kind), 'all')
                         if (provider != null) inputs.files(provider)
                     }

@@ -1,3 +1,4 @@
+mod android_project_tree;
 pub mod project_panel_settings;
 mod undo;
 mod utils;
@@ -144,6 +145,7 @@ pub struct NewSearchInDirectory {
 
 pub struct ProjectPanel {
     project: Entity<Project>,
+    android_tree: android_project_tree::AndroidTree,
     fs: Arc<dyn Fs>,
     focus_handle: FocusHandle,
     scroll_handle: UniformListScrollHandle,
@@ -543,7 +545,11 @@ pub fn init(cx: &mut App) {
         workspace.register_action(|workspace, action: &CollapseAllEntries, window, cx| {
             if let Some(panel) = workspace.panel::<ProjectPanel>(cx) {
                 panel.update(cx, |panel, cx| {
-                    panel.collapse_all_entries(action, window, cx);
+                    if panel.android_tree.enabled {
+                        panel.android_collapse_all(cx);
+                    } else {
+                        panel.collapse_all_entries(action, window, cx);
+                    }
                 });
             }
         });
@@ -551,7 +557,11 @@ pub fn init(cx: &mut App) {
         workspace.register_action(|workspace, action: &ExpandAllEntries, window, cx| {
             if let Some(panel) = workspace.panel::<ProjectPanel>(cx) {
                 panel.update(cx, |panel, cx| {
-                    panel.expand_all_entries(action, window, cx);
+                    if panel.android_tree.enabled {
+                        panel.android_expand_all(cx);
+                    } else {
+                        panel.expand_all_entries(action, window, cx);
+                    }
                 });
             }
         });
@@ -560,6 +570,9 @@ pub fn init(cx: &mut App) {
             workspace.open_panel::<ProjectPanel>(window, cx);
             if let Some(panel) = workspace.panel::<ProjectPanel>(cx) {
                 panel.update(cx, |panel, cx| {
+                    if panel.android_tree.enabled {
+                        return;
+                    }
                     if let Some(first_marked) = panel.marked_entries.first() {
                         let first_marked = *first_marked;
                         panel.marked_entries.clear();
@@ -574,14 +587,20 @@ pub fn init(cx: &mut App) {
             workspace.open_panel::<ProjectPanel>(window, cx);
             if let Some(panel) = workspace.panel::<ProjectPanel>(cx) {
                 panel.update(cx, |panel, cx| {
-                    panel.duplicate(action, window, cx);
+                    if !panel.android_tree.enabled {
+                        panel.duplicate(action, window, cx);
+                    }
                 });
             }
         });
 
         workspace.register_action(|workspace, action: &Delete, window, cx| {
             if let Some(panel) = workspace.panel::<ProjectPanel>(cx) {
-                panel.update(cx, |panel, cx| panel.delete(action, window, cx));
+                panel.update(cx, |panel, cx| {
+                    if !panel.android_tree.enabled {
+                        panel.delete(action, window, cx);
+                    }
+                });
             }
         });
 
@@ -885,6 +904,7 @@ impl ProjectPanel {
             let weak_project_panel = cx.weak_entity();
             let mut this = Self {
                 project: project.clone(),
+                android_tree: android_project_tree::AndroidTree::new(workspace.database_id()),
                 hover_scroll_task: None,
                 fs: workspace.app_state().fs.clone(),
                 focus_handle,
@@ -926,6 +946,7 @@ impl ProjectPanel {
                 ),
             };
             this.update_visible_entries(None, false, false, window, cx);
+            this.observe_android_tree(cx);
 
             this
         });
@@ -4387,6 +4408,9 @@ impl ProjectPanel {
     }
 
     pub fn selected_entry_project_path(&self, cx: &App) -> Option<ProjectPath> {
+        if self.android_tree.enabled {
+            return self.android_selected_path(cx);
+        }
         let (worktree, entry) = self.selected_sub_entry(cx)?;
         Some(ProjectPath {
             worktree_id: worktree.read(cx).id(),
@@ -7034,6 +7058,9 @@ impl ProjectPanel {
     fn dispatch_context(&self, window: &Window, cx: &Context<Self>) -> KeyContext {
         let mut dispatch_context = KeyContext::new_with_defaults();
         dispatch_context.add("ProjectPanel");
+        if self.android_tree.enabled {
+            dispatch_context.add("AndroidProjectPanel");
+        }
         dispatch_context.add("menu");
 
         let identifier = if self.filename_editor.focus_handle(cx).is_focused(window) {
@@ -7054,6 +7081,11 @@ impl ProjectPanel {
         window: &mut Window,
         cx: &mut Context<Self>,
     ) -> Result<()> {
+        if self.android_tree.enabled {
+            if self.reveal_android_entry(entry_id, cx) {
+                return Ok(());
+            }
+        }
         let worktree = project
             .read(cx)
             .worktree_for_entry(entry_id, cx)
@@ -7316,6 +7348,9 @@ fn item_width_estimate(depth: usize, item_text_chars: usize, is_symlink: bool) -
 
 impl Render for ProjectPanel {
     fn render(&mut self, window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
+        if self.android_tree.enabled {
+            return self.render_android_tree(window, cx).into_any_element();
+        }
         if !cx.has_active_drag() {
             self.clear_drag_state(cx);
         }
@@ -7522,7 +7557,7 @@ impl Render for ProjectPanel {
                                 .flex_none()
                                 .px_2()
                                 .justify_between()
-                                .child(Label::new("Project").weight(FontWeight::MEDIUM))
+                                .child(self.render_project_view_selector(cx))
                                 .child(
                                     h_flex()
                                         .gap_1()
@@ -7978,6 +8013,7 @@ impl Render for ProjectPanel {
                     )
                     .with_priority(3)
                 }))
+                .into_any_element()
         } else {
             let focus_handle = self.focus_handle(cx);
             let workspace = self.workspace.clone();
@@ -8037,6 +8073,7 @@ impl Render for ProjectPanel {
                         ))
                     })
                 })
+                .into_any_element()
         }
     }
 }

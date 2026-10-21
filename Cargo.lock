@@ -14273,10 +14273,12 @@ dependencies = [
 name = "project_panel"
 version = "0.1.0"
 dependencies = [
+ "android_tools",
  "anyhow",
  "client",
  "collections",
  "criterion",
+ "db",
  "editor",
  "file_icons",
  "fs",

@@ -1021,6 +1021,12 @@
     },
   },
   {
+    "context": "AndroidProjectPanel",
+    "bindings": {
+      "enter": "menu::Confirm",
+    },
+  },
+  {
     "context": "ProjectPanel && not_editing",
     "use_key_equivalents": true,
     "bindings": {
