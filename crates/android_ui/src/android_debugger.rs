@@ -434,7 +434,11 @@ impl AndroidPanel {
         cx.notify();
     }
 
-    pub(super) fn run_configuration_picker(&self, cx: &Context<Self>) -> impl IntoElement {
+    pub(super) fn run_configuration_picker(
+        &self,
+        compact: bool,
+        cx: &Context<Self>,
+    ) -> impl IntoElement {
         let configurations = self.run_configurations.clone();
         let panel = cx.weak_entity();
         div().max_w(px(140.)).min_w_0().child(
@@ -442,9 +446,13 @@ impl AndroidPanel {
                 .trigger(
                     Button::new(
                         "android-run-configuration",
-                        self.selected_run_configuration
-                            .clone()
-                            .unwrap_or_else(|| "Default launcher".into()),
+                        if compact {
+                            "Launches".to_owned()
+                        } else {
+                            self.selected_run_configuration
+                                .clone()
+                                .unwrap_or_else(|| "Default launcher".into())
+                        },
                     )
                     .truncate(true)
                     .tooltip(Tooltip::text("Choose an Android run configuration"))
@@ -583,13 +591,17 @@ impl AndroidPanel {
         cx.notify();
     }
 
-    pub(super) fn debug_process_picker(&self, cx: &Context<Self>) -> impl IntoElement {
+    pub(super) fn debug_process_picker(
+        &self,
+        compact: bool,
+        cx: &Context<Self>,
+    ) -> impl IntoElement {
         let processes = self.debug_processes.clone();
         let context = self.debug_process_context.clone();
         let panel = cx.weak_entity();
         div().max_w(px(130.)).min_w_0().child(
             PopoverMenu::new("android-debug-process")
-                .trigger(Button::new("android-debug-process", "Attach process…")
+                .trigger(Button::new("android-debug-process", if compact { "Attach…" } else { "Attach process…" })
                     .truncate(true)
                     .tooltip(Tooltip::text("Refresh and attach to an Android application process"))
                     .disabled(self.debugger_controls_busy() || self.debug_forward.is_some()).tab_index(0isize))

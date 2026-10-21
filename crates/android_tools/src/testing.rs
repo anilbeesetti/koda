@@ -181,6 +181,45 @@ def module = System.getProperty('koda.test.module')
 def variantName = System.getProperty('koda.test.variant')
 def destination = new File(System.getProperty('koda.test.output'))
 def deviceTests = System.getProperty('koda.test.kind') == 'device'
+if (gradle.parent == null) {
+    // --no-daemon can still fork a single-use daemon outside the CLI process group.
+    // Ask Gradle to stop its workers before the client reports cancellation complete.
+    def cancellationToken
+    try {
+        def tokenType = Class.forName('org.gradle.initialization.BuildCancellationToken')
+        cancellationToken = gradle.services.get(tokenType)
+        if (cancellationToken == null || tokenType.getMethod('cancel') == null) {
+            throw new IllegalStateException('Missing Gradle build cancellation service')
+        }
+    } catch (Exception error) {
+        throw new GradleException('This Gradle version does not provide the build cancellation service required by the Koda test runner.', error)
+    }
+    def cancellationFinished = new java.util.concurrent.atomic.AtomicBoolean(false)
+    def cancellationMarker = new File(destination, 'cancel-requested')
+    def cancellationWatcher = new Thread({
+        try {
+            while (!cancellationFinished.get()) {
+                if (cancellationMarker.isFile()) {
+                    cancellationToken.cancel()
+                    break
+                }
+                Thread.sleep(100)
+            }
+        } catch (InterruptedException ignored) {
+            Thread.currentThread().interrupt()
+        } catch (Exception error) {
+            logger.error('Koda could not request Gradle test cancellation', error)
+            new File(destination, 'cancellation-error').text = error.toString()
+        }
+    }, 'koda-test-cancellation')
+    cancellationWatcher.daemon = true
+    gradle.buildFinished {
+        cancellationFinished.set(true)
+        cancellationWatcher.interrupt()
+        new File(destination, 'execution-finished').text = 'finished'
+    }
+    cancellationWatcher.start()
+}
 gradle.beforeProject { project ->
     if (project.path == module) {
         ['com.android.application', 'com.android.library'].each { plugin ->

@@ -1370,14 +1370,17 @@ async fn execute_tests_with_discovery(
     };
     let mut sources = Vec::new();
     let mut reports = testing::TestResults::default();
+    let process_started = std::sync::atomic::AtomicBool::new(false);
     let operation = async {
         sources = discovery.await?;
         if execution.discover_only {
             return Ok(ProcessOutput::Success(String::new()));
         }
         let (_keep_cancel, never_cancel) = oneshot::channel();
+        let command = command(execution.run.clone())?;
+        process_started.store(true, std::sync::atomic::Ordering::Relaxed);
         let mut run = android_build::command_output(
-            command(execution.run.clone())?,
+            command,
             &executor,
             Duration::from_secs(3600),
             output.clone(),
@@ -1419,8 +1422,44 @@ async fn execute_tests_with_discovery(
     let mut result = match select(&mut cancelled, operation).await {
         Either::Left((_, operation)) => {
             control.cancel();
-            drop(operation);
-            Ok(ProcessOutput::Cancelled)
+            if process_started.load(std::sync::atomic::Ordering::Relaxed) {
+                // Gradle's single-use daemon can leave the launcher's process
+                // group. Ask its build cancellation token to stop test workers,
+                // then retain the reservation until Gradle acknowledges completion.
+                match std::fs::write(
+                    execution.directory.path().join("cancel-requested"),
+                    b"cancel",
+                ) {
+                    Ok(()) => {
+                        let result = operation.await;
+                        if execution
+                            .directory
+                            .path()
+                            .join("cancellation-error")
+                            .is_file()
+                        {
+                            Err(anyhow::anyhow!(
+                                "Gradle could not cancel test execution; check Build Output before retrying"
+                            ))
+                        } else if execution
+                            .directory
+                            .path()
+                            .join("execution-finished")
+                            .is_file()
+                        {
+                            Ok(ProcessOutput::Cancelled)
+                        } else {
+                            result.and_then(|_| anyhow::bail!("Gradle did not acknowledge test cancellation; check Build Output before retrying"))
+                                .map_err(|error| error.context("Could not confirm Gradle test cancellation"))
+                        }
+                    }
+                    Err(error) => Err(anyhow::Error::from(error)
+                        .context("Could not request Gradle test cancellation")),
+                }
+            } else {
+                drop(operation);
+                Ok(ProcessOutput::Cancelled)
+            }
         }
         Either::Right((result, _)) => result,
     };
@@ -1471,6 +1510,97 @@ fn dirty_test_source(
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[cfg(unix)]
+    #[test]
+    fn cancelling_test_execution_waits_for_gradle_acknowledgement() -> Result<()> {
+        let executor = BackgroundExecutor::new(Arc::new(gpui::ThreadedDispatcher::new()));
+        let root = tempfile::tempdir()?;
+        let directory = tempfile::tempdir()?;
+        let drained = root.path().join("drained");
+        std::fs::write(
+            root.path().join("gradlew"),
+            r#"#!/bin/sh
+printf 'started\n'
+while [ ! -f "$KODA_CANCEL_FILE" ]; do sleep 0.01; done
+printf done > "$KODA_DRAINED"
+printf done > "$KODA_ACK_FILE"
+exit 1
+"#,
+        )?;
+        let execution = TestExecution {
+            root: root.path().into(),
+            environment: [
+                (
+                    "KODA_CANCEL_FILE".into(),
+                    directory
+                        .path()
+                        .join("cancel-requested")
+                        .to_string_lossy()
+                        .into_owned(),
+                ),
+                (
+                    "KODA_ACK_FILE".into(),
+                    directory
+                        .path()
+                        .join("execution-finished")
+                        .to_string_lossy()
+                        .into_owned(),
+                ),
+                (
+                    "KODA_DRAINED".into(),
+                    drained.to_string_lossy().into_owned(),
+                ),
+            ]
+            .into_iter()
+            .collect(),
+            directory,
+            sources: Vec::new(),
+            run: Vec::new(),
+            discover_only: false,
+        };
+        let (output, mut logs) = futures::channel::mpsc::channel(16);
+        let (progress, mut snapshots) = futures::channel::mpsc::channel(1);
+        let (cancel, cancelled) = oneshot::channel();
+        let run_executor = executor.clone();
+        let work = async {
+            let (outcome, (), ()) = futures::join!(
+                execute_tests(execution, run_executor, output, cancelled, progress),
+                async {
+                    let mut cancel = Some(cancel);
+                    while let Some(line) = logs.next().await {
+                        if line.text == "started"
+                            && let Some(cancel) = cancel.take()
+                        {
+                            cancel.send(()).expect("Test process is still running");
+                        }
+                    }
+                },
+                async { while snapshots.next().await.is_some() {} },
+            );
+            assert!(
+                matches!(outcome.2, Ok(ProcessOutput::Cancelled)),
+                "Expected cancellation after the worker acknowledgement"
+            );
+            assert!(
+                drained.is_file(),
+                "Cancellation must await the test worker's acknowledgement"
+            );
+        };
+        futures::executor::block_on(async {
+            match select(
+                Box::pin(work),
+                Box::pin(executor.timer(Duration::from_secs(10))),
+            )
+            .await
+            {
+                Either::Left(_) => Ok(()),
+                Either::Right(_) => {
+                    anyhow::bail!("Timed out waiting for cooperative test cancellation")
+                }
+            }
+        })
+    }
 
     #[test]
     fn dirty_test_sources_follow_selected_external_roots() {

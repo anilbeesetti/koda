@@ -4074,14 +4074,15 @@ impl AndroidPanel {
             })
     }
 
-    fn render_toolbar(&mut self, _window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
+    fn render_toolbar(&mut self, window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
+        let compact = window.viewport_size().width < px(1000.);
         h_flex()
             .gap_1()
             .child(div().max_w(px(130.)).child(self.project_picker(cx)))
             .child(self.target_picker("toolbar-target", cx))
             .child(self.device_picker("toolbar-device", cx))
-            .child(self.run_configuration_picker(cx))
-            .child(self.debug_process_picker(cx))
+            .child(self.run_configuration_picker(compact, cx))
+            .child(self.debug_process_picker(compact, cx))
             .when(self.debug_forward.is_some(), |this| {
                 this.child(
                     IconButton::new("disconnect-android-debugger", IconName::Stop)
