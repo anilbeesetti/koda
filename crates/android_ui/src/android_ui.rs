@@ -4015,9 +4015,7 @@ fn java_model_arguments_match(parsed: &serde_json::Value, root: &Path) -> bool {
 
 fn java_is_configured(root: &Path) -> bool {
     android_tools::kotlin::read_settings(root)
-        .and_then(|text| {
-            settings::parse_json_with_comments::<serde_json::Value>(&text).map_err(Into::into)
-        })
+        .and_then(|text| settings::parse_json_with_comments::<serde_json::Value>(&text))
         .log_err()
         .is_some_and(|settings| java_model_arguments_match(&settings, root))
 }
@@ -5509,7 +5507,7 @@ mod tests {
                     .is_file()
             );
             assert!(!root.join(".koda/android-java").exists());
-            let mut moved = settings.clone();
+            let mut moved = settings;
             let other_cache =
                 "/missing/old-profile/projects/old-key/external_build_system/android-v1/java";
             let old_arguments = json!([
