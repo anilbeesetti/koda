@@ -7,7 +7,7 @@ class App {
             val local: Int = 123
             return "Hello world."
         }
-    
+
     override fun toString(): String = "App"
 }
 
