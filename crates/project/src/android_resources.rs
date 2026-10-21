@@ -2854,7 +2854,7 @@ fn resource_scan_current(
     token: &ModelToken,
     cx: &AsyncApp,
 ) -> Result<bool> {
-    Ok(project.read_with(cx, |project, cx| {
+    project.read_with(cx, |project, cx| {
         project.android_model.is_current(token)
             && !project.android_resource_model_inputs_dirty(cx)
             && project.is_local()
@@ -2862,7 +2862,7 @@ fn resource_scan_current(
                 &project.worktree_store(),
                 cx,
             )
-    })?)
+    })
 }
 
 async fn build_index(

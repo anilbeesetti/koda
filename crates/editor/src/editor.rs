@@ -1072,7 +1072,7 @@ pub struct Editor {
     linked_editing_range_task: Option<Task<Option<()>>>,
     linked_edit_ranges: linked_editing_ranges::LinkedEditingRanges,
     pending_rename: Option<RenameState>,
-    resource_rename_preparation: Option<futures::channel::oneshot::Sender<()>>,
+    rename_preparation: Option<futures::channel::oneshot::Sender<()>>,
     pending_inline_input: Option<InlineInputState>,
     searchable: bool,
     cursor_shape: CursorShape,
@@ -2465,7 +2465,7 @@ impl Editor {
             document_highlights_task: None,
             linked_editing_range_task: None,
             pending_rename: None,
-            resource_rename_preparation: None,
+            rename_preparation: None,
             pending_inline_input: None,
             searchable: !is_minimap,
             cursor_shape: EditorSettings::get_global(cx)
@@ -3586,7 +3586,7 @@ impl Editor {
     ) -> bool {
         let mut dismissed = false;
 
-        dismissed |= self.resource_rename_preparation.take().is_some();
+        dismissed |= self.rename_preparation.take().is_some();
         dismissed |= self.take_rename(false, window, cx).is_some();
         dismissed |= self.take_inline_input(window, cx).is_some();
         dismissed |= self.hide_blame_popover(true, cx);
@@ -8132,7 +8132,7 @@ impl Editor {
     ) -> Option<Task<Result<()>>> {
         use language::ToOffset as _;
 
-        self.resource_rename_preparation.take();
+        self.rename_preparation.take();
 
         if self.read_only(cx) {
             return None;
@@ -8154,21 +8154,44 @@ impl Editor {
             return None;
         }
 
+        let source_multibuffer = self.buffer.clone();
         let snapshot = cursor_buffer.read(cx).snapshot();
+        let source_version = snapshot.version().clone();
         let cursor_buffer_offset = cursor_buffer_position.to_offset(&snapshot);
         let head_buffer_offset = head_buffer_position.to_offset(&snapshot);
         let cursor_buffer_offset_end = cursor_buffer_position_end.to_offset(&snapshot);
         let prepare_rename = provider.range_for_rename(&cursor_buffer, cursor_buffer_position, cx);
         drop(snapshot);
+        let (cancel, cancelled) = futures::channel::oneshot::channel();
+        self.rename_preparation = Some(cancel);
 
         Some(cx.spawn_in(window, async move |this, cx| {
-            let rename_target = prepare_rename.await?;
+            let Some(rename_target) =
+                resource_rename::await_preparation(prepare_rename, cancelled).await
+            else {
+                return Ok(());
+            };
+            this.update(cx, |this, _| {
+                this.rename_preparation.take();
+            })?;
+            let rename_target = rename_target?;
             if let Some(RenameTarget {
                 range: rename_range,
                 language_server_id,
             }) = rename_target
             {
                 this.update_in(cx, |this, window, cx| {
+                    // The target range belongs to the text and cursor captured before
+                    // preparation. Mixing it with later offsets can cross an excerpt
+                    // boundary or put the inline rename outside the current buffer.
+                    if this.read_only(cx)
+                        || this.buffer != source_multibuffer
+                        || cursor_buffer.read(cx).version() != source_version
+                        || this.selections.newest_anchor().head() != selection.head()
+                        || this.selections.newest_anchor().tail() != selection.tail()
+                    {
+                        return;
+                    }
                     let snapshot = cursor_buffer.read(cx).snapshot();
                     let rename_buffer_range = rename_range.to_offset(&snapshot);
                     let cursor_offset_in_rename_range =
@@ -8178,12 +8201,17 @@ impl Editor {
                     let tail_offset_in_rename_range =
                         cursor_buffer_offset_end.saturating_sub(rename_buffer_range.start);
 
-                    this.take_rename(false, window, cx);
                     let buffer = this.buffer.read(cx).read(cx);
+                    if !buffer.can_resolve(&cursor) {
+                        return;
+                    }
                     let cursor_offset = cursor.to_offset(&buffer);
                     let rename_start =
                         cursor_offset.saturating_sub_usize(cursor_offset_in_rename_range);
                     let rename_end = rename_start + rename_buffer_range.len();
+                    if rename_end > buffer.len() {
+                        return;
+                    }
                     let range = buffer.anchor_before(rename_start)..buffer.anchor_after(rename_end);
                     let mut old_highlight_id = None;
                     let old_name: Arc<str> = buffer
@@ -8204,6 +8232,7 @@ impl Editor {
                         .into();
 
                     drop(buffer);
+                    this.take_rename(false, window, cx);
 
                     // Position the selection in the rename editor so that it matches the current selection.
                     this.show_local_selections = false;
@@ -8371,7 +8400,7 @@ impl Editor {
             });
             if let Some(plan) = plan {
                 let (cancel, cancelled) = futures::channel::oneshot::channel();
-                self.resource_rename_preparation = Some(cancel);
+                self.rename_preparation = Some(cancel);
                 return Some(cx.spawn_in(window, async move |editor, cx| {
                     let executor = cx.background_executor().clone();
                     let preparation = async move {
@@ -8392,7 +8421,7 @@ impl Editor {
                         return Ok(());
                     };
                     editor.update(cx, |editor, _| {
-                        editor.resource_rename_preparation.take();
+                        editor.rename_preparation.take();
                     })?;
                     let Some((plan, preview)) = prepared? else {
                         let rename = editor

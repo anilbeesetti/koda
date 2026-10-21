@@ -158,14 +158,14 @@ mod tests {
     }
 
     #[gpui::test]
-    async fn test_resource_rename_preparation_escape_and_repeat(cx: &mut TestAppContext) {
+    async fn test_rename_preparation_escape_and_repeat(cx: &mut TestAppContext) {
         let (_, review, _, mut cx) = open_review(cx);
         let editor = review.read_with(&cx, |review, _| review.preview.clone());
         for repeat in [false, true] {
             let (cancel, cancelled) = oneshot::channel();
             let (complete, pending) = oneshot::channel::<()>();
             editor.update(&mut cx, |editor, _| {
-                editor.resource_rename_preparation = Some(cancel);
+                editor.rename_preparation = Some(cancel);
             });
             let mut preparation = Box::pin(await_preparation(pending, cancelled));
             assert!(preparation.as_mut().now_or_never().is_none());
@@ -175,7 +175,7 @@ mod tests {
                 } else {
                     editor.cancel(&actions::Cancel, window, cx);
                 }
-                assert!(editor.resource_rename_preparation.is_none());
+                assert!(editor.rename_preparation.is_none());
             });
             assert!(preparation.await.is_none());
             assert!(
@@ -186,13 +186,13 @@ mod tests {
     }
 
     #[gpui::test]
-    async fn test_resource_rename_preparation_editor_release(cx: &mut TestAppContext) {
+    async fn test_rename_preparation_editor_release(cx: &mut TestAppContext) {
         let (_, _, _, mut cx) = open_review(cx);
         let (cancel, cancelled) = oneshot::channel();
         let editor = cx.update(|window, cx| {
             cx.new(|cx| {
                 let mut editor = Editor::multi_line(window, cx);
-                editor.resource_rename_preparation = Some(cancel);
+                editor.rename_preparation = Some(cancel);
                 editor
             })
         });
@@ -206,9 +206,7 @@ mod tests {
     }
 
     #[gpui::test]
-    async fn test_resource_rename_preparation_cancellation_wins_ready_result(
-        cx: &mut TestAppContext,
-    ) {
+    async fn test_rename_preparation_cancellation_wins_ready_result(cx: &mut TestAppContext) {
         let (_, _, _, _cx) = open_review(cx);
         let (cancel, cancelled) = oneshot::channel();
         drop(cancel);
@@ -311,6 +309,100 @@ mod tests {
                 footer.bottom() <= viewport.height,
                 "Footer must remain visible after resizing: {footer:?}, viewport: {viewport:?}"
             );
+        }
+    }
+
+    #[gpui::test]
+    async fn test_delayed_rename_preparation_rejects_changed_editor(cx: &mut TestAppContext) {
+        use crate::test::editor_lsp_test_context::EditorLspTestContext;
+        use futures::StreamExt as _;
+        use std::collections::VecDeque;
+
+        init_test(cx, |_| {});
+        for scenario in [
+            "edit",
+            "cursor",
+            "escape",
+            "repeat",
+            "read-only",
+            "unchanged",
+        ] {
+            let mut test = EditorLspTestContext::new_rust(
+                lsp::ServerCapabilities {
+                    rename_provider: Some(lsp::OneOf::Right(lsp::RenameOptions {
+                        prepare_provider: Some(true),
+                        work_done_progress_options: Default::default(),
+                    })),
+                    ..Default::default()
+                },
+                cx,
+            )
+            .await;
+            test.set_state("let loˇcal = 1;");
+            let (first_complete, first_pending) = oneshot::channel();
+            let (second_complete, second_pending) = oneshot::channel();
+            let mut pending = VecDeque::from([first_pending, second_pending]);
+            let (started, mut requests) = futures::channel::mpsc::unbounded();
+            let _responses = test.set_request_handler::<lsp::request::PrepareRenameRequest, _, _>(
+                move |_, _, _| {
+                    let pending = pending.pop_front().expect("Expected preparation request");
+                    started.unbounded_send(()).expect("Preparation observer");
+                    async move {
+                        pending.await.expect("Release preparation response");
+                        Ok(Some(lsp::PrepareRenameResponse::Range(lsp::Range::new(
+                            lsp::Position::new(0, 4),
+                            lsp::Position::new(0, 9),
+                        ))))
+                    }
+                },
+            );
+            let first = test
+                .update_editor(|editor, window, cx| editor.rename(&actions::Rename, window, cx))
+                .expect("First rename preparation");
+            requests.next().await.expect("First request started");
+            assert!(test.editor(|editor, _, _| editor.pending_rename().is_none()));
+            match scenario {
+                "edit" => test.update_editor(|editor, window, cx| {
+                    editor.select_all(&actions::SelectAll, window, cx);
+                    editor.insert("x", window, cx);
+                }),
+                "cursor" => test.set_selections_state("let local = 1;ˇ"),
+                "escape" => test.update_editor(|editor, window, cx| {
+                    editor.cancel(&actions::Cancel, window, cx);
+                }),
+                "read-only" => test.update_editor(|editor, _, cx| {
+                    editor.set_read_only(true);
+                    cx.notify();
+                }),
+                _ => {}
+            }
+            if scenario == "repeat" {
+                let second = test
+                    .update_editor(|editor, window, cx| editor.rename(&actions::Rename, window, cx))
+                    .expect("Replacement rename preparation");
+                requests.next().await.expect("Second request started");
+                second_complete
+                    .send(())
+                    .expect("Complete current request first");
+                second.await.expect("Current rename completes");
+                assert!(test.editor(|editor, _, _| editor.pending_rename().is_some()));
+            } else {
+                drop(second_complete);
+            }
+            // Cancellation may already have dropped the server-side response receiver.
+            drop(first_complete.send(()));
+            first
+                .await
+                .expect("Stale preparation completes without an error");
+            test.run_until_parked();
+            assert_eq!(
+                test.editor(|editor, _, _| editor.pending_rename().is_some()),
+                matches!(scenario, "repeat" | "unchanged"),
+                "{scenario}",
+            );
+            if scenario == "edit" {
+                assert_eq!(test.buffer_text(), "x");
+            }
         }
     }
 
