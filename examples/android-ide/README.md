@@ -245,7 +245,7 @@ implementation research, compatibility boundaries, and integration checks.
 
 ## Shared Android project model
 
-Sync evaluates `kodaAndroidProjectModel` through the project's own Gradle wrapper.
+Sync evaluates `prepareAndroidProjectModel` through the project's own Gradle wrapper.
 It discovers the application targets, Android library and dynamic-feature modules,
 JVM project dependencies, and variant components in one versioned catalog. Main,
 unit-test, device-test, and test-fixture components retain separate source roots
@@ -262,16 +262,47 @@ configurations without its lock. The Java classpath exporter follows the same ru
 Sync's `export.gradle` is written into a unique OS temporary directory (normally
 outside the project) and removed when that request finishes or is cancelled. Existing
 `.koda/android-model/export.gradle` files from older versions are no longer used
-or overwritten. The persistent `.koda/android-model/selected.json` remains the
-managed projection used to configure the native Kotlin importer.
+or overwritten.
+
+Koda stores the complete versioned catalog at
+`<Koda cache>/projects/<SHA-256 of profile and canonical root>/external_build_system/android-v1/project.json`.
+The cache is isolated by Koda's Dev/Nightly/Stable profile and custom data directory. On Linux its root is
+`$XDG_CACHE_HOME/koda` (normally `~/.cache/koda`); on macOS it is
+`~/Library/Caches/Koda`, and on Windows `%LOCALAPPDATA%/Koda`. Profile suffixes and
+sandbox-specific cache locations follow the rest of Koda's cache storage.
+`selected.json` contains the native Kotlin importer's selected graph, `java/`
+contains Java import scripts and model data, and `kotlin/` contains the resource
+generation guard. Project-local settings remain in `.koda/settings.json`.
+Existing generated `.koda/android-model`, `.koda/android-java`, and
+`.koda/android-kotlin-official` files are left intact; Java setup replaces its
+managed legacy script arguments when next refreshed.
+
+Sync serializes the complete catalog off the UI thread and atomically publishes
+it only after checking the current project/model generation. A cancelled or
+superseded request discards its temporary file. Model input changes and fresh
+syncs invalidate cached catalogs. Published tooling projections remain available
+for language servers in other windows and are regenerated before the next import.
+Java's setup choice is recovered from project settings after cache eviction;
+old cached files alone never opt a replacement project into Java support. Managed
+Java paths migrate when switching Koda data profiles or release channels.
+Every Sync still runs Gradle, including after reopen: Koda does not restore the disk catalog as a current model or skip current Gradle
+warnings, errors, or arbitrary build-script inputs.
 
 Android Studio instead requests AGP's per-project, selected-variant models using
 the Gradle Tooling API ([Studio model fetchers](https://android.googlesource.com/platform/tools/adt/idea/+/mirror-goog-studio-main/project-system-gradle-sync/src/com/android/tools/idea/gradle/project/sync/ModelFetchers.kt),
 [AGP model builder](https://android.googlesource.com/platform/tools/base/+/mirror-goog-studio-main/build-system/gradle-core/src/main/java/com/android/build/gradle/internal/ide/v2/ModelBuilder.kt)).
 Its IntelliJ Gradle integration can inject helper init scripts, but writes them
 to temporary storage ([init-script utility](https://github.com/JetBrains/intellij-community/blob/master/plugins/gradle/src/org/jetbrains/plugins/gradle/service/execution/GradleInitScriptUtil.kt)).
-Koda's CLI JSON exporter remains a separate bridge; `.koda/android-model` is a
-Koda convention. The script's location does not cause Gradle's lock error:
+Android Studio and IntelliJ persist their imported model graph in the IDE system
+cache at `projects/<project-name>.<path-hash>/external_build_system/project.dat`
+([cache storage](https://github.com/JetBrains/intellij-community/blob/master/platform/external-system-impl/src/com/intellij/openapi/externalSystem/service/project/manage/ExternalProjectsDataStorage.java),
+[path construction](https://github.com/JetBrains/intellij-community/blob/master/platform/ide-core/src/com/intellij/openapi/project/ProjectUtil.kt)).
+Koda follows this separation between generated model data and project settings,
+using its own versioned JSON rather than IntelliJ's private binary format.
+Koda's CLI JSON exporter remains a separate bridge. Its tasks are named
+`prepareAndroidModuleModel` and `prepareAndroidProjectModel`;
+`prepareKotlinBuildScriptModel` belongs to Gradle's Kotlin DSL script model and
+is not an Android model collector. The script's location does not cause Gradle's lock error:
 [unsafe configuration resolution](https://docs.gradle.org/current/userguide/declaring_configurations.html#sec:configuration_unsafe_access)
 includes resolving another project's configuration from a task.
 

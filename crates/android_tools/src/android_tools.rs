@@ -5,6 +5,7 @@ pub mod preview;
 pub mod project_model;
 pub mod provision;
 pub(crate) mod shared_sdk;
+pub mod sync_cache;
 use anyhow::{Context as _, Result, bail, ensure};
 pub mod java;
 pub mod kotlin;

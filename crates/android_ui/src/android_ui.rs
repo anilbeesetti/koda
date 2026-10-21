@@ -427,6 +427,7 @@ struct KotlinPreferences {
 }
 
 const UNAVAILABLE_ANDROID_VARIANT: &str = "ZED_ANDROID_VARIANT_UNAVAILABLE";
+const MANAGED_JAVA_MODEL: &str = "KODA_MANAGED_ANDROID_JAVA";
 const PAUSED_JAVA_SERVERS: &str = "KODA_ANDROID_JAVA_PAUSED_SERVERS";
 
 #[derive(serde::Deserialize, serde::Serialize)]
@@ -1417,7 +1418,9 @@ impl AndroidPanel {
                     .await?
                     {
                         ProcessOutput::Success(output) => {
-                            android_tools::project_model::parse_model(&output, &root).map(Some)
+                            let model = android_tools::project_model::parse_model(&output, &root)?;
+                            let cache = android_tools::project_model::prepare_model_cache(&model)?;
+                            Ok(Some((model, cache)))
                         }
                         ProcessOutput::Cancelled => Ok(None),
                     }
@@ -1442,7 +1445,12 @@ impl AndroidPanel {
                                     .is_current(&model_token),
                             "The Android project changed during sync"
                         );
-                        Ok(targets)
+                        targets
+                            .map(|(model, cache)| {
+                                cache.commit()?;
+                                Ok(model)
+                            })
+                            .transpose()
                     });
                     let status = match &result {
                         Ok(Some(_)) => BuildStatus::Succeeded,
@@ -1514,7 +1522,7 @@ impl AndroidPanel {
                                 {
                                     panel.fail(error, window, cx);
                                 }
-                            } else if android_tools::java::is_configured(&expected_root)
+                            } else if java_is_configured(&expected_root)
                                 && let Some(target) = panel.selected_target.clone()
                             {
                                 panel.configure_java(target, window, cx);
@@ -2540,7 +2548,7 @@ impl AndroidPanel {
         let Some(root) = &self.root else {
             return Ok(());
         };
-        if !android_tools::java::is_configured(root) {
+        if !java_is_configured(root) {
             return Ok(());
         }
         let previous = android_tools::kotlin::read_settings(root)?;
@@ -2847,7 +2855,7 @@ impl AndroidPanel {
                     Ok(generation_error) => {
                         panel.status = "Managed Kotlin configured. Open a Kotlin file and wait for import and indexing. Variant and Gradle input changes refresh automatically.".into();
                         panel.error = generation_error.map(|error| format!("Android resource generation failed; generated symbols may be unavailable. Kotlin import can still proceed.\n{error:#}"));
-                        if android_tools::java::is_configured(&root) {
+                        if java_is_configured(&root) {
                             panel.configure_java(target, window, cx);
                         }
                     }
@@ -2882,7 +2890,7 @@ impl AndroidPanel {
             && self
                 .validate_official_kotlin_target(root, &target, cx)
                 .is_ok()
-            && android_tools::java::is_configured(root)
+            && java_is_configured(root)
         {
             // Keep the Kotlin error while refreshing an already configured Java model.
             self.configure_java(target, window, cx);
@@ -3128,6 +3136,12 @@ impl AndroidPanel {
         cx: &mut Context<Self>,
     ) -> android_tools::project_model::ModelToken {
         self.pause_managed_java(cx).log_err();
+        if let Some(previous) = self.project.read(cx).android_model().root() {
+            android_tools::sync_cache::invalidate(previous).log_err();
+        }
+        if let Some(root) = &root {
+            android_tools::sync_cache::invalidate(root).log_err();
+        }
         self.cancel_model_followup(cx);
         if self.root.as_ref() != root.as_ref() {
             self.model_input_roots.clear();
@@ -3273,7 +3287,7 @@ impl AndroidPanel {
                                         );
                                     } else if changed
                                         && let Some(root) = &panel.root
-                                        && android_tools::java::is_configured(root)
+                                        && java_is_configured(root)
                                     {
                                         panel.configure_java(target.clone(), window, cx);
                                     }
@@ -3951,6 +3965,63 @@ impl lsp::notification::Notification for RefreshJavaProjects {
     const METHOD: &'static str = "java/projectConfigurationsUpdate";
 }
 
+fn legacy_java_path_matches(path: &str, root: &Path, name: &str) -> bool {
+    let path = Path::new(path);
+    if path == root.join(".koda/android-java").join(name) {
+        return true;
+    }
+    path.ends_with(Path::new(".koda/android-java").join(name))
+        && path
+            .ancestors()
+            .nth(3)
+            .and_then(|root| root.canonicalize().ok())
+            .zip(root.canonicalize().ok())
+            .is_some_and(|(candidate, root)| candidate == root)
+}
+
+fn managed_java_model_path(path: &str, root: &Path, marked: bool) -> bool {
+    let path = Path::new(path);
+    path == android_tools::java::cache_directory(root).join("model.json")
+        || legacy_java_path_matches(&path.to_string_lossy(), root, "model.json")
+        || (marked && path.ends_with("external_build_system/android-v1/java/model.json"))
+}
+
+fn java_model_is_marked(parsed: &serde_json::Value) -> bool {
+    parsed
+        .pointer(&format!("/lsp/jdtls/binary/env/{MANAGED_JAVA_MODEL}"))
+        .and_then(serde_json::Value::as_str)
+        == Some("1")
+}
+
+fn java_model_arguments_match(parsed: &serde_json::Value, root: &Path) -> bool {
+    parsed
+        .pointer("/lsp/jdtls/settings/java/import/gradle/arguments")
+        .or_else(|| {
+            parsed
+                .pointer("/lsp/jdtls/initialization_options/settings/java/import/gradle/arguments")
+        })
+        .and_then(serde_json::Value::as_array)
+        .is_some_and(|arguments| {
+            arguments.iter().any(|argument| {
+                argument
+                    .as_str()
+                    .and_then(|argument| argument.strip_prefix("-Dzed.android.javaModel="))
+                    .is_some_and(|path| {
+                        managed_java_model_path(path, root, java_model_is_marked(parsed))
+                    })
+            })
+        })
+}
+
+fn java_is_configured(root: &Path) -> bool {
+    android_tools::kotlin::read_settings(root)
+        .and_then(|text| {
+            settings::parse_json_with_comments::<serde_json::Value>(&text).map_err(Into::into)
+        })
+        .log_err()
+        .is_some_and(|settings| java_model_arguments_match(&settings, root))
+}
+
 fn java_settings(previous: String, root: &Path, cx: &App) -> Result<String> {
     let parsed: serde_json::Value = settings::parse_json_with_comments(&previous)?;
     let existing_environment = parsed
@@ -3960,8 +4031,9 @@ fn java_settings(previous: String, root: &Path, cx: &App) -> Result<String> {
         .flatten()
         .filter_map(|(key, value)| value.as_str().map(|value| (key.clone(), value.to_owned())))
         .collect::<std::collections::BTreeMap<_, _>>();
-    let managed_environment =
+    let mut managed_environment =
         android_tools::managed::language_environment_with(existing_environment.iter())?;
+    managed_environment.insert(MANAGED_JAVA_MODEL.into(), "1".into());
     let pause = java_pause_state(&parsed)?;
     let mut options = parsed
         .pointer("/lsp/jdtls/initialization_options")
@@ -3976,13 +4048,15 @@ fn java_settings(previous: String, root: &Path, cx: &App) -> Result<String> {
         .or_else(|| parsed.pointer("/lsp/jdtls/initialization_options/settings"))
         .cloned()
         .unwrap_or_else(|| serde_json::json!({}));
-    let import = root
-        .join(".koda/android-java/import.gradle")
+    let import = android_tools::java::cache_directory(root)
+        .join("import.gradle")
         .to_string_lossy()
         .into_owned();
     let model = format!(
         "-Dzed.android.javaModel={}",
-        root.join(".koda/android-java/model.json").display()
+        android_tools::java::cache_directory(root)
+            .join("model.json")
+            .display()
     );
     let arguments = java_settings
         .pointer("/java/import/gradle/arguments")
@@ -3990,7 +4064,34 @@ fn java_settings(previous: String, root: &Path, cx: &App) -> Result<String> {
         .unwrap_or_else(|| serde_json::json!([]));
     let mut arguments: Vec<String> = serde_json::from_value(arguments)
         .context("Java Gradle arguments must be an array of strings")?;
-    arguments.retain(|argument| !argument.starts_with("-Dzed.android.javaModel="));
+    let previous_imports = arguments
+        .iter()
+        .filter_map(|argument| {
+            let path = argument.strip_prefix("-Dzed.android.javaModel=")?;
+            managed_java_model_path(path, root, java_model_is_marked(&parsed)).then(|| {
+                Path::new(path)
+                    .with_file_name("import.gradle")
+                    .to_string_lossy()
+                    .into_owned()
+            })
+        })
+        .collect::<Vec<_>>();
+    let mut migrated = Vec::new();
+    let mut previous_arguments = arguments.into_iter().peekable();
+    while let Some(argument) = previous_arguments.next() {
+        if argument == "--init-script"
+            && previous_arguments.peek().is_some_and(|path| {
+                legacy_java_path_matches(path, root, "import.gradle")
+                    || previous_imports.contains(path)
+            })
+        {
+            migrated.extend(["--init-script".to_owned(), import.clone()]);
+            previous_arguments.next();
+        } else if !argument.starts_with("-Dzed.android.javaModel=") {
+            migrated.push(argument);
+        }
+    }
+    arguments = migrated;
     if !arguments
         .windows(2)
         .any(|pair| pair == ["--init-script", &import])
@@ -4073,19 +4174,8 @@ fn paused_java_settings(previous: String, root: &Path, cx: &App) -> Result<Strin
     {
         return Ok(previous);
     }
-    let expected = format!(
-        "-Dzed.android.javaModel={}",
-        root.join(".koda/android-java/model.json").display()
-    );
     ensure!(
-        parsed
-            .pointer("/lsp/jdtls/settings/java/import/gradle/arguments")
-            .or_else(|| parsed
-                .pointer("/lsp/jdtls/initialization_options/settings/java/import/gradle/arguments"))
-            .and_then(serde_json::Value::as_array)
-            .is_some_and(|arguments| arguments
-                .iter()
-                .any(|argument| argument.as_str() == Some(&expected))),
+        java_model_arguments_match(&parsed, root),
         "The Java backend changed while syncing; its settings were preserved"
     );
     let original: Option<Vec<String>> = parsed
@@ -5322,6 +5412,161 @@ mod tests {
             panel.invalidate_model(Some("/another".into()), cx);
             assert!(panel.model_input_roots.is_empty());
         });
+    }
+
+    #[gpui::test]
+    fn managed_java_refresh_keeps_custom_init_scripts_in_their_original_order(
+        cx: &mut TestAppContext,
+    ) {
+        let _state = cx.update(AppState::test);
+        cx.update(|cx| {
+            let root = Path::new("/android project");
+            let initial = java_settings("{}".into(), root, cx).expect("Managed Java settings");
+            let mut settings: serde_json::Value =
+                settings::parse_json_with_comments(&initial).expect("Settings");
+            let arguments = json!([
+                "--init-script",
+                android_tools::java::cache_directory(root)
+                    .join("import.gradle")
+                    .to_string_lossy(),
+                "--init-script",
+                "/custom/after.gradle",
+                format!(
+                    "-Dzed.android.javaModel={}",
+                    android_tools::java::cache_directory(root)
+                        .join("model.json")
+                        .display()
+                )
+            ]);
+            settings["lsp"]["jdtls"]["settings"]["java"]["import"]["gradle"]["arguments"] =
+                arguments.clone();
+            let updated =
+                java_settings(settings.to_string(), root, cx).expect("Refresh managed Java");
+            let updated: serde_json::Value =
+                settings::parse_json_with_comments(&updated).expect("Refreshed settings");
+            assert_eq!(
+                updated["lsp"]["jdtls"]["settings"]["java"]["import"]["gradle"]["arguments"],
+                arguments
+            );
+        });
+    }
+
+    #[gpui::test]
+    fn managed_java_cache_eviction_and_legacy_migration_preserve_user_configuration(
+        cx: &mut TestAppContext,
+    ) {
+        let _state = cx.update(AppState::test);
+        let temporary = tempfile::tempdir().expect("Fixture root");
+        let root = temporary.path();
+        let legacy_import = root
+            .join(".koda/android-java/import.gradle")
+            .to_string_lossy()
+            .into_owned();
+        let legacy_model = format!(
+            "-Dzed.android.javaModel={}",
+            root.join(".koda/android-java/model.json").display()
+        );
+        let previous = json!({"lsp": {"jdtls": {"settings": {"java": {"import": {"gradle": {"arguments": ["--offline", "--init-script", "/custom/import.gradle", "--init-script", legacy_import, legacy_model]}}}}}}}).to_string();
+        cx.update(|cx| {
+            let paused =
+                paused_java_settings(previous, root, cx).expect("Pause legacy managed Java");
+            let migrated = java_settings(paused, root, cx).expect("Migrate legacy Java arguments");
+            let settings: serde_json::Value =
+                settings::parse_json_with_comments(&migrated).expect("Migrated settings");
+            assert_eq!(
+                settings["lsp"]["jdtls"]["settings"]["java"]["import"]["gradle"]["arguments"],
+                json!([
+                    "--offline",
+                    "--init-script",
+                    "/custom/import.gradle",
+                    "--init-script",
+                    android_tools::java::cache_directory(root)
+                        .join("import.gradle")
+                        .to_string_lossy(),
+                    format!(
+                        "-Dzed.android.javaModel={}",
+                        android_tools::java::cache_directory(root)
+                            .join("model.json")
+                            .display()
+                    )
+                ])
+            );
+            android_tools::java::prepare(root).expect("Prepare cache");
+            std::fs::create_dir(root.join(".koda")).expect("Settings directory");
+            std::fs::write(root.join(".koda/settings.json"), &migrated)
+                .expect("Persist Java preference");
+            std::fs::remove_dir_all(android_tools::sync_cache::directory(root))
+                .expect("Evict cache");
+            assert!(!android_tools::java::cache_directory(root).exists());
+            assert!(
+                java_is_configured(root),
+                "Sync must recover Java after cache eviction"
+            );
+            paused_java_settings(migrated, root, cx).expect("Pause Java with evicted cache");
+            assert!(
+                android_tools::java::prepare(root)
+                    .expect("Rebuild Java scripts")
+                    .is_file()
+            );
+            assert!(!root.join(".koda/android-java").exists());
+            let mut moved = settings.clone();
+            let other_cache =
+                "/missing/old-profile/projects/old-key/external_build_system/android-v1/java";
+            let old_arguments = json!([
+                "--offline",
+                "--init-script",
+                format!("{other_cache}/import.gradle"),
+                format!("-Dzed.android.javaModel={other_cache}/model.json")
+            ]);
+            moved["lsp"]["jdtls"]["settings"]["java"]["import"]["gradle"]["arguments"] =
+                old_arguments.clone();
+            moved["lsp"]["jdtls"]["initialization_options"]["settings"]["java"]["import"]["gradle"]
+                ["arguments"] = old_arguments;
+            std::fs::write(root.join(".koda/settings.json"), moved.to_string())
+                .expect("Settings from another profile");
+            assert!(
+                java_is_configured(root),
+                "Managed ownership must survive a data-profile change"
+            );
+            let migrated_profile =
+                java_settings(moved.to_string(), root, cx).expect("Migrate profile");
+            assert!(!migrated_profile.contains(other_cache));
+            assert!(migrated_profile.contains("--offline"));
+            std::fs::remove_file(root.join(".koda/settings.json"))
+                .expect("Simulate replacement project");
+            assert!(
+                !java_is_configured(root),
+                "Old cache files must not opt a replacement project into Java"
+            );
+        });
+    }
+
+    #[test]
+    #[cfg(unix)]
+    fn legacy_java_paths_recognize_the_same_root_through_an_alias() {
+        let project = tempfile::tempdir().expect("Project");
+        let other = tempfile::tempdir().expect("Other root");
+        let alias = other.path().join("project-alias");
+        std::os::unix::fs::symlink(project.path(), &alias).expect("Project alias");
+        for name in ["model.json", "import.gradle"] {
+            assert!(legacy_java_path_matches(
+                &alias
+                    .join(".koda/android-java")
+                    .join(name)
+                    .to_string_lossy(),
+                project.path(),
+                name
+            ));
+            assert!(!legacy_java_path_matches(
+                &other
+                    .path()
+                    .join(".koda/android-java")
+                    .join(name)
+                    .to_string_lossy(),
+                project.path(),
+                name
+            ));
+        }
     }
 
     #[gpui::test]
@@ -7332,7 +7577,7 @@ fi
         let directory = tempfile::tempdir().unwrap();
         let root = directory.path().canonicalize().unwrap();
         android_tools::java::prepare(&root).unwrap();
-        std::fs::write(root.join(".koda/android-java/model.json"), "[]").unwrap();
+        android_tools::java::install_model(&root, &[]).unwrap();
         let fs = FakeFs::new(cx.executor());
         fs.insert_tree(&root, json!({"app": {}})).await;
         let project = Project::test(fs, [root.as_path()], cx).await;
@@ -7352,6 +7597,10 @@ fi
             let token = panel.project.read(cx).android_model().token();
             panel.error = Some("Managed Kotlin runtime missing".into());
             panel.kotlin_setup_error = panel.error.clone();
+            let configured = java_settings("{}".into(), &root, cx).expect("Java preference");
+            std::fs::create_dir_all(root.join(".koda")).expect("Settings directory");
+            std::fs::write(root.join(".koda/settings.json"), configured)
+                .expect("Persist Java opt-in");
             panel.refresh_java_after_kotlin_failure(&root, target.clone(), &token, window, cx);
             assert!(
                 panel.java_task.is_some(),
@@ -8127,8 +8376,8 @@ fi
             assert_eq!(server["settings"]["java"]["format"]["enabled"], false);
             assert_eq!(server["settings"], server["initialization_options"]["settings"]);
             assert_eq!(server["settings"]["java"]["import"]["gradle"]["arguments"], json!([
-                "--offline", "--init-script", "/android project/.koda/android-java/import.gradle",
-                "-Dzed.android.javaModel=/android project/.koda/android-java/model.json"
+                "--offline", "--init-script", android_tools::java::cache_directory(Path::new("/android project")).join("import.gradle").to_string_lossy(),
+                format!("-Dzed.android.javaModel={}", android_tools::java::cache_directory(Path::new("/android project")).join("model.json").display())
             ]));
             assert_eq!(java_settings(updated.clone(), Path::new("/android project"), cx).expect("Setup should be repeatable"), updated);
             assert!(java_settings(r#"{"lsp":{"jdtls":{"initialization_options":[]}}}"#.into(), Path::new("/android"), cx).is_err());

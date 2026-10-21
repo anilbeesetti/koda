@@ -127,26 +127,12 @@ pub struct JavaModule {
     pub test_libraries: Vec<PathBuf>,
 }
 
-pub fn is_configured(root: &Path) -> bool {
-    let cache = root.join(".koda/android-java");
-    fs::read_to_string(cache.join(".gitignore")).is_ok_and(|marker| marker == CACHE_MARKER)
-        && cache.join("model.json").is_file()
+pub fn cache_directory(root: &Path) -> PathBuf {
+    crate::sync_cache::directory(root).join("java")
 }
 
 pub fn prepare(root: &Path) -> Result<PathBuf> {
-    let settings = root.join(".koda");
-    ensure_directory(&settings)?;
-    let cache = settings.join("android-java");
-    if cache.exists() {
-        ensure_directory(&cache)?;
-        ensure!(
-            fs::read_to_string(cache.join(".gitignore"))? == CACHE_MARKER,
-            "The .koda/android-java directory contains unmanaged files. Move it aside before configuring Java."
-        );
-    } else {
-        ensure_directory(&cache)?;
-        atomic_write(&cache.join(".gitignore"), CACHE_MARKER, false)?;
-    }
+    let cache = crate::sync_cache::prepare_area(root, "java", CACHE_MARKER)?;
     let export = cache.join("export.gradle");
     atomic_write(&export, EXPORT_INIT, false)?;
     atomic_write(&cache.join("import.gradle"), IMPORT_INIT, false)?;
@@ -163,7 +149,7 @@ pub fn prepare_selected(
         "The Java selection belongs to a different project"
     );
     let models = selected.projection();
-    let selection = root.join(".koda/android-java/selection.json");
+    let selection = cache_directory(root).join("selection.json");
     atomic_write(&selection, &serde_json::to_string(&models)?, false)?;
     Ok((export, selection))
 }
@@ -274,8 +260,8 @@ pub fn parse_model(output: &str, root: &Path, target: &AndroidTarget) -> Result<
 }
 
 pub fn install_model(root: &Path, models: &[JavaModule]) -> Result<PathBuf> {
-    let cache = root.join(".koda/android-java");
-    ensure_directory(&root.join(".koda"))?;
+    let cache = cache_directory(root);
+    crate::sync_cache::prepare(root)?;
     ensure_directory(&cache)?;
     ensure!(
         fs::read_to_string(cache.join(".gitignore"))? == CACHE_MARKER,
@@ -292,6 +278,7 @@ pub fn finish(root: &Path, models: &[JavaModule], previous: &str, updated: &str)
         "Project settings changed during Java setup. Retry to preserve your latest edits."
     );
     install_model(root, models)?;
+    ensure_directory(&root.join(".koda"))?;
     atomic_write(&root.join(".koda/settings.json"), updated, false)
 }
 
@@ -349,25 +336,26 @@ mod tests {
             )
             .is_err()
         );
-        let cache = root.join(".koda/android-java");
-        assert!(!is_configured(&root));
+        let cache = cache_directory(&root);
+        assert!(!cache.join("model.json").exists());
         fs::create_dir_all(&cache)?;
         fs::write(cache.join(".gitignore"), "user files")?;
         assert!(prepare(&root).is_err());
         assert_eq!(fs::read_to_string(cache.join(".gitignore"))?, "user files");
-        fs::rename(&cache, root.join("user-java-cache"))?;
+        fs::rename(&cache, cache.with_file_name("user-java-cache"))?;
         assert!(prepare(&root)?.is_file());
         let parsed = parse_model(&output, &root, &target)?;
         assert!(install_model(&root, &parsed)?.is_file());
-        assert!(is_configured(&root));
+        crate::sync_cache::invalidate(&root)?;
+        assert!(cache.join("model.json").exists());
         assert!(prepare(&root)?.is_file());
         finish(&root, &parsed, "{}\n", "{\"tab_size\":2}")?;
         assert!(finish(&root, &parsed, "{}\n", "{\"tab_size\":4}").is_err());
         assert_eq!(crate::kotlin::read_settings(&root)?, "{\"tab_size\":2}");
         #[cfg(unix)]
         {
-            fs::rename(&cache, root.join("generated-cache"))?;
-            std::os::unix::fs::symlink(root.join("generated-cache"), &cache)?;
+            fs::rename(&cache, cache.with_file_name("generated-cache"))?;
+            std::os::unix::fs::symlink(cache.with_file_name("generated-cache"), &cache)?;
             assert!(prepare(&root).is_err());
             assert!(install_model(&root, &parsed).is_err());
         }
