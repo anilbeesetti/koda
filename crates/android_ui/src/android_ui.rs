@@ -7979,6 +7979,11 @@ fi
                 .into_iter()
                 .find(|target| target.variant == "demoDebug");
             panel.remember_target(cx);
+        });
+        // Let the saved preference reach the database before simulating reopening.
+        cx.run_until_parked();
+        panel.update(cx, |panel, cx| {
+            panel.selected_target = None;
             let refreshed = model(&["fullRelease"]);
             let targets = refreshed.targets();
             panel.project.update(cx, |project, cx| {
@@ -8022,6 +8027,7 @@ fi
             );
             assert_eq!(panel.status.as_ref(), "Sync complete · 1 build variants");
         });
+        cx.run_until_parked();
         // A menu opened before a sync must not select a removed target. Reopening
         // must read the new targets, including on subsequent recovery cycles.
         for variant in ["demoDebug", "fullRelease", "demoRelease"] {
