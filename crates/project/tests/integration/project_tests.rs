@@ -22705,6 +22705,8 @@ async fn test_android_resource_rename_preview_unsaved_edits_all_variants_and_und
         .await
         .expect("Prepare safe rename");
     let preview = plan.preview();
+    assert!(preview.starts_with("Rename title → renamed_title\n\n"));
+    assert!(!preview.contains("/android-resources/"));
     assert!(preview.contains("app/full/values/strings.xml"));
     assert!(preview.contains("Activity.java"));
     assert!(preview.contains("Test.kt"));

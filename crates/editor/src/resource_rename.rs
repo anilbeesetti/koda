@@ -35,6 +35,7 @@ impl ResourceRenameReview {
         let preview = cx.new(|cx| {
             let mut editor = Editor::multi_line(window, cx);
             editor.set_text(preview, window, cx);
+            editor.set_show_gutter(false, cx);
             editor.set_read_only(true);
             editor
         });

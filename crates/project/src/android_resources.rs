@@ -744,15 +744,22 @@ struct ResourceQuery {
 pub struct AndroidResourceRename {
     index: ResourceIndex,
     model_inputs: ResourceModelInputs,
+    root: PathBuf,
+    old_name: String,
     edits: BTreeMap<PathBuf, Vec<Range<usize>>>,
     new_name: String,
 }
 
 impl AndroidResourceRename {
     pub fn preview(&self) -> String {
-        let mut result = String::new();
+        let mut result = format!("Rename {} → {}\n\n", self.old_name, self.new_name);
         for (path, ranges) in &self.edits {
-            result.push_str(&format!("{} ({} edits)\n", path.display(), ranges.len()));
+            let display_path = path.strip_prefix(&self.root).unwrap_or(path);
+            result.push_str(&format!(
+                "{} ({} edits)\n",
+                display_path.display(),
+                ranges.len()
+            ));
             if let Some(document) = self.index.documents.get(path) {
                 let text = document.snapshot.text();
                 let mut line = 1;
@@ -778,11 +785,10 @@ impl AndroidResourceRename {
                         .count();
                     previous_offset = range.start;
                     result.push_str(&format!(
-                        "  {line}: {before}{}{} → {before}{}{}\n",
+                        "  {line}: {} → {}\n      {before}{}{after}\n",
                         &text[range.clone()],
-                        after,
                         self.new_name,
-                        after
+                        &text[range.clone()]
                     ));
                 }
             }
@@ -1765,7 +1771,7 @@ impl Project {
             }).await?;
             ensure!(capture_resource_model_inputs(&project, cx).await? == model_inputs, "Gradle model inputs changed while preparing rename; sync and prepare a new preview");
             ensure!(query_current(&project, &query, &index, cx).await?, "Android model or source changed while preparing rename; try again");
-            Ok(Some(AndroidResourceRename { index, model_inputs, edits, new_name }))
+            Ok(Some(AndroidResourceRename { index, model_inputs, root: query.selected.model.root.clone(), old_name: query.reference.name.clone(), edits, new_name }))
         }))
     }
 
