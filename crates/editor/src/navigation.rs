@@ -2438,6 +2438,26 @@ impl Editor {
         })
     }
 
+    /// Resolves non-text Android resource definitions for the current selection.
+    /// Both the editor and the definitions picker use this before text locations.
+    pub fn android_resource_file_definitions(
+        &self,
+        cx: &mut Context<Self>,
+    ) -> Option<Task<Result<Vec<PathBuf>>>> {
+        let head = self
+            .selections
+            .newest::<MultiBufferOffset>(&self.display_snapshot(cx))
+            .head();
+        let (buffer, head) = self.buffer.read(cx).text_anchor_for_position(head, cx)?;
+        self.project.as_ref()?.update(cx, |project, cx| {
+            project.android_resource_file_definitions(
+                &buffer,
+                language::ToPointUtf16::to_point_utf16(&head, buffer.read(cx)),
+                cx,
+            )
+        })
+    }
+
     pub(crate) fn go_to_definition_of_kind(
         &mut self,
         kind: GotoDefinitionKind,
@@ -2456,16 +2476,47 @@ impl Editor {
         let Some((buffer, head)) = buffer.text_anchor_for_position(head, cx) else {
             return Task::ready(Ok(Navigated::No));
         };
-        let Some(definitions) = provider.definitions(&buffer, head, kind, cx) else {
-            return Task::ready(Ok(Navigated::No));
+        let resource_files = if kind == GotoDefinitionKind::Symbol && !split {
+            self.android_resource_file_definitions(cx)
+        } else {
+            None
         };
+        let workspace = self.workspace().map(|workspace| workspace.downgrade());
+        let definitions = provider.definitions(&buffer, head, kind, cx);
 
         let nav_entry = self.navigation_entry(self.selections.newest_anchor().head(), cx);
 
         cx.spawn_in(window, async move |editor, cx| {
-            let Some(definitions) = definitions.await? else {
-                return Ok(Navigated::No);
+            let mut resource_navigated = Navigated::No;
+            if let Some(files) = resource_files
+                && let Some(workspace) = workspace
+            {
+                let paths = files.await?;
+                if !paths.is_empty() {
+                    for path in paths {
+                        workspace
+                            .update_in(cx, |workspace, window, cx| {
+                                workspace.open_abs_path(
+                                    path,
+                                    workspace::OpenOptions::default(),
+                                    window,
+                                    cx,
+                                )
+                            })?
+                            .await?;
+                    }
+                    resource_navigated = Navigated::Yes;
+                }
+            }
+            let Some(definitions) = definitions else {
+                return Ok(resource_navigated);
             };
+            let Some(definitions) = definitions.await? else {
+                return Ok(resource_navigated);
+            };
+            if definitions.is_empty() {
+                return Ok(resource_navigated);
+            }
             let navigated = editor
                 .update_in(cx, |editor, window, cx| {
                     editor.navigate_to_hover_links(
@@ -2484,7 +2535,11 @@ impl Editor {
                     )
                 })?
                 .await?;
-            anyhow::Ok(navigated)
+            anyhow::Ok(if navigated == Navigated::Yes {
+                navigated
+            } else {
+                resource_navigated
+            })
         })
     }
 

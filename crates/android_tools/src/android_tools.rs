@@ -4,6 +4,7 @@ pub mod managed;
 pub mod preview;
 pub mod project_model;
 pub mod provision;
+pub mod resources;
 pub(crate) mod shared_sdk;
 use anyhow::{Context as _, Result, bail, ensure};
 pub mod java;

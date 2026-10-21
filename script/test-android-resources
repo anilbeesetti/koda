@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+# Transport only: fixture construction, subprocesses and assertions are Rust.
+set -euo pipefail
+resource_repository=$(CDPATH= cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)
+exec cargo run --locked --manifest-path "$resource_repository/Cargo.toml" -p android_tools --example resource_model_probe -- "$@"
