@@ -2335,9 +2335,7 @@ mod tests {
     }
 
     #[gpui::test]
-    async fn model_console_copy_after_interrupted_and_repeated_sync(
-        cx: &mut gpui::TestAppContext,
-    ) -> Result<()> {
+    async fn model_console_copy_after_interrupted_and_repeated_sync(cx: &mut gpui::TestAppContext) {
         let _app_state = cx.update(workspace::AppState::test);
         let fs = project::FakeFs::new(cx.executor());
         fs.insert_tree("/project", serde_json::json!({"README.md": ""}))
@@ -2368,27 +2366,29 @@ mod tests {
                     true,
                     OutputPolicy::AndroidProjectModel,
                 )
-                .await?,
+                .await
+                .expect("Sync model output should be captured"),
                 raw
             );
-            read_output(Cursor::new("error: visible stderr\n"), true, sender, false).await?;
+            read_output(Cursor::new("error: visible stderr\n"), true, sender, false)
+                .await
+                .expect("Sync stderr should remain visible");
             logs.await;
             pane.update(cx, |pane, cx| {
                 pane.finish(BuildTab::Sync, id, status, "Done".into(), cx)
             });
             cx.run_until_parked();
-            let copy = cx.debug_bounds("ICON-Copy").context("Copy output button")?;
+            let copy = cx.debug_bounds("ICON-Copy").expect("Copy output button");
             cx.simulate_click(copy.center(), Default::default());
             let copied = cx
                 .update(|_, cx| cx.read_from_clipboard().and_then(|item| item.text()))
-                .context("Copied Sync output")?;
+                .expect("Copied Sync output");
             assert_eq!(
                 copied,
                 format!("{label}\nw: visible warning\nerror: visible stderr\nDone")
             );
             assert!(!copied.contains("KODA_ANDROID_PROJECT_MODEL="));
         }
-        Ok(())
     }
 
     #[gpui::test]
