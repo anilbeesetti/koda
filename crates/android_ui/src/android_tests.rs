@@ -1075,6 +1075,7 @@ impl AndroidPanel {
             .into();
             cx.notify();
         });
+        self.tool_setup.last_operation = None;
         let (session, output, logs) = self.build_panel.update(cx, |panel, cx| {
             panel.begin(
                 BuildTab::Output,
@@ -1762,6 +1763,8 @@ mod tests {
         let (_state, panel, cx) = runner_fixture(cx).await;
         panel.update_in(cx, |panel, window, cx| {
             publish_runner_model(panel, cx);
+            panel.tool_setup.last_operation =
+                Some((android_tools::managed::Tool::Debugger, "validate"));
             panel.kotlin_refresh_pending = panel.root.clone();
             panel.start_tests(
                 TestKind::Unit,
@@ -1798,6 +1801,10 @@ mod tests {
             let request = panel.pending_test.as_ref().unwrap().clone();
             panel.resume_pending_tests(window, cx);
             assert!(panel.pending_test.is_none());
+            assert!(
+                panel.tool_setup.last_operation.is_none(),
+                "Build Output rerun belongs to tests after managed setup"
+            );
             assert_eq!(panel.test_operation_id, Some(id));
             assert!(panel.running);
             assert_eq!(
