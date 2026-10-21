@@ -17,6 +17,7 @@ doctest = false
 
 [dependencies]
 editor.workspace = true
+file_icons.workspace = true
 futures.workspace = true
 language.workspace = true
 picker_preview.workspace = true
