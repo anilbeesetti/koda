@@ -1407,13 +1407,12 @@ impl AndroidPanel {
                         .args(arguments)
                         .current_dir(&root)
                         .envs(android_tools::managed::command_environment()?);
-                    match android_build::command_output(
+                    match android_build::project_model_output(
                         command,
                         &executor,
                         Duration::from_secs(300),
                         output,
                         cancelled,
-                        true,
                     )
                     .await?
                     {
