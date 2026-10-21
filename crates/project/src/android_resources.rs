@@ -1890,6 +1890,15 @@ impl Project {
                     path.display()
                 );
             }
+            // Disk validation yields to other work. Recheck membership after it so
+            // files added while inspecting earlier documents invalidate this plan.
+            let mut current_files = enumerate_files_in_background(
+                filesystem.clone(),
+                plan.index.roots.clone(),
+                true,
+                cx,
+            )
+            .await?;
             project.update(cx, |project, cx| {
                 ensure!(
                     project.android_model.is_current(&plan.index.token)
@@ -1910,13 +1919,15 @@ impl Project {
                         && !file.disk_state().is_deleted()
                     {
                         let path = project.android_file_path(file.as_ref(), cx);
-                        ensure!(
-                            !indexable_file(&path, &plan.index.roots, true)
-                                || plan.index.files.contains(&path),
-                            "Files changed after resource rename preview; prepare a new preview"
-                        );
+                        if indexable_file(&path, &plan.index.roots, true) {
+                            current_files.insert(path);
+                        }
                     }
                 }
+                ensure!(
+                    current_files == plan.index.files,
+                    "Files changed after resource rename preview; prepare a new preview"
+                );
                 for document in plan.index.documents.values() {
                     let buffer = document.buffer.read(cx);
                     ensure!(
