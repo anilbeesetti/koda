@@ -8,6 +8,7 @@ mod android_tool_setup;
 #[cfg(test)]
 mod first_launch_setup_tests;
 mod startup_kotlin;
+pub mod tabbed_toolbar;
 
 use android_build::{BuildEvent, BuildStatus, BuildTab, ProcessOutput};
 pub use android_build::{BuildPanel, ToggleBuild};
