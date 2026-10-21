@@ -101,6 +101,19 @@ impl LogcatPanel {
         pane
     }
 
+    pub(super) fn context_changed(&mut self, cx: &mut Context<Self>) {
+        for pane in self.center.panes() {
+            let views = pane
+                .read(cx)
+                .items_of_type::<LogcatView>()
+                .collect::<Vec<_>>();
+            for view in views {
+                view.update(cx, |view, cx| view.context_changed(cx));
+            }
+        }
+        cx.notify();
+    }
+
     pub(super) fn has_views(&self, cx: &App) -> bool {
         self.center
             .panes()
@@ -240,6 +253,9 @@ impl Focusable for LogcatPanel {
 }
 impl EventEmitter<PanelEvent> for LogcatPanel {}
 impl Panel for LogcatPanel {
+    fn enabled(&self, cx: &App) -> bool {
+        crate::project_surfaces::android_available(&self.workspace, cx)
+    }
     fn persistent_name() -> &'static str {
         "LogcatPanel"
     }
@@ -314,9 +330,11 @@ impl Render for LogcatPanel {
             .key_context("LogcatPanel")
             .track_focus(&self.focus_handle)
             .size_full()
-            .on_action(
-                cx.listener(|panel, _: &NewViewer, window, cx| panel.new_view(None, window, cx)),
-            )
+            .on_action(cx.listener(|panel, _: &NewViewer, window, cx| {
+                if crate::project_surfaces::android_available(&panel.workspace, cx) {
+                    panel.new_view(None, window, cx);
+                }
+            }))
             .children(content)
     }
 }

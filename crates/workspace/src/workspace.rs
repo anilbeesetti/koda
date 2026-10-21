@@ -4816,6 +4816,12 @@ impl Workspace {
         cx: &mut Context<Self>,
         should_focus: &mut dyn FnMut(&dyn PanelHandle, &mut Window, &mut Context<Dock>) -> bool,
     ) -> Option<Arc<dyn PanelHandle>> {
+        if self
+            .panel::<T>(cx)
+            .is_none_or(|panel| !panel.read(cx).enabled(cx))
+        {
+            return None;
+        }
         let mut result_panel = None;
         let mut serialize = false;
         for dock in self.all_docks() {
@@ -4857,6 +4863,12 @@ impl Workspace {
 
     /// Open the panel of the given type
     pub fn open_panel<T: Panel>(&mut self, window: &mut Window, cx: &mut Context<Self>) {
+        if self
+            .panel::<T>(cx)
+            .is_none_or(|panel| !panel.read(cx).enabled(cx))
+        {
+            return;
+        }
         for dock in self.all_docks() {
             if let Some(panel_index) = dock.read(cx).panel_index_for_type::<T>() {
                 dock.update(cx, |dock, cx| {
@@ -20010,6 +20022,48 @@ mod tests {
             workspace.open_url_or_file("nonexistent.txt", None, window, cx);
         });
         assert_eq!(cx.opened_url(), Some("nonexistent.txt".to_string()));
+    }
+
+    #[gpui::test]
+    async fn test_disabled_dock_restore_waits_for_eligibility(cx: &mut gpui::TestAppContext) {
+        init_test(cx);
+        let fs = FakeFs::new(cx.executor());
+        let project = Project::test(fs, [], cx).await;
+        let (workspace, cx) =
+            cx.add_window_view(|window, cx| Workspace::test_new(project, window, cx));
+        let panel = workspace.update_in(cx, |workspace, window, cx| {
+            let panel = cx.new(|cx| {
+                let mut panel = TestPanel::new(DockPosition::Bottom, 100, cx);
+                panel.enabled = false;
+                panel
+            });
+            workspace.add_panel(panel.clone(), window, cx);
+            workspace.bottom_dock().update(cx, |dock, cx| {
+                dock.restore_serialized_state(
+                    DockData {
+                        visible: true,
+                        active_panel: Some(TestPanel::persistent_name().into()),
+                        zoom: true,
+                    },
+                    window,
+                    cx,
+                );
+            });
+            workspace.finish_dock_restoration(cx);
+            workspace.open_panel::<TestPanel>(window, cx);
+            assert!(!workspace.bottom_dock().read(cx).is_open());
+            assert!(!panel.read(cx).zoomed);
+            panel
+        });
+        panel.update(cx, |panel, cx| {
+            panel.enabled = true;
+            cx.notify();
+        });
+        cx.run_until_parked();
+        workspace.read_with(cx, |workspace, cx| {
+            assert!(workspace.bottom_dock().read(cx).is_open());
+            assert!(panel.read(cx).zoomed);
+        });
     }
 
     #[gpui::test]
