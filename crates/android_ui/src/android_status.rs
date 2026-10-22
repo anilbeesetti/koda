@@ -238,7 +238,8 @@ mod tests {
         let project = Project::test(fs, [Path::new("/android")], cx).await;
         let (workspace, cx) =
             cx.add_window_view(|window, cx| Workspace::test_new(project.clone(), window, cx));
-        let panel = cx.new(|cx| AndroidPanel::new(workspace.downgrade(), project, cx));
+        let panel =
+            cx.new(|cx| crate::tests::test_android_panel(workspace.downgrade(), project, cx));
         workspace.update_in(cx, |workspace, window, cx| {
             workspace.add_panel(panel.read(cx).build_panel.clone(), window, cx);
             crate::register_controller(workspace, &panel, cx);

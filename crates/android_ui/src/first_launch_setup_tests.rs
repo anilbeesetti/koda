@@ -28,7 +28,7 @@ async fn android_project(root: &Path, cx: &mut TestAppContext) -> Entity<Project
     filesystem
         .insert_tree(
             root,
-            serde_json::json!({"gradlew": "", "settings.gradle.kts": ""}),
+            serde_json::json!({"gradlew": "", "settings.gradle.kts": "", "build.gradle.kts": "plugins { id(\"com.android.application\") }"}),
         )
         .await;
     let project = Project::test_with_worktree_trust(filesystem, [root], cx).await;

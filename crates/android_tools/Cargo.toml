@@ -22,14 +22,22 @@ reqwest = { workspace = true, features = ["blocking"] }
 sha1 = "0.10"
 tar = "0.4.44"
 regex.workspace = true
+kurbo = "0.13.1"
+quick-xml.workspace = true
+roxmltree = "0.21.1"
+svgtypes = "0.16.1"
 paths.workspace = true
 sha2.workspace = true
 libc.workspace = true
 smol.workspace = true
 serde.workspace = true
 serde_json.workspace = true
+toml.workspace = true
 tempfile.workspace = true
 tokio = { workspace = true, features = ["rt", "time", "macros"] }
 which.workspace = true
 uuid = { workspace = true, features = ["v4"] }
 zip = { version = "0.6.6", default-features = false, features = ["deflate"] }
+
+[dev-dependencies]
+resvg.workspace = true
