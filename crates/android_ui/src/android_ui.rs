@@ -7,7 +7,11 @@ mod android_status;
 mod android_tool_setup;
 #[cfg(test)]
 mod first_launch_setup_tests;
+mod project_surfaces;
 mod startup_kotlin;
+pub use project_surfaces::{
+    ApplicationMenuTemplates, application_menus, install_application_menus,
+};
 
 use android_build::{BuildEvent, BuildStatus, BuildTab, ProcessOutput};
 pub use android_build::{BuildPanel, ToggleBuild};
@@ -45,6 +49,9 @@ use workspace::{
     tasks::ScheduledTaskResult,
 };
 pub use zed_actions::android::Logcat;
+
+const UNAVAILABLE_BUILD_VARIANT_STATUS: &str =
+    "The previous build variant is unavailable. Select a build variant to continue.";
 
 actions!(
     android,
@@ -94,61 +101,98 @@ pub fn init(cx: &mut App) {
         workspace.add_panel(panel.read(cx).build_panel.clone(), window, cx);
         android_status::register(&panel, window, cx);
         register_controller(workspace, &panel, cx);
+        let surface_panel = panel.downgrade();
+        // A Workspace may be constructed while its MultiWorkspace root is still
+        // being installed. Retained workspaces later change that root's chrome
+        // ownership without changing project facts or platform window activation.
+        window.defer(cx, move |window, cx| {
+            let Some(multi_workspace) = window.root::<workspace::MultiWorkspace>().flatten() else {
+                return;
+            };
+            surface_panel
+                .update(cx, |panel, cx| {
+                    panel._startup_subscriptions.push(cx.subscribe_in(
+                        &multi_workspace,
+                        window,
+                        |panel, multi, event, window, cx| {
+                            if matches!(
+                                event,
+                                workspace::MultiWorkspaceEvent::ActiveWorkspaceChanged { .. }
+                            ) && multi.read(cx).workspace().entity_id()
+                                == panel.workspace.entity_id()
+                            {
+                                panel.surfaces_changed(window, cx);
+                            }
+                        },
+                    ));
+                })
+                .log_err();
+        });
         panel.update(cx, |panel, cx| {
             panel.observe_first_launch_setup(workspace.modal_layer(), window, cx)
         });
         let logcat_panel = cx.new(|cx| LogcatPanel::new(workspace, window, cx));
         workspace.add_panel(logcat_panel, window, cx);
-        workspace
-            .register_action(|workspace, _: &ToggleBuild, window, cx| {
-                workspace.toggle_panel_focus::<BuildPanel>(window, cx);
-            })
-            .register_action(|workspace, _: &SyncProject, window, cx| {
-                with_panel(workspace, window, cx, AndroidPanel::sync_project)
-            })
-            .register_action(|workspace, _: &RefreshDevices, window, cx| {
+        project_surfaces::register_action(workspace, |workspace, _: &ToggleBuild, window, cx| {
+            workspace.toggle_panel_focus::<BuildPanel>(window, cx);
+        });
+        project_surfaces::register_action(workspace, |workspace, _: &SyncProject, window, cx| {
+            with_panel(workspace, window, cx, AndroidPanel::sync_project)
+        });
+        project_surfaces::register_action(
+            workspace,
+            |workspace, _: &RefreshDevices, window, cx| {
                 with_panel(workspace, window, cx, |panel, _, cx| {
                     panel.refresh_devices(cx)
-                })
-            })
-            .register_action(|workspace, _: &StartEmulator, window, cx| {
-                with_panel(workspace, window, cx, |panel, window, cx| {
-                    if let Some(name) = panel.selected_avd.clone() {
-                        panel.start_emulator(name, window, cx);
-                    } else {
-                        panel.fail(anyhow::anyhow!("Refresh devices and select an available Android virtual device first."), window, cx);
-                    }
-                })
-            })
-            .register_action(|workspace, _: &StopEmulator, window, cx| {
-                with_panel(workspace, window, cx, AndroidPanel::stop_emulator)
-            })
-            .register_action(|workspace, _: &Build, window, cx| {
-                with_panel(workspace, window, cx, |panel, window, cx| {
-                    panel.gradle(GradleOperation::Build, window, cx)
-                })
-            })
-            .register_action(|workspace, _: &Run, window, cx| {
-                with_panel(workspace, window, cx, |panel, window, cx| {
-                    panel.gradle(GradleOperation::Run, window, cx)
-                })
-            })
-            .register_action(|workspace, _: &Debug, window, cx| {
-                with_panel(workspace, window, cx, |panel, window, cx| {
-                    panel.gradle(GradleOperation::Debug, window, cx)
-                })
-            })
-            .register_action(|workspace, _: &Test, window, cx| {
-                with_panel(workspace, window, cx, |panel, window, cx| {
-                    panel.gradle(GradleOperation::Test, window, cx)
-                })
-            })
-            .register_action(|workspace, _: &Lint, window, cx| {
-                with_panel(workspace, window, cx, |panel, window, cx| {
-                    panel.gradle(GradleOperation::Lint, window, cx)
-                })
-            })
-            .register_action(|workspace, _: &android_logcat::Toggle, window, cx| {
+                });
+            },
+        );
+        project_surfaces::register_action(workspace, |workspace, _: &StartEmulator, window, cx| {
+            with_panel(workspace, window, cx, |panel, window, cx| {
+                if let Some(name) = panel.selected_avd.clone() {
+                    panel.start_emulator(name, window, cx);
+                } else {
+                    panel.fail(
+                        anyhow::anyhow!(
+                            "Refresh devices and select an available Android virtual device first."
+                        ),
+                        window,
+                        cx,
+                    );
+                }
+            });
+        });
+        project_surfaces::register_action(workspace, |workspace, _: &StopEmulator, window, cx| {
+            with_panel(workspace, window, cx, AndroidPanel::stop_emulator)
+        });
+        project_surfaces::register_action(workspace, |workspace, _: &Build, window, cx| {
+            with_panel(workspace, window, cx, |panel, window, cx| {
+                panel.gradle(GradleOperation::Build, window, cx)
+            });
+        });
+        project_surfaces::register_action(workspace, |workspace, _: &Run, window, cx| {
+            with_panel(workspace, window, cx, |panel, window, cx| {
+                panel.gradle(GradleOperation::Run, window, cx)
+            });
+        });
+        project_surfaces::register_action(workspace, |workspace, _: &Debug, window, cx| {
+            with_panel(workspace, window, cx, |panel, window, cx| {
+                panel.gradle(GradleOperation::Debug, window, cx)
+            });
+        });
+        project_surfaces::register_action(workspace, |workspace, _: &Test, window, cx| {
+            with_panel(workspace, window, cx, |panel, window, cx| {
+                panel.gradle(GradleOperation::Test, window, cx)
+            });
+        });
+        project_surfaces::register_action(workspace, |workspace, _: &Lint, window, cx| {
+            with_panel(workspace, window, cx, |panel, window, cx| {
+                panel.gradle(GradleOperation::Lint, window, cx)
+            });
+        });
+        project_surfaces::register_action(
+            workspace,
+            |workspace, _: &android_logcat::Toggle, window, cx| {
                 if workspace
                     .panel::<LogcatPanel>(cx)
                     .is_some_and(|panel| panel.read(cx).has_views(cx))
@@ -159,33 +203,46 @@ pub fn init(cx: &mut App) {
                 } else {
                     with_panel(workspace, window, cx, AndroidPanel::logcat);
                 }
-            })
-            .register_action(|workspace, _: &Logcat, window, cx| {
-                with_panel(workspace, window, cx, AndroidPanel::logcat)
-            })
-            .register_action(|workspace, _: &ComposePreview, window, cx| {
+            },
+        );
+        project_surfaces::register_action(workspace, |workspace, _: &Logcat, window, cx| {
+            with_panel(workspace, window, cx, AndroidPanel::logcat)
+        });
+        project_surfaces::register_action(
+            workspace,
+            |workspace, _: &ComposePreview, window, cx| {
                 with_panel(workspace, window, cx, |panel, window, cx| {
                     panel.gradle(GradleOperation::Preview, window, cx)
-                })
-            })
-            .register_action(|workspace, _: &ToggleComposePreview, window, cx| {
+                });
+            },
+        );
+        project_surfaces::register_action(
+            workspace,
+            |workspace, _: &ToggleComposePreview, window, cx| {
                 android_preview::toggle_preview(workspace, window, cx);
-            })
-            .register_action(|workspace, _: &ConfigureJava, window, cx| {
-                with_panel(workspace, window, cx, |panel, window, cx| {
-                    panel.gradle(GradleOperation::Java, window, cx)
-                })
-            })
-            .register_action(|workspace, _: &ConfigureKotlin, window, cx| {
-                with_panel(workspace, window, cx, |panel, window, cx| {
-                    panel.gradle(GradleOperation::Kotlin, window, cx)
-                })
-            })
-            .register_action(|workspace, _: &ConfigureOfficialKotlin, window, cx| {
-                with_panel(workspace, window, cx, |panel, window, cx| {
-                    panel.gradle(GradleOperation::Kotlin, window, cx)
-                })
+            },
+        );
+        project_surfaces::register_action(workspace, |workspace, _: &ConfigureJava, window, cx| {
+            with_panel(workspace, window, cx, |panel, window, cx| {
+                panel.gradle(GradleOperation::Java, window, cx)
             });
+        });
+        project_surfaces::register_action(
+            workspace,
+            |workspace, _: &ConfigureKotlin, window, cx| {
+                with_panel(workspace, window, cx, |panel, window, cx| {
+                    panel.gradle(GradleOperation::Kotlin, window, cx)
+                });
+            },
+        );
+        project_surfaces::register_action(
+            workspace,
+            |workspace, _: &ConfigureOfficialKotlin, window, cx| {
+                with_panel(workspace, window, cx, |panel, window, cx| {
+                    panel.gradle(GradleOperation::Kotlin, window, cx)
+                });
+            },
+        );
         cx.notify();
     })
     .detach();
@@ -293,7 +350,7 @@ fn register_controller(workspace: &mut Workspace, panel: &Entity<AndroidPanel>, 
         android_tool_setup::open(workspace, controller.clone(), window, cx);
     });
     let controller = panel.clone();
-    workspace.register_action(move |workspace, _: &ToggleFocus, window, cx| {
+    project_surfaces::register_action(workspace, move |workspace, _: &ToggleFocus, window, cx| {
         android_tool_setup::open(workspace, controller.clone(), window, cx);
     });
 }
@@ -311,10 +368,17 @@ fn with_panel(
     cx: &mut Context<Workspace>,
     callback: impl FnOnce(&mut AndroidPanel, &mut Window, &mut Context<AndroidPanel>) + 'static,
 ) {
+    if !project_surfaces::SurfaceState::for_workspace(workspace, cx).eligible {
+        return;
+    }
     if let Some(panel) = controller(workspace, cx) {
         // Task scheduling updates the workspace, so wait until its action handler has returned.
         window.defer(cx, move |window, cx| {
-            panel.update(cx, |panel, cx| callback(panel, window, cx))
+            panel.update(cx, |panel, cx| {
+                if panel.surface_state().eligible {
+                    callback(panel, window, cx);
+                }
+            })
         });
     }
 }
@@ -322,7 +386,12 @@ fn with_panel(
 pub fn toolbar(workspace: &WeakEntity<Workspace>, cx: &App) -> Option<Entity<AndroidToolbar>> {
     let workspace = workspace.upgrade()?;
     let panel = controller(workspace.read(cx), cx)?;
-    Some(panel.read(cx).toolbar.clone())
+    panel
+        .read(cx)
+        .project_surfaces
+        .values()
+        .any(|state| state.eligible)
+        .then(|| panel.read(cx).toolbar.clone())
 }
 
 pub fn can_preview_compose(workspace: &Workspace, cx: &App) -> bool {
@@ -447,6 +516,9 @@ fn java_pause_state(parsed: &serde_json::Value) -> Result<Option<JavaPause>> {
 pub struct AndroidPanel {
     workspace: WeakEntity<Workspace>,
     project: Entity<Project>,
+    project_surfaces: HashMap<PathBuf, project_surfaces::SurfaceState>,
+    surface_scan: Option<project_surfaces::SurfaceScan>,
+    surface_revision: u64,
     toolbar: Entity<AndroidToolbar>,
     build_panel: Entity<BuildPanel>,
     build_task: Option<Task<()>>,
@@ -544,6 +616,9 @@ impl AndroidPanel {
             _subscription: cx.observe(&panel, |_, _, cx| cx.notify()),
         });
         let mut panel = Self {
+            project_surfaces: HashMap::new(),
+            surface_scan: None,
+            surface_revision: 0,
             workspace,
             project,
             toolbar,
@@ -747,6 +822,12 @@ impl AndroidPanel {
     }
 
     fn observe_project_open(&mut self, window: &mut Window, cx: &mut Context<Self>) {
+        self.refresh_project_surfaces(window, cx);
+        self._startup_subscriptions.push(
+            cx.observe_window_activation(window, |panel, window, cx| {
+                panel.surfaces_changed(window, cx)
+            }),
+        );
         self.observe_compose_preview(window, cx);
         self._startup_subscriptions.push(cx.subscribe_in(
             &self.build_panel,
@@ -806,13 +887,16 @@ impl AndroidPanel {
                         panel.queue_official_kotlin_refresh(window, cx);
                     }
                 }
-                if matches!(
-                    event,
-                    project::Event::WorktreeAdded(_)
-                        | project::Event::WorktreeRemoved(_)
-                        | project::Event::WorktreeUpdatedEntries(_, _)
-                ) {
+                let context_changed = match event {
+                    project::Event::WorktreeAdded(_) | project::Event::WorktreeRemoved(_) => true,
+                    project::Event::WorktreeUpdatedEntries(_, changes) => changes
+                        .iter()
+                        .any(|(path, _, _)| project_surfaces::is_context_path(path.as_unix_str())),
+                    _ => false,
+                };
+                if context_changed {
                     cx.defer_in(window, |panel, window, cx| {
+                        panel.refresh_project_surfaces(window, cx);
                         panel.auto_sync_project(window, cx)
                     });
                 }
@@ -825,6 +909,7 @@ impl AndroidPanel {
                 |_, _, _, window, cx| {
                     // Trust events are emitted while the trust store is being updated.
                     cx.defer_in(window, |panel, window, cx| {
+                        panel.refresh_project_surfaces(window, cx);
                         panel.auto_sync_project(window, cx)
                     });
                 },
@@ -903,6 +988,13 @@ impl AndroidPanel {
 
     fn auto_sync_candidate(&self, cx: &App) -> Option<PathBuf> {
         let root = self.trusted_root(cx).ok()?;
+        if !self
+            .project_surfaces
+            .get(&root)
+            .is_some_and(|state| state.android)
+        {
+            return None;
+        }
         let worktree = self
             .project
             .read(cx)
@@ -1338,6 +1430,9 @@ impl AndroidPanel {
     }
 
     fn sync_project(&mut self, window: &mut Window, cx: &mut Context<Self>) {
+        if !self.surface_state().android {
+            return;
+        }
         if self.syncing || self.running || self.tool_setup.choosing {
             return;
         }
@@ -1555,7 +1650,7 @@ impl AndroidPanel {
     }
 
     fn refresh_devices(&mut self, cx: &mut Context<Self>) {
-        if self.refreshing_devices {
+        if !self.surface_state().android || self.refreshing_devices {
             return;
         }
         self.refreshing_devices = true;
@@ -1634,6 +1729,9 @@ impl AndroidPanel {
     }
 
     fn gradle(&mut self, operation: GradleOperation, window: &mut Window, cx: &mut Context<Self>) {
+        if !self.surface_state().android {
+            return;
+        }
         if matches!(operation, GradleOperation::Preview) {
             self.show_compose_preview(window, cx);
             return;
@@ -3084,6 +3182,9 @@ impl AndroidPanel {
     }
 
     fn logcat(&mut self, window: &mut Window, cx: &mut Context<Self>) {
+        if !self.surface_state().android {
+            return;
+        }
         let result = (|| {
             let root = self.trusted_root(cx)?;
             let workspace = self.workspace.clone();
@@ -3223,7 +3324,7 @@ impl AndroidPanel {
             self.remember_target(cx);
         }
         self.status = if preferred.is_some() && self.selected_target.is_none() {
-            "The previous build variant is unavailable. Select a build variant to continue.".into()
+            UNAVAILABLE_BUILD_VARIANT_STATUS.into()
         } else {
             format!("Sync complete · {} build variants", targets.len()).into()
         };
@@ -3231,8 +3332,6 @@ impl AndroidPanel {
     }
 
     fn target_picker(&self, id: &'static str, cx: &Context<Self>) -> impl IntoElement {
-        let targets = self.targets.clone();
-        let root = self.root.clone();
         let panel = cx.weak_entity();
         let label = self
             .selected_target
@@ -3251,54 +3350,62 @@ impl AndroidPanel {
                 Button::new("target", label)
                     .label_size(LabelSize::Small)
                     .end_icon(Icon::new(IconName::ChevronDown).size(IconSize::XSmall))
-                    .disabled(self.syncing || self.running || targets.is_empty())
+                    .disabled(self.syncing || self.running || self.targets.is_empty())
                     .tab_index(0isize),
             )
-            .menu(move |window, cx| {
-                Some(ContextMenu::build(window, cx, |mut menu, _, _| {
-                    for target in &targets {
-                        let panel = panel.clone();
-                        let target = target.clone();
-                        let root = root.clone();
-                        menu = menu.entry(target.label(), None, move |window, cx| {
-                            panel
-                                .update(cx, |panel, cx| {
-                                    if panel.running
-                                        || panel.syncing
-                                        || panel.root != root
-                                        || !panel.targets.contains(&target)
-                                    {
-                                        return;
-                                    }
-                                    let changed = panel.selected_target.as_ref() != Some(&target);
-                                    panel.selected_target = Some(target.clone());
-                                    if changed && let Err(error) = panel.publish_selection(cx) {
-                                        panel.selected_target = None;
-                                        panel.fail(error, window, cx);
-                                        return;
-                                    }
-                                    panel.remember_target(cx);
-                                    if changed && panel.should_configure_official_kotlin(cx) {
-                                        panel.configure_official_kotlin(
-                                            target.clone(),
-                                            true,
-                                            window,
-                                            cx,
-                                        );
-                                    } else if changed
-                                        && let Some(root) = &panel.root
-                                        && java_is_configured(root)
-                                    {
-                                        panel.configure_java(target.clone(), window, cx);
-                                    }
-                                    cx.notify();
-                                })
-                                .log_err();
-                        });
-                    }
-                    menu
-                }))
-            })
+            .menu(move |window, cx| Some(Self::target_menu(panel.upgrade()?, window, cx)))
+    }
+
+    fn target_menu(panel: Entity<Self>, window: &mut Window, cx: &mut App) -> Entity<ContextMenu> {
+        let targets = panel.read(cx).targets.clone();
+        let root = panel.read(cx).root.clone();
+        let panel = panel.downgrade();
+        ContextMenu::build(window, cx, |mut menu, _, _| {
+            for target in &targets {
+                let panel = panel.clone();
+                let target = target.clone();
+                let root = root.clone();
+                menu = menu.entry(target.label(), None, move |window, cx| {
+                    panel
+                        .update(cx, |panel, cx| {
+                            if panel.running
+                                || panel.syncing
+                                || panel.root != root
+                                || !panel.targets.contains(&target)
+                            {
+                                return;
+                            }
+                            let changed = panel.selected_target.as_ref() != Some(&target);
+                            panel.selected_target = Some(target.clone());
+                            if changed && let Err(error) = panel.publish_selection(cx) {
+                                panel.selected_target = None;
+                                panel.fail(error, window, cx);
+                                return;
+                            }
+                            // Clear the resolved selection diagnostic while preserving other errors.
+                            if panel.status.as_ref() == UNAVAILABLE_BUILD_VARIANT_STATUS {
+                                panel.status = format!(
+                                    "Sync complete · {} build variants",
+                                    panel.targets.len()
+                                )
+                                .into();
+                            }
+                            panel.remember_target(cx);
+                            if changed && panel.should_configure_official_kotlin(cx) {
+                                panel.configure_official_kotlin(target.clone(), true, window, cx);
+                            } else if changed
+                                && let Some(root) = &panel.root
+                                && java_is_configured(root)
+                            {
+                                panel.configure_java(target.clone(), window, cx);
+                            }
+                            cx.notify();
+                        })
+                        .log_err();
+                });
+            }
+            menu
+        })
     }
 
     fn device_picker(&self, id: &'static str, cx: &Context<Self>) -> impl IntoElement {
@@ -3324,10 +3431,14 @@ impl AndroidPanel {
 
     fn device_menu(panel: Entity<Self>, window: &mut Window, cx: &mut App) -> Entity<ContextMenu> {
         panel.update(cx, |panel, cx| panel.refresh_devices(cx));
+        let owner = panel.read(cx).context_root();
         let menu = ContextMenu::build_persistent(window, cx, {
             let panel = panel.clone();
             move |mut menu, _, cx| {
                 let state = panel.read(cx);
+                if !state.surface_state().android || state.context_root() != owner {
+                    return menu.label("Project changed. Reopen devices.");
+                }
                 if state.refreshing_devices {
                     menu = menu.label("Refreshing devices…");
                 } else if state.device_error.is_some() || state.emulator_error.is_some() {
@@ -3343,6 +3454,7 @@ impl AndroidPanel {
                     }
                     let panel = panel.downgrade();
                     let device = device.clone();
+                    let owner = owner.clone();
                     let label = format!("{} · {} · {}", device.model, device.serial, device.state);
                     menu = menu.toggleable_entry_disabled_when(
                         label,
@@ -3354,6 +3466,12 @@ impl AndroidPanel {
                         move |_, cx| {
                             panel
                                 .update(cx, |panel, cx| {
+                                    if !panel.surface_state().android
+                                        || panel.context_root() != owner
+                                        || !panel.devices.contains(&device)
+                                    {
+                                        return;
+                                    }
                                     panel.selected_serial = Some(device.serial.clone());
                                     panel.selected_avd = None;
                                     cx.notify();
@@ -3378,6 +3496,7 @@ impl AndroidPanel {
                         }
                     );
                     let name = name.clone();
+                    let owner = owner.clone();
                     menu = menu.toggleable_entry_disabled_when(
                         label,
                         state.selected_avd.as_ref() == Some(&name),
@@ -3387,6 +3506,12 @@ impl AndroidPanel {
                         move |_, cx| {
                             panel
                                 .update(cx, |panel, cx| {
+                                    if !panel.surface_state().android
+                                        || panel.context_root() != owner
+                                        || !panel.emulators.contains(&name)
+                                    {
+                                        return;
+                                    }
                                     panel.selected_avd = Some(name.clone());
                                     panel.selected_serial = serial.clone();
                                     cx.notify();
@@ -3396,10 +3521,15 @@ impl AndroidPanel {
                     );
                 }
                 let panel = panel.downgrade();
+                let owner = owner.clone();
                 menu.separator()
                     .entry("Refresh devices", None, move |_, cx| {
                         panel
-                            .update(cx, |panel, cx| panel.refresh_devices(cx))
+                            .update(cx, |panel, cx| {
+                                if panel.context_root() == owner {
+                                    panel.refresh_devices(cx);
+                                }
+                            })
                             .log_err();
                     })
                     .keep_open_on_confirm(false)
@@ -3564,6 +3694,9 @@ impl AndroidPanel {
     }
 
     fn start_emulator(&mut self, name: String, window: &mut Window, cx: &mut Context<Self>) {
+        if !self.surface_state().android {
+            return;
+        }
         if self.running || self.syncing || self.tool_setup.choosing {
             return;
         }
@@ -3699,6 +3832,9 @@ impl AndroidPanel {
     }
 
     fn stop_emulator(&mut self, window: &mut Window, cx: &mut Context<Self>) {
+        if !self.surface_state().android {
+            return;
+        }
         if self.running || self.syncing || self.tool_setup.choosing {
             return;
         }
@@ -3859,7 +3995,10 @@ impl AndroidPanel {
                                         controller.selected_target = None;
                                         controller.error = None;
                                         controller.auto_sync_root = None;
-                                        controller.sync_project(window, cx);
+                                        controller.surfaces_changed(window, cx);
+                                        if controller.surface_state().android {
+                                            controller.sync_project(window, cx);
+                                        }
                                     })
                                     .log_err();
                             },
@@ -3874,65 +4013,74 @@ impl AndroidPanel {
         h_flex()
             .gap_1()
             .child(div().max_w(px(130.)).child(self.project_picker(cx)))
-            .child(self.target_picker("toolbar-target", cx))
-            .child(self.device_picker("toolbar-device", cx))
-            .child(
-                IconButton::new("android-run", IconName::PlayFilled)
-                    .tab_index(0isize)
-                    .aria_label("Run app")
-                    .icon_color(Color::Success)
-                    .disabled(
-                        self.running
-                            || self.syncing
-                            || self.tool_setup.choosing
-                            || self.selected_target.is_none()
-                            || !self.can_run_on_selected_device(),
+            .when(self.surface_state().android, |toolbar| {
+                toolbar
+                    .child(self.target_picker("toolbar-target", cx))
+                    .child(self.device_picker("toolbar-device", cx))
+                    .child(
+                        IconButton::new("android-run", IconName::PlayFilled)
+                            .tab_index(0isize)
+                            .aria_label("Run app")
+                            .icon_color(Color::Success)
+                            .disabled(
+                                self.running
+                                    || self.syncing
+                                    || self.tool_setup.choosing
+                                    || self.selected_target.is_none()
+                                    || !self.can_run_on_selected_device(),
+                            )
+                            .tooltip(|_, cx| Tooltip::for_action("Run app", &Run, cx))
+                            .on_click(cx.listener(|panel, _, window, cx| {
+                                panel.gradle(GradleOperation::Run, window, cx)
+                            })),
                     )
-                    .tooltip(|_, cx| Tooltip::for_action("Run app", &Run, cx))
-                    .on_click(cx.listener(|panel, _, window, cx| {
-                        panel.gradle(GradleOperation::Run, window, cx)
-                    })),
-            )
-            .child(
-                IconButton::new("android-debug", IconName::Debug)
-                    .tab_index(0isize)
-                    .aria_label("Debug app")
-                    .disabled(
-                        self.running
-                            || self.syncing
-                            || self.tool_setup.choosing
-                            || self.debug_forward.is_some()
-                            || self.selected_target.is_none()
-                            || !self.can_run_on_selected_device(),
+                    .child(
+                        IconButton::new("android-debug", IconName::Debug)
+                            .tab_index(0isize)
+                            .aria_label("Debug app")
+                            .disabled(
+                                self.running
+                                    || self.syncing
+                                    || self.tool_setup.choosing
+                                    || self.debug_forward.is_some()
+                                    || self.selected_target.is_none()
+                                    || !self.can_run_on_selected_device(),
+                            )
+                            .tooltip(|_, cx| Tooltip::for_action("Debug app", &Debug, cx))
+                            .on_click(cx.listener(|panel, _, window, cx| {
+                                panel.gradle(GradleOperation::Debug, window, cx)
+                            })),
                     )
-                    .tooltip(|_, cx| Tooltip::for_action("Debug app", &Debug, cx))
-                    .on_click(cx.listener(|panel, _, window, cx| {
-                        panel.gradle(GradleOperation::Debug, window, cx)
-                    })),
-            )
-            .child(
-                IconButton::new("android-build", IconName::ToolHammer)
-                    .tab_index(0isize)
-                    .aria_label("Build selected variant")
-                    .disabled(
-                        self.running
-                            || self.syncing
-                            || self.tool_setup.choosing
-                            || self.selected_target.is_none(),
+                    .child(
+                        IconButton::new("android-build", IconName::ToolHammer)
+                            .tab_index(0isize)
+                            .aria_label("Build selected variant")
+                            .disabled(
+                                self.running
+                                    || self.syncing
+                                    || self.tool_setup.choosing
+                                    || self.selected_target.is_none(),
+                            )
+                            .tooltip(|_, cx| {
+                                Tooltip::for_action("Build selected variant", &Build, cx)
+                            })
+                            .on_click(cx.listener(|panel, _, window, cx| {
+                                panel.gradle(GradleOperation::Build, window, cx)
+                            })),
                     )
-                    .tooltip(|_, cx| Tooltip::for_action("Build selected variant", &Build, cx))
-                    .on_click(cx.listener(|panel, _, window, cx| {
-                        panel.gradle(GradleOperation::Build, window, cx)
-                    })),
-            )
-            .child(
-                IconButton::new("android-sync", IconName::RefreshTitle)
-                    .tab_index(0isize)
-                    .aria_label("Sync Android project")
-                    .disabled(self.running || self.syncing || self.tool_setup.choosing)
-                    .tooltip(|_, cx| Tooltip::for_action("Sync Android project", &SyncProject, cx))
-                    .on_click(cx.listener(|panel, _, window, cx| panel.sync_project(window, cx))),
-            )
+                    .child(
+                        IconButton::new("android-sync", IconName::RefreshTitle)
+                            .tab_index(0isize)
+                            .aria_label("Sync Android project")
+                            .disabled(self.running || self.syncing || self.tool_setup.choosing)
+                            .tooltip(|_, cx| {
+                                Tooltip::for_action("Sync Android project", &SyncProject, cx)
+                            })
+                            .on_click(
+                                cx.listener(|panel, _, window, cx| panel.sync_project(window, cx)),
+                            ),
+                    )
+            })
     }
 }
 
@@ -5063,7 +5211,7 @@ mod tests {
         filesystem
             .insert_tree(
                 "/android",
-                json!({"gradlew": "", "settings.gradle.kts": ""}),
+                json!({"gradlew": "", "settings.gradle.kts": "", "build.gradle.kts": "plugins { id(\"com.android.application\") }"}),
             )
             .await;
         let project =
@@ -5132,14 +5280,14 @@ mod tests {
         let filesystem = FakeFs::new(cx.executor());
         for root in ["/first", "/second"] {
             filesystem
-                .insert_tree(root, json!({"gradlew": "", "settings.gradle.kts": ""}))
+                .insert_tree(root, json!({"gradlew": "", "settings.gradle.kts": "", "build.gradle.kts": "plugins { id(\"com.android.application\") }"}))
                 .await;
         }
         let project =
             Project::test(filesystem, [Path::new("/first"), Path::new("/second")], cx).await;
         let (workspace, cx) =
             cx.add_window_view(|window, cx| Workspace::test_new(project.clone(), window, cx));
-        let panel = cx.new(|cx| AndroidPanel::new(workspace.downgrade(), project, cx));
+        let panel = cx.new(|cx| test_android_panel(workspace.downgrade(), project, cx));
         panel.update_in(cx, |panel, window, cx| {
             panel.startup_settings_ready = true;
             panel.root = Some("/second".into());
@@ -5150,6 +5298,36 @@ mod tests {
             assert!(panel.auto_sync_root.is_none());
             assert!(!panel.syncing);
         });
+    }
+
+    pub(super) fn test_android_panel(
+        workspace: WeakEntity<Workspace>,
+        project: Entity<Project>,
+        cx: &mut Context<AndroidPanel>,
+    ) -> AndroidPanel {
+        let roots = project
+            .read(cx)
+            .visible_worktrees(cx)
+            .map(|tree| tree.read(cx).abs_path().to_path_buf())
+            .collect::<Vec<_>>();
+        let mut panel = AndroidPanel::new(workspace, project, cx);
+        for root in roots {
+            panel.project_surfaces.insert(
+                root,
+                project_surfaces::SurfaceState {
+                    eligible: true,
+                    android: true,
+                    build_window: true,
+                },
+            );
+        }
+        panel
+    }
+
+    pub(super) fn install_logcat_context(workspace: &mut Workspace, cx: &mut Context<Workspace>) {
+        let panel = cx
+            .new(|cx| test_android_panel(workspace.weak_handle(), workspace.project().clone(), cx));
+        register_controller(workspace, &panel, cx);
     }
 
     pub(super) fn publish_test_android_model(
@@ -5193,7 +5371,7 @@ mod tests {
         });
         let (workspace, cx) =
             cx.add_window_view(|window, cx| Workspace::test_new(project.clone(), window, cx));
-        let panel = cx.new(|cx| AndroidPanel::new(workspace.downgrade(), project, cx));
+        let panel = cx.new(|cx| test_android_panel(workspace.downgrade(), project, cx));
         panel.update_in(cx, |panel, window, cx| {
             let root = PathBuf::from("/android");
             let target = AndroidTarget {
@@ -5267,7 +5445,7 @@ mod tests {
         let project = Project::test(filesystem, [Path::new("/android")], cx).await;
         let (workspace, cx) =
             cx.add_window_view(|window, cx| Workspace::test_new(project.clone(), window, cx));
-        let panel = cx.new(|cx| AndroidPanel::new(workspace.downgrade(), project, cx));
+        let panel = cx.new(|cx| test_android_panel(workspace.downgrade(), project, cx));
         panel.update_in(cx, |panel, window, cx| {
             let root = PathBuf::from("/android");
             let target = AndroidTarget {
@@ -5334,7 +5512,7 @@ mod tests {
             .expect("Open resource");
         let (workspace, cx) =
             cx.add_window_view(|window, cx| Workspace::test_new(project.clone(), window, cx));
-        let panel = cx.new(|cx| AndroidPanel::new(workspace.downgrade(), project.clone(), cx));
+        let panel = cx.new(|cx| test_android_panel(workspace.downgrade(), project.clone(), cx));
         workspace.update_in(cx, |workspace, window, cx| {
             let editor = cx.new(|cx| {
                 editor::Editor::for_buffer(buffer.clone(), Some(project.clone()), window, cx)
@@ -5384,7 +5562,7 @@ mod tests {
         let project = Project::test(filesystem, [Path::new("/android")], cx).await;
         let (workspace, cx) =
             cx.add_window_view(|window, cx| Workspace::test_new(project.clone(), window, cx));
-        let panel = cx.new(|cx| AndroidPanel::new(workspace.downgrade(), project, cx));
+        let panel = cx.new(|cx| test_android_panel(workspace.downgrade(), project, cx));
         panel.update(cx, |panel, cx| {
             panel.root = Some("/android".into());
             panel.model_input_roots = vec![
@@ -5693,7 +5871,7 @@ mod tests {
         let project = Project::test(filesystem, [Path::new("/android")], cx).await;
         let (workspace, cx) =
             cx.add_window_view(|window, cx| Workspace::test_new(project.clone(), window, cx));
-        let panel = cx.new(|cx| AndroidPanel::new(workspace.downgrade(), project.clone(), cx));
+        let panel = cx.new(|cx| test_android_panel(workspace.downgrade(), project.clone(), cx));
         panel.update(cx, |panel, cx| {
             let root = PathBuf::from("/android");
             let target = AndroidTarget {
@@ -5961,7 +6139,7 @@ fi
         let project = Project::test(filesystem, [Path::new("/android")], cx).await;
         let (workspace, cx) =
             cx.add_window_view(|window, cx| Workspace::test_new(project.clone(), window, cx));
-        let panel = cx.new(|cx| AndroidPanel::new(workspace.downgrade(), project, cx));
+        let panel = cx.new(|cx| test_android_panel(workspace.downgrade(), project, cx));
         panel.update_in(cx, |panel, window, cx| {
             let root = PathBuf::from("/android");
             let target = AndroidTarget {
@@ -6032,7 +6210,7 @@ fi
         let project = Project::test(filesystem, [Path::new("/android")], cx).await;
         let (workspace, cx) =
             cx.add_window_view(|window, cx| Workspace::test_new(project.clone(), window, cx));
-        let panel = cx.new(|cx| AndroidPanel::new(workspace.downgrade(), project, cx));
+        let panel = cx.new(|cx| test_android_panel(workspace.downgrade(), project, cx));
         panel.update_in(cx, |panel, window, cx| {
             panel.root = Some("/android".into());
             let target = AndroidTarget {
@@ -6094,13 +6272,13 @@ fi
         let fs = FakeFs::new(cx.executor());
         fs.insert_tree(
             "/android",
-            json!({"settings.gradle.kts": "", "gradlew": ""}),
+            json!({"settings.gradle.kts": "", "gradlew": "", "build.gradle.kts": "plugins { id(\"com.android.application\") }"}),
         )
         .await;
         let project = Project::test(fs, [Path::new("/android")], cx).await;
         let (workspace, cx) =
             cx.add_window_view(|window, cx| Workspace::test_new(project.clone(), window, cx));
-        let panel = cx.new(|cx| AndroidPanel::new(workspace.downgrade(), project, cx));
+        let panel = cx.new(|cx| test_android_panel(workspace.downgrade(), project, cx));
         panel.update_in(cx, |panel, window, cx| {
             panel.root = Some(PathBuf::from("/android"));
             let target = AndroidTarget {
@@ -6206,7 +6384,7 @@ fi
         let fs = FakeFs::new(cx.executor());
         fs.insert_tree(
             "/android",
-            json!({"settings.gradle.kts": "", "gradlew": ""}),
+            json!({"settings.gradle.kts": "", "gradlew": "", "build.gradle.kts": "plugins { id(\"com.android.application\") }"}),
         )
         .await;
         let project = Project::test(fs, [Path::new("/android")], cx).await;
@@ -6221,7 +6399,7 @@ fi
         });
         let (workspace, cx) =
             cx.add_window_view(|window, cx| Workspace::test_new(project.clone(), window, cx));
-        let panel = cx.new(|cx| AndroidPanel::new(workspace.downgrade(), project, cx));
+        let panel = cx.new(|cx| test_android_panel(workspace.downgrade(), project, cx));
         let activity = cx.new(|cx| android_status::AndroidActivity::new(&panel, cx));
         workspace.update_in(cx, |workspace, window, cx| {
             workspace
@@ -6526,7 +6704,7 @@ fi
         let project = Project::test(fs, [Path::new("/android")], cx).await;
         let (workspace, cx) =
             cx.add_window_view(|window, cx| Workspace::test_new(project.clone(), window, cx));
-        let panel = cx.new(|cx| AndroidPanel::new(workspace.downgrade(), project, cx));
+        let panel = cx.new(|cx| test_android_panel(workspace.downgrade(), project, cx));
         let (send_cancel, receiver) = oneshot::channel();
         drop(receiver);
         panel.update_in(cx, |panel, window, cx| {
@@ -6567,7 +6745,7 @@ fi
         let project = Project::test(filesystem, [Path::new("/android")], cx).await;
         let (workspace, cx) =
             cx.add_window_view(|window, cx| Workspace::test_new(project.clone(), window, cx));
-        let panel = cx.new(|cx| AndroidPanel::new(workspace.downgrade(), project, cx));
+        let panel = cx.new(|cx| test_android_panel(workspace.downgrade(), project, cx));
         for closed in [false, true] {
             panel.update_in(cx, |panel, window, cx| {
                 let (session, output, logs) = panel.build_panel.update(cx, |build, cx| {
@@ -6613,7 +6791,7 @@ fi
         let project = Project::test(filesystem, [Path::new("/android")], cx).await;
         let (workspace, cx) =
             cx.add_window_view(|window, cx| Workspace::test_new(project.clone(), window, cx));
-        let panel = cx.new(|cx| AndroidPanel::new(workspace.downgrade(), project, cx));
+        let panel = cx.new(|cx| test_android_panel(workspace.downgrade(), project, cx));
         panel.update_in(cx, |panel, window, cx| {
             panel.observe_project_open(window, cx);
             panel.last_build_operation = Some(GradleOperation::Run);
@@ -6644,12 +6822,12 @@ fi
         let fs = FakeFs::new(cx.executor());
         fs.insert_tree(
             "/android-a",
-            json!({"settings.gradle.kts": "", "gradlew": ""}),
+            json!({"settings.gradle.kts": "", "gradlew": "", "build.gradle.kts": "plugins { id(\"com.android.application\") }"}),
         )
         .await;
         fs.insert_tree(
             "/android-b",
-            json!({"settings.gradle.kts": "", "gradlew": ""}),
+            json!({"settings.gradle.kts": "", "gradlew": "", "build.gradle.kts": "plugins { id(\"com.android.application\") }"}),
         )
         .await;
         let project =
@@ -6665,7 +6843,7 @@ fi
         });
         let (workspace, cx) =
             cx.add_window_view(|window, cx| Workspace::test_new(project.clone(), window, cx));
-        let panel = cx.new(|cx| AndroidPanel::new(workspace.downgrade(), project.clone(), cx));
+        let panel = cx.new(|cx| test_android_panel(workspace.downgrade(), project.clone(), cx));
         let target = AndroidTarget {
             module: ":mobile".into(),
             variant: "debug".into(),
@@ -6739,7 +6917,7 @@ fi
         let project = Project::test(fs, [root.as_path()], cx).await;
         let (workspace, cx) =
             cx.add_window_view(|window, cx| Workspace::test_new(project.clone(), window, cx));
-        let panel = cx.new(|cx| AndroidPanel::new(workspace.downgrade(), project.clone(), cx));
+        let panel = cx.new(|cx| test_android_panel(workspace.downgrade(), project.clone(), cx));
         let target = AndroidTarget {
             module: ":mobile".into(),
             variant: "demoDebug".into(),
@@ -6847,7 +7025,7 @@ fi
         let imported = json!({"phase": "FINISHED", "folders": [{"status": "SUCCESS"}]});
         let _app_state = cx.update(AppState::test);
         let fs = FakeFs::new(cx.executor());
-        fs.insert_tree("/project", json!({"main.kt": "fun main() {}"}))
+        fs.insert_tree("/project", json!({"main.kt": "fun main() {}", "build.gradle.kts": "plugins { id(\"com.android.application\") }"}))
             .await;
         let project = Project::test(fs, [Path::new("/project")], cx).await;
         let languages = project.read_with(cx, |project, _| project.languages().clone());
@@ -6917,7 +7095,7 @@ fi
         let location = serde_json::from_value(serde_json::to_value(location).unwrap()).unwrap();
         let (workspace, cx) =
             cx.add_window_view(|window, cx| Workspace::test_new(project.clone(), window, cx));
-        let panel = cx.new(|cx| AndroidPanel::new(workspace.downgrade(), project.clone(), cx));
+        let panel = cx.new(|cx| test_android_panel(workspace.downgrade(), project.clone(), cx));
         panel.update_in(cx, |panel, window, cx| {
             panel.root = Some(PathBuf::from("/project"));
             panel.syncing = true;
@@ -7032,7 +7210,7 @@ fi
         }
         let (workspace, cx) =
             cx.add_window_view(|window, cx| Workspace::test_new(project.clone(), window, cx));
-        let panel = cx.new(|cx| AndroidPanel::new(workspace.downgrade(), project.clone(), cx));
+        let panel = cx.new(|cx| test_android_panel(workspace.downgrade(), project.clone(), cx));
         panel.update(cx, |panel, cx| {
             panel
                 .restart_language_server(Path::new("/first"), "kotlin-lsp", cx)
@@ -7218,7 +7396,7 @@ fi
         });
         let (workspace, cx) =
             cx.add_window_view(|window, cx| Workspace::test_new(project.clone(), window, cx));
-        let panel = cx.new(|cx| AndroidPanel::new(workspace.downgrade(), project.clone(), cx));
+        let panel = cx.new(|cx| test_android_panel(workspace.downgrade(), project.clone(), cx));
         let target = AndroidTarget {
             module: ":app".into(),
             variant: "debug".into(),
@@ -7509,7 +7687,7 @@ fi
         let project = Project::test(fs, [root.as_path()], cx).await;
         let (workspace, cx) =
             cx.add_window_view(|window, cx| Workspace::test_new(project.clone(), window, cx));
-        let panel = cx.new(|cx| AndroidPanel::new(workspace.downgrade(), project, cx));
+        let panel = cx.new(|cx| test_android_panel(workspace.downgrade(), project, cx));
         let target = AndroidTarget {
             module: ":app".into(),
             variant: "debug".into(),
@@ -7581,7 +7759,7 @@ fi
         let project = Project::test(fs, [root.as_path()], cx).await;
         let (workspace, cx) =
             cx.add_window_view(|window, cx| Workspace::test_new(project.clone(), window, cx));
-        let panel = cx.new(|cx| AndroidPanel::new(workspace.downgrade(), project, cx));
+        let panel = cx.new(|cx| test_android_panel(workspace.downgrade(), project, cx));
         let target = AndroidTarget {
             module: ":app".into(),
             variant: "debug".into(),
@@ -7859,9 +8037,9 @@ fi
             .0;
         let (second_workspace, cx) = cx
             .add_window_view(|window, cx| Workspace::test_new(second_project.clone(), window, cx));
-        let first = cx.new(|cx| AndroidPanel::new(first_workspace.downgrade(), first_project, cx));
+        let first = cx.new(|cx| test_android_panel(first_workspace.downgrade(), first_project, cx));
         let second =
-            cx.new(|cx| AndroidPanel::new(second_workspace.downgrade(), second_project, cx));
+            cx.new(|cx| test_android_panel(second_workspace.downgrade(), second_project, cx));
         first_workspace.update(cx, |workspace, cx| {
             register_controller(workspace, &first, cx)
         });
@@ -8081,10 +8259,16 @@ fi
     #[gpui::test]
     async fn device_menu_uses_refreshed_devices_and_preserves_selection(cx: &mut TestAppContext) {
         let _app_state = cx.update(AppState::test);
-        let project = Project::test(FakeFs::new(cx.executor()), [], cx).await;
+        let fs = FakeFs::new(cx.executor());
+        fs.insert_tree(
+            "/android",
+            json!({"build.gradle.kts": "plugins { id(\"com.android.application\") }"}),
+        )
+        .await;
+        let project = Project::test(fs, [Path::new("/android")], cx).await;
         let (workspace, cx) =
             cx.add_window_view(|window, cx| Workspace::test_new(project.clone(), window, cx));
-        let panel = cx.new(|cx| AndroidPanel::new(workspace.downgrade(), project, cx));
+        let panel = cx.new(|cx| test_android_panel(workspace.downgrade(), project, cx));
         panel.update(cx, |panel, _| {
             // Supply completion below instead of running host SDK processes.
             panel.refreshing_devices = true;
@@ -8132,7 +8316,7 @@ fi
         let project = Project::test(fs, [Path::new("/gradle-default-model")], cx).await;
         let (workspace, cx) =
             cx.add_window_view(|window, cx| Workspace::test_new(project.clone(), window, cx));
-        let panel = cx.new(|cx| AndroidPanel::new(workspace.downgrade(), project, cx));
+        let panel = cx.new(|cx| test_android_panel(workspace.downgrade(), project, cx));
         panel.update(cx, |panel, cx| {
             let root = PathBuf::from("/gradle-default-model");
             panel.root = Some(root.clone());
@@ -8184,6 +8368,203 @@ fi
     }
 
     #[gpui::test]
+    async fn build_variant_menu_recovers_from_removed_selection(cx: &mut TestAppContext) {
+        let _app_state = cx.update(AppState::test);
+        let fs = FakeFs::new(cx.executor());
+        let root = PathBuf::from("/removed-build-variant");
+        fs.insert_tree(&root, json!({"settings.gradle.kts": ""}))
+            .await;
+        let project = Project::test(fs, [root.as_path()], cx).await;
+        let (workspace, cx) =
+            cx.add_window_view(|window, cx| Workspace::test_new(project.clone(), window, cx));
+        let panel = cx.new(|cx| AndroidPanel::new(workspace.downgrade(), project, cx));
+        let model = |names: &[&str]| {
+            let variants = names.iter().map(|name| json!({
+                "name": name, "outputListing": root.join(name).join("output.json"),
+                "components": [{"name": name, "scope": "main", "sources": [], "dependencies": []}]
+            })).collect::<Vec<_>>();
+            serde_json::from_value::<android_tools::project_model::ProjectModel>(json!({
+                "version": 1, "root": root, "diagnostics": [], "modules": [{
+                    "path": ":mobile", "directory": root.join("mobile"),
+                    "kind": "application", "defaultVariant": names.first(),
+                    "variants": variants
+                }]
+            }))
+            .expect("Gradle model")
+        };
+        panel.update(cx, |panel, cx| {
+            panel.root = Some(root.clone());
+            let previous = model(&["demoDebug", "fullRelease"]);
+            panel.selected_target = previous
+                .targets()
+                .into_iter()
+                .find(|target| target.variant == "demoDebug");
+            panel.remember_target(cx);
+        });
+        // Let the saved preference reach the database before simulating reopening.
+        cx.run_until_parked();
+        panel.update(cx, |panel, cx| {
+            panel.selected_target = None;
+            let refreshed = model(&["fullRelease"]);
+            let targets = refreshed.targets();
+            panel.project.update(cx, |project, cx| {
+                let token = project.invalidate_android_model(Some(root.clone()), cx);
+                project
+                    .publish_android_model(&token, refreshed, cx)
+                    .expect("Publish refreshed model");
+            });
+            panel.apply_targets(targets, cx);
+            panel
+                .publish_selection(cx)
+                .expect("Clear removed selection");
+            assert!(panel.selected_target.is_none());
+            assert_eq!(panel.status.as_ref(), UNAVAILABLE_BUILD_VARIANT_STATUS);
+        });
+        let menu = cx.update(|window, cx| AndroidPanel::target_menu(panel.clone(), window, cx));
+        menu.update_in(cx, |menu, window, cx| {
+            menu.select_first(&Default::default(), window, cx);
+            menu.confirm(&Default::default(), window, cx);
+        });
+        panel.read_with(cx, |panel, cx| {
+            assert_eq!(
+                panel
+                    .selected_target
+                    .as_ref()
+                    .expect("Recovered variant")
+                    .variant,
+                "fullRelease"
+            );
+            assert_eq!(
+                panel
+                    .project
+                    .read(cx)
+                    .android_model()
+                    .selected
+                    .as_ref()
+                    .expect("Published selection")
+                    .selected
+                    .variant,
+                "fullRelease"
+            );
+            assert_eq!(panel.status.as_ref(), "Sync complete · 1 build variants");
+        });
+        cx.run_until_parked();
+        // A menu opened before a sync must not select a removed target. Reopening
+        // must read the new targets, including on subsequent recovery cycles.
+        for variant in ["demoDebug", "fullRelease", "demoRelease"] {
+            let stale_menu =
+                cx.update(|window, cx| AndroidPanel::target_menu(panel.clone(), window, cx));
+            panel.update(cx, |panel, cx| {
+                let refreshed = model(&[variant]);
+                let targets = refreshed.targets();
+                panel.project.update(cx, |project, cx| {
+                    let token = project.invalidate_android_model(Some(root.clone()), cx);
+                    project
+                        .publish_android_model(&token, refreshed, cx)
+                        .expect("Publish changed targets");
+                });
+                panel.apply_targets(targets, cx);
+                panel
+                    .publish_selection(cx)
+                    .expect("Clear removed selection");
+                assert!(panel.selected_target.is_none());
+                assert_eq!(panel.status.as_ref(), UNAVAILABLE_BUILD_VARIANT_STATUS);
+            });
+            stale_menu.update_in(cx, |menu, window, cx| {
+                menu.select_first(&Default::default(), window, cx);
+                menu.confirm(&Default::default(), window, cx);
+            });
+            panel.read_with(cx, |panel, _| {
+                assert!(panel.selected_target.is_none());
+                assert_eq!(panel.status.as_ref(), UNAVAILABLE_BUILD_VARIANT_STATUS);
+            });
+            for interruption in ["sync", "run", "root"] {
+                let menu =
+                    cx.update(|window, cx| AndroidPanel::target_menu(panel.clone(), window, cx));
+                panel.update(cx, |panel, _| match interruption {
+                    "sync" => panel.syncing = true,
+                    "run" => panel.running = true,
+                    _ => panel.root = Some(PathBuf::from("/another-project")),
+                });
+                menu.update_in(cx, |menu, window, cx| {
+                    menu.select_first(&Default::default(), window, cx);
+                    menu.confirm(&Default::default(), window, cx);
+                });
+                panel.update(cx, |panel, _| {
+                    assert!(panel.selected_target.is_none());
+                    assert_eq!(panel.status.as_ref(), UNAVAILABLE_BUILD_VARIANT_STATUS);
+                    panel.syncing = false;
+                    panel.running = false;
+                    panel.root = Some(root.clone());
+                });
+            }
+            let menu = cx.update(|window, cx| AndroidPanel::target_menu(panel.clone(), window, cx));
+            menu.update_in(cx, |menu, window, cx| {
+                menu.select_first(&Default::default(), window, cx);
+                menu.confirm(&Default::default(), window, cx);
+            });
+            panel.read_with(cx, |panel, cx| {
+                assert_eq!(
+                    panel
+                        .selected_target
+                        .as_ref()
+                        .expect("Recovered target")
+                        .variant,
+                    variant
+                );
+                assert_eq!(
+                    panel
+                        .project
+                        .read(cx)
+                        .android_model()
+                        .selected
+                        .as_ref()
+                        .expect("Published recovery")
+                        .selected
+                        .variant,
+                    variant
+                );
+                assert_eq!(panel.status.as_ref(), "Sync complete · 1 build variants");
+            });
+            cx.run_until_parked();
+            panel.update(cx, |panel, cx| {
+                let key = panel.target_selection_key().expect("Selection key");
+                let saved = KeyValueStore::global(cx)
+                    .read_kvp(&key)
+                    .expect("Read remembered selection")
+                    .expect("Recovery was remembered");
+                assert_eq!(
+                    serde_json::from_str::<(String, String)>(&saved).expect("Saved variant"),
+                    (":mobile".to_string(), variant.to_string())
+                );
+                panel.selected_target = None;
+                panel.apply_targets(model(&[variant]).targets(), cx);
+                assert_eq!(
+                    panel
+                        .selected_target
+                        .as_ref()
+                        .expect("Remembered recovery")
+                        .variant,
+                    variant
+                );
+            });
+        }
+        // Selecting a variant must not hide an unrelated operation failure.
+        panel.update(cx, |panel, _| {
+            panel.status = "Build failed: compiler error".into()
+        });
+        let menu = cx.update(|window, cx| AndroidPanel::target_menu(panel.clone(), window, cx));
+        menu.update_in(cx, |menu, window, cx| {
+            menu.select_first(&Default::default(), window, cx);
+            menu.confirm(&Default::default(), window, cx);
+        });
+        panel.read_with(cx, |panel, _| {
+            assert_eq!(panel.status.as_ref(), "Build failed: compiler error");
+        });
+        cx.run_until_parked();
+    }
+
+    #[gpui::test]
     async fn default_build_variant_is_selected_and_remembered(cx: &mut TestAppContext) {
         let _app_state = cx.update(AppState::test);
         let fs = FakeFs::new(cx.executor());
@@ -8192,7 +8573,7 @@ fi
         let project = Project::test(fs, [Path::new("/android")], cx).await;
         let (workspace, cx) =
             cx.add_window_view(|window, cx| Workspace::test_new(project.clone(), window, cx));
-        let panel = cx.new(|cx| AndroidPanel::new(workspace.downgrade(), project, cx));
+        let panel = cx.new(|cx| test_android_panel(workspace.downgrade(), project, cx));
         for (index, (variants, expected)) in [
             (
                 vec![
@@ -8386,7 +8767,7 @@ fi
         filesystem
             .insert_tree(
                 "/android",
-                json!({"settings.gradle.kts": "", "gradlew": ""}),
+                json!({"settings.gradle.kts": "", "gradlew": "", "build.gradle.kts": "plugins { id(\"com.android.application\") }"}),
             )
             .await;
         let project =

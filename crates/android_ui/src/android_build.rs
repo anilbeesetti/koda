@@ -1067,6 +1067,9 @@ impl Focusable for BuildPanel {
     }
 }
 impl Panel for BuildPanel {
+    fn enabled(&self, cx: &App) -> bool {
+        crate::project_surfaces::build_available(&self.workspace, cx)
+    }
     fn persistent_name() -> &'static str {
         "Build"
     }

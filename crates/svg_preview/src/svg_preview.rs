@@ -13,6 +13,16 @@ actions!(
     ]
 );
 
+actions!(
+    android,
+    [
+        /// Opens a live preview of the active vector drawable XML.
+        OpenVectorDrawablePreview,
+        /// Opens a live vector drawable preview beside the XML editor.
+        OpenVectorDrawablePreviewToTheSide
+    ]
+);
+
 pub fn init(cx: &mut App) {
     cx.observe_new(|workspace: &mut Workspace, window, cx| {
         let Some(window) = window else {

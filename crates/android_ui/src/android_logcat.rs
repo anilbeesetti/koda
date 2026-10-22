@@ -599,7 +599,25 @@ impl LogcatView {
         }
     }
 
+    pub(super) fn context_changed(&mut self, cx: &mut Context<Self>) {
+        if let Err(error) = self.ensure_trusted(cx) {
+            self.stream_task = None;
+            self.device_task = None;
+            self.control_task = None;
+            self.capturing = false;
+            self.error = Some(format!("{error:#}"));
+            cx.notify();
+        } else if self.device_task.is_none() {
+            self.error = None;
+            self.watch_devices(cx);
+        }
+    }
+
     fn ensure_trusted(&self, cx: &App) -> Result<()> {
+        ensure!(
+            crate::project_surfaces::root_available(&self.workspace, &self.root, cx),
+            "This project no longer supports Android device logs"
+        );
         let project = self.project.read(cx);
         ensure!(project.is_local(), "Logcat supports local projects only");
         ensure!(
@@ -3559,6 +3577,7 @@ pub(super) mod tests {
         let (workspace, cx) =
             cx.add_window_view(|window, cx| Workspace::test_new(project.clone(), window, cx));
         let view = workspace.update_in(cx, |workspace, window, cx| {
+            crate::tests::install_logcat_context(workspace, cx);
             cx.new(|cx| {
                 LogcatView::new(
                     workspace.weak_handle(),
@@ -4159,6 +4178,7 @@ pub(super) mod tests {
         let (workspace, cx) =
             cx.add_window_view(|window, cx| Workspace::test_new(project.clone(), window, cx));
         let view = workspace.update_in(cx, |workspace, window, cx| {
+            crate::tests::install_logcat_context(workspace, cx);
             cx.new(|cx| {
                 LogcatView::new(
                     workspace.weak_handle(),
@@ -4243,6 +4263,59 @@ pub(super) mod tests {
             view.apply_discovery(discovery(vec![device("device-a"), device("device-b")]), cx);
             assert!(view.connected);
             assert_eq!(view.preferences.serial.as_deref(), Some("device-a"));
+        });
+    }
+    #[gpui::test]
+    async fn context_loss_stops_capture_discovery_and_control_then_resumes_safely(
+        cx: &mut TestAppContext,
+    ) {
+        let (workspace, view, cx) = viewer(cx, false).await;
+        let panel = workspace.read_with(cx, |workspace, cx| {
+            controller(workspace, cx).expect("Android context")
+        });
+        view.update(cx, |view, cx| {
+            view.stream_task = Some(cx.spawn(async |_, _| futures::future::pending().await));
+            view.device_task = Some(cx.spawn(async |_, _| futures::future::pending().await));
+            view.control_task = Some(cx.spawn(async |_, _| futures::future::pending().await));
+            view.capturing = true;
+            view.stopped = true;
+        });
+        panel.update(cx, |panel, _| panel.project_surfaces.clear());
+        view.update(cx, |view, cx| {
+            view.context_changed(cx);
+            assert!(view.stream_task.is_none());
+            assert!(view.device_task.is_none());
+            assert!(view.control_task.is_none());
+            assert!(!view.capturing);
+            view.watch_devices(cx);
+            assert!(
+                view.device_task.is_none(),
+                "Stale restart cannot resume a hidden context"
+            );
+        });
+        panel.update(cx, |panel, _| {
+            panel.project_surfaces.insert(
+                PathBuf::from("/logcat"),
+                crate::project_surfaces::SurfaceState {
+                    eligible: true,
+                    android: true,
+                    build_window: true,
+                },
+            );
+        });
+        view.update(cx, |view, cx| {
+            view.context_changed(cx);
+            assert!(view.device_task.is_some());
+            assert!(
+                view.stopped,
+                "Restoration preserves a deliberate capture stop"
+            );
+            assert!(!view.capturing);
+        });
+        panel.update(cx, |panel, _| panel.project_surfaces.clear());
+        view.update(cx, |view, cx| {
+            view.context_changed(cx);
+            assert!(view.device_task.is_none());
         });
     }
 }
