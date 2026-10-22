@@ -6,6 +6,7 @@ pub mod project_detection;
 pub mod project_model;
 pub mod provision;
 pub(crate) mod shared_sdk;
+pub mod sync_cache;
 pub mod vector_drawable;
 use anyhow::{Context as _, Result, bail, ensure};
 pub mod java;

@@ -167,7 +167,7 @@ gradle.projectsEvaluated {
     def collectors = []
     androidVariants.each { path, variants ->
         def project = root.project(path)
-        collectors.add(project.tasks.register('kodaAndroidModuleModel') {
+        collectors.add(project.tasks.register('prepareAndroidModuleModel') {
             // AGP 8 forbids reading task-backed source providers until their producers finish.
             variants.each { variant ->
                 def components = [variant, optional(variant, 'unitTest'), optional(variant, 'androidTest'), optional(variant, 'testFixtures')]
@@ -221,7 +221,7 @@ gradle.projectsEvaluated {
         })
     }
     jvmProjects.each { project ->
-        collectors.add(project.tasks.register('kodaAndroidModuleModel') {
+        collectors.add(project.tasks.register('prepareAndroidModuleModel') {
             project.extensions.getByName('sourceSets').findAll { it.name in ['main', 'test'] }.each { sourceSet ->
                 // Source file trees carry the producer dependencies of task-backed JVM roots.
                 inputs.files(sourceSet.java)
@@ -241,7 +241,7 @@ gradle.projectsEvaluated {
             }
         })
     }
-    root.tasks.register('kodaAndroidProjectModel') {
+    root.tasks.register('prepareAndroidProjectModel') {
         dependsOn(collectors)
         doLast {
             def modules = models.entrySet().sort { it.key }.collect { it.value }

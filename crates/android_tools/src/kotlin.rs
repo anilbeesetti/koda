@@ -110,25 +110,7 @@ pub(crate) fn validate_official_server(path: &Path) -> Result<()> {
 }
 
 fn prepare_cache(root: &Path, name: &str) -> Result<PathBuf> {
-    let root = root.canonicalize()?;
-    let settings = root.join(".koda");
-    ensure_directory(&settings)?;
-    let cache = settings.join(name);
-    if cache.exists() {
-        ensure!(
-            !fs::symlink_metadata(&cache)?.file_type().is_symlink(),
-            "Kotlin cache must not be a symlink"
-        );
-        ensure!(
-            fs::read_to_string(cache.join(".gitignore"))? == CACHE_MARKER,
-            "The {} directory already contains unmanaged files. Move it aside before configuring Kotlin.",
-            cache.display()
-        );
-    } else {
-        fs::create_dir(&cache)?;
-        atomic_write(&cache.join(".gitignore"), CACHE_MARKER, false)?;
-    }
-    Ok(cache)
+    crate::sync_cache::prepare_area(root, name, CACHE_MARKER)
 }
 
 pub(crate) fn ensure_directory(path: &Path) -> Result<()> {
@@ -220,7 +202,7 @@ gradle.taskGraph.whenReady { graph ->
 "#;
 
 pub fn prepare_official_resource_generation(root: &Path) -> Result<PathBuf> {
-    let cache = prepare_cache(root, "android-kotlin-official")?;
+    let cache = prepare_cache(root, "kotlin")?;
     let script = cache.join("resource-generation.gradle");
     atomic_write(&script, RESOURCE_GENERATION_GUARD, false)?;
     Ok(script)
@@ -231,7 +213,8 @@ pub fn finish_official(root: &Path, previous_settings: &str, updated_settings: &
         read_settings(root)? == previous_settings,
         "Project settings changed during Kotlin setup. Retry to preserve your latest edits."
     );
-    prepare_cache(root, "android-kotlin-official")?;
+    prepare_cache(root, "kotlin")?;
+    ensure_directory(&root.join(".koda"))?;
     atomic_write(&root.join(".koda/settings.json"), updated_settings, false)
 }
 
@@ -573,7 +556,7 @@ mod tests {
             "user hook"
         );
         assert_eq!(
-            fs::read_to_string(root.join(".koda/android-kotlin-official/.gitignore"))?,
+            fs::read_to_string(crate::sync_cache::directory(root).join("kotlin/.gitignore"))?,
             CACHE_MARKER
         );
         assert!(!root.join(".koda/android-kotlin").exists());
@@ -581,7 +564,7 @@ mod tests {
         assert_eq!(read_settings(root)?, "{\"tab_size\": 2}");
         finish_official(root, &read_settings(root)?, "{\"tab_size\": 4}")?;
         fs::write(
-            root.join(".koda/android-kotlin-official/.gitignore"),
+            crate::sync_cache::directory(root).join("kotlin/.gitignore"),
             "unmanaged",
         )?;
         assert!(finish_official(root, &read_settings(root)?, "{}").is_err());

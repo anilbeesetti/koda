@@ -118,6 +118,17 @@ fun main(arguments: Array<String>) {
             )) == fixture.expected())
         },
         "android-module" to { fixture -> check(fixture.evaluate() == fixture.expected()) },
+        "external-cached-model" to { fixture ->
+            val cache = Files.createTempFile("koda-import-cache-", ".json")
+            try {
+                check(!cache.startsWith(fixture.root))
+                cache.toFile().writeText(JsonArray(listOf(fixture.module())).toString())
+                val options = Options(environment = mapOf("LSP_ANDROID_MODEL" to cache.toString()))
+                check(sharedGeneratedSources(WorkspaceImportParameters(fixture.root, options), fixture.metadata()) == fixture.expected())
+            } finally {
+                Files.deleteIfExists(cache)
+            }
+        },
         "missing-build-tree-path" to { fixture ->
             check(fixture.evaluate(metadata = fixture.metadata(buildTreePath = null)) == fixture.expected())
         },

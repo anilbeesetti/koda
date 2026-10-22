@@ -133,7 +133,7 @@ def check_default_variants(root, agp, sdk, gradle):
         write(root, "app/build.gradle", f"plugins {{ id 'com.android.application' }}\nandroid {{ namespace 'dev.koda.defaults'; compileSdk 35; defaultConfig {{ applicationId 'dev.koda.defaults'; minSdk 24 }}; {configuration} }}\n{filtering}\n")
         log = root / f"{name}.log"
         with log.open("w") as output:
-            result = subprocess.run([gradle, "--console=plain", "--no-configuration-cache", "--parallel", "--max-workers=2", "--init-script", str(REPOSITORY / "crates/android_tools/src/project_model.gradle"), "kodaAndroidProjectModel"], cwd=root, stdout=output, stderr=subprocess.STDOUT)
+            result = subprocess.run([gradle, "--console=plain", "--no-configuration-cache", "--parallel", "--max-workers=2", "--init-script", str(REPOSITORY / "crates/android_tools/src/project_model.gradle"), "prepareAndroidProjectModel"], cwd=root, stdout=output, stderr=subprocess.STDOUT)
         if result.returncode:
             raise RuntimeError(log.read_text())
         app = next(module for module in model_from_log(log)["modules"] if module["path"] == ":app")
@@ -232,7 +232,7 @@ kotlin { androidLibrary { namespace = 'dev.koda.util'; compileSdk = 35; minSdk =
         return result.returncode
 
     export = REPOSITORY / "crates/android_tools/src/project_model.gradle"
-    run("model.log", "--init-script", str(export), "kodaAndroidProjectModel")
+    run("model.log", "--init-script", str(export), "prepareAndroidProjectModel")
     model = model_from_log(root / "model.log")
     shared = next(module for module in model["modules"] if module["path"] == ":sharedLogic")
     assert shared["kind"] == "library" and shared["namespace"] == "dev.koda.shared", shared
@@ -256,7 +256,7 @@ kotlin { androidLibrary { namespace = 'dev.koda.util'; compileSdk = 35; minSdk =
         assert graph["variants"] == {":app": selected, ":sharedLogic": "androidMain", ":sharedUtil": "androidMain"}, graph
         run("java.log", "--init-script", graph["javaExport"], f'-Dkoda.android.selection={graph["javaSelection"]}', "zedAndroidJavaModel")
         subprocess.run([probe, root, root / "model.log", ":app", selected, root / "java.log"], check=True, stdout=subprocess.DEVNULL)
-        java = json.loads((root / ".koda/android-java/model.json").read_text())
+        java = json.loads(Path(graph["javaModel"]).read_text())
         shared_java = next(module for module in java if module["project"] == ":sharedLogic")
         assert str(root / "sharedLogic/src/commonMain/kotlin") in shared_java["sources"], shared_java
         assert str(root / "sharedLogic/src/commonTest/kotlin") in shared_java["testSources"], shared_java
@@ -266,17 +266,17 @@ kotlin { androidLibrary { namespace = 'dev.koda.util'; compileSdk = 35; minSdk =
         assert str(root / "sharedUtil/src/androidMain/java") in util_java["sources"], util_java
         assert any((Path(path) / "dev/koda/util/KotlinHelper.class").is_file() for path in util_java["libraries"]), util_java
         assert (root / "sharedUtil/build/intermediates/javac/androidMain/compileAndroidMainJavaWithJavac/classes/dev/koda/util/Helper.class").is_file()
-        run("eclipse.log", "--init-script", str(root / ".koda/android-java/import.gradle"), f'-Dzed.android.javaModel={root / ".koda/android-java/model.json"}', ":sharedLogic:eclipseClasspath", ":sharedUtil:eclipseClasspath")
+        run("eclipse.log", "--init-script", graph["javaImport"], f'-Dzed.android.javaModel={graph["javaModel"]}', ":sharedLogic:eclipseClasspath", ":sharedUtil:eclipseClasspath")
         assert_eclipse_test_entries(root / "sharedLogic/.classpath", [], [Path(path).relative_to(shared_java["directory"]).as_posix() for path in shared_java["testSources"] if path not in shared_java["sources"]])
         assert "without an exclusive lock" not in (root / "java.log").read_text()
     # A failed KMP collector must never publish a partial catalog.
     original = (root / "sharedLogic/build.gradle").read_text()
     write(root, "sharedLogic/build.gradle", original + "\nconfigurations.androidCompileClasspath.incoming.beforeResolve { throw new GradleException('Intentional KMP resolution failure') }\n")
-    assert run("failed.log", "--init-script", str(export), "kodaAndroidProjectModel", "--continue", success=False) != 0
+    assert run("failed.log", "--init-script", str(export), "prepareAndroidProjectModel", "--continue", success=False) != 0
     assert "Intentional KMP resolution failure" in (root / "failed.log").read_text()
     assert "KODA_ANDROID_PROJECT_MODEL=" not in (root / "failed.log").read_text()
     write(root, "sharedLogic/build.gradle", original)
-    run("recovered.log", "--init-script", str(export), "kodaAndroidProjectModel")
+    run("recovered.log", "--init-script", str(export), "prepareAndroidProjectModel")
     assert len(model_from_log(root / "recovered.log")["modules"]) == 3
     print(f"Passed AGP {agp}: KMP app dependencies, transitive Android libraries, common/intermediate/platform sources, generated roots, host/device scopes, Kotlin-only and Java-enabled projections, failure/recovery", flush=True)
 
@@ -340,7 +340,7 @@ androidComponents.onVariants(androidComponents.selector().all()) {{ variant ->
         write(root, f"shared/src/{directory}/kotlin/{directory}.kt", f"package dev.koda.shared\nclass {directory[0].upper() + directory[1:]}\n")
     log = root / "model.log"
     with log.open("w") as output:
-        result = subprocess.run([gradle, "--console=plain", "--no-configuration-cache", "--parallel", "--max-workers=2", "--init-script", str(REPOSITORY / "crates/android_tools/src/project_model.gradle"), "kodaAndroidProjectModel"], cwd=root, stdout=output, stderr=subprocess.STDOUT, timeout=240)
+        result = subprocess.run([gradle, "--console=plain", "--no-configuration-cache", "--parallel", "--max-workers=2", "--init-script", str(REPOSITORY / "crates/android_tools/src/project_model.gradle"), "prepareAndroidProjectModel"], cwd=root, stdout=output, stderr=subprocess.STDOUT, timeout=240)
     if result.returncode:
         raise RuntimeError(log.read_text())
     model = model_from_log(log)
@@ -433,12 +433,12 @@ def main():
         return result.returncode
 
     export = REPOSITORY / "crates/android_tools/src/project_model.gradle"
-    gradle("model.log", "--init-script", str(export), "kodaAndroidProjectModel")
+    gradle("model.log", "--init-script", str(export), "prepareAndroidProjectModel")
     model = model_from_log(root / "model.log")
     # Parallel execution exposes foreign-project classpath resolution, which serial execution masks.
     assert "without an exclusive lock" not in (root / "model.log").read_text()
     for module in ["app", "library", "feature", "testing"]:
-        assert f"> Task :{module}:kodaAndroidModuleModel" in (root / "model.log").read_text()
+        assert f"> Task :{module}:prepareAndroidModuleModel" in (root / "model.log").read_text()
     testing_model = next(module for module in model["modules"] if module["path"] == ":testing")
     testing_sources = testing_model["variants"][0]["components"][0]["sources"]
     assert any(source["generated"] and Path(source["path"]) == root / "testing/build/generated/probe" for source in testing_sources)
@@ -469,7 +469,7 @@ def main():
         for module in ["app", "library", "feature", "testing"]:
             assert f"> Task :{module}:kodaAndroidJavaModuleModel" in (root / "java.log").read_text()
         subprocess.run([probe, root, root / "model.log", ":app", variant, root / "java.log"], check=True, stdout=subprocess.DEVNULL)
-        java = json.loads((root / ".koda/android-java/model.json").read_text())
+        java = json.loads(Path(graph["javaModel"]).read_text())
         app_java = next(module for module in java if module["project"] == ":app")
         assert_test_classpath(app_java, root, {"junit", "testing", "testFixtures"})
         generated = (root / "app/build/generated/java" / ("generate" + variant[0].upper() + variant[1:] + "Probe")) if args.agp.startswith("8.") else root / "app/probe-generated" / variant
@@ -478,7 +478,7 @@ def main():
         assert_test_classpath(library_java, root, {"junit"})
         assert str(root / "library/src/testFixtures/java") in library_java["testSources"], library_java
         assert str(root / "library/src/testFixtures/java") not in library_java["sources"], library_java
-        gradle("eclipse.log", "--init-script", str(root / ".koda/android-java/import.gradle"), f'-Dzed.android.javaModel={root / ".koda/android-java/model.json"}', ":app:eclipseClasspath", ":library:eclipseClasspath")
+        gradle("eclipse.log", "--init-script", graph["javaImport"], f'-Dzed.android.javaModel={graph["javaModel"]}', ":app:eclipseClasspath", ":library:eclipseClasspath")
         for module in [app_java, library_java]:
             assert_eclipse_test_entries(
                 Path(module["directory"]) / ".classpath",
@@ -489,7 +489,7 @@ def main():
     for module in ["app", "feature"]:
         with (root / module / "build.gradle").open("a") as output:
             output.write("\nandroidComponents.beforeVariants(androidComponents.selector().all()) { variant -> if (variant.name == 'demoDebug') variant.enable = false }\n")
-    gradle("removed.log", "--init-script", str(export), "kodaAndroidProjectModel")
+    gradle("removed.log", "--init-script", str(export), "prepareAndroidProjectModel")
     removed_model = model_from_log(root / "removed.log")
     app = next(module for module in removed_model["modules"] if module["path"] == ":app")
     assert "demoDebug" not in {variant["name"] for variant in app["variants"]}, app
@@ -497,34 +497,34 @@ def main():
     assert removed.returncode != 0 and "unavailable" in removed.stderr, removed
     subprocess.run([probe, root, root / "removed.log", ":app", "fullDebug"], check=True, stdout=subprocess.DEVNULL)
     fixture(root, args.agp)
-    gradle("restored.log", "--init-script", str(export), "kodaAndroidProjectModel")
+    gradle("restored.log", "--init-script", str(export), "prepareAndroidProjectModel")
     testing = (root / "testing/build.gradle").read_text()
     write(root, "testing/build.gradle", testing + "\nconfigurations.compileClasspath.incoming.beforeResolve { throw new GradleException('Intentional collector resolution failure') }\n")
-    assert gradle("collector-failed.log", "--init-script", str(export), "kodaAndroidProjectModel", "--continue", success=False) != 0
+    assert gradle("collector-failed.log", "--init-script", str(export), "prepareAndroidProjectModel", "--continue", success=False) != 0
     failed_collection = (root / "collector-failed.log").read_text()
     assert "Intentional collector resolution failure" in failed_collection
-    assert "> Task :library:kodaAndroidModuleModel" in failed_collection
+    assert "> Task :library:prepareAndroidModuleModel" in failed_collection
     assert "KODA_ANDROID_PROJECT_MODEL=" not in failed_collection
     write(root, "testing/build.gradle", testing)
-    gradle("collector-recovery.log", "--init-script", str(export), "kodaAndroidProjectModel")
+    gradle("collector-recovery.log", "--init-script", str(export), "prepareAndroidProjectModel")
     assert len(model_from_log(root / "collector-recovery.log")["modules"]) == 4
     subprocess.run([probe, root, root / "restored.log", ":app", "demoDebug"], check=True, stdout=subprocess.DEVNULL)
     write(root, "build.gradle", "throw new GradleException('Intentional failed sync')")
-    assert gradle("failed.log", "--init-script", str(export), "kodaAndroidProjectModel", success=False) != 0
+    assert gradle("failed.log", "--init-script", str(export), "prepareAndroidProjectModel", success=False) != 0
     fixture(root, args.agp)
-    gradle("recovery.log", "--init-script", str(export), "kodaAndroidProjectModel")
+    gradle("recovery.log", "--init-script", str(export), "prepareAndroidProjectModel")
     subprocess.run([probe, root, root / "recovery.log", ":app", "demoDebug"], check=True, stdout=subprocess.DEVNULL)
     write(root, "included/settings.gradle", "rootProject.name = 'included'\n")
     write(root, "included/build.gradle", "")
     with (root / "settings.gradle").open("a") as output:
         output.write("includeBuild 'included'\n")
-    assert gradle("included.log", "--init-script", str(export), "kodaAndroidProjectModel", success=False) != 0
+    assert gradle("included.log", "--init-script", str(export), "prepareAndroidProjectModel", success=False) != 0
     assert "does not yet support included builds" in (root / "included.log").read_text()
     root_module = root / "root-jvm"
     write(root_module, "settings.gradle", "rootProject.name = 'root-jvm'; include ':helper'\n")
     write(root_module, "build.gradle", "plugins { id 'java-library' }; dependencies { testImplementation project(':helper') }\n")
     write(root_module, "helper/build.gradle", "plugins { id 'java-library' }\n")
-    gradle("model.log", "--init-script", str(export), "kodaAndroidProjectModel", project=root_module)
+    gradle("model.log", "--init-script", str(export), "prepareAndroidProjectModel", project=root_module)
     root_model = model_from_log(root_module / "model.log")
     assert [module["path"] for module in root_model["modules"]] == [":", ":helper"]
     assert root_model["modules"][0]["variants"][0]["components"][1]["dependencies"] == [{"kind": "project", "module": ":helper", "variant": "jvm"}]

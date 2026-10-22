@@ -31,6 +31,8 @@ fn main() -> Result<()> {
         serde_json::to_string_pretty(&serde_json::json!({
             "selected": graph.selected, "variants": graph.variants, "kotlinVariants": graph.kotlin_variants(),
             "javaExport": export, "javaSelection": selection,
+            "javaModel": java::cache_directory(&root).join("model.json"),
+            "javaImport": java::cache_directory(&root).join("import.gradle"),
             "modules": graph.modules().map(|(module, variant)| serde_json::json!({"path": module.path, "kind": module.kind, "components": variant.components})).collect::<Vec<_>>()
         }))?
     );
