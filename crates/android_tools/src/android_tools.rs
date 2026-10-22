@@ -5,6 +5,7 @@ pub mod preview;
 pub mod project_model;
 pub mod provision;
 pub(crate) mod shared_sdk;
+pub mod vector_drawable;
 use anyhow::{Context as _, Result, bail, ensure};
 pub mod java;
 pub mod kotlin;

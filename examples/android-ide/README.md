@@ -36,6 +36,10 @@ prompted. Existing emulators require the SDK emulator package and an AVD; setup
 does not download emulator images or create virtual devices. Use **Stop emulator**
 when finished to release the VM's memory.
 
+Open a vector drawable XML file and click its eye button for a live preview.
+Alt-click to preview beside the code. See [Vector drawable previews](VECTOR_DRAWABLE_PREVIEW.md)
+for supported features, resource resolution, and manual checks.
+
 Use **Open Logcat** for the structured device log viewer. See [Logcat](LOGCAT.md)
 for filtering syntax, capture controls, saved files, and validation steps.
 

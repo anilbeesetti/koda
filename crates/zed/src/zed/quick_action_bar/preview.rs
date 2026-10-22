@@ -10,6 +10,7 @@ use super::QuickActionBar;
 enum PreviewTarget {
     Markdown(Entity<Editor>),
     Svg(Entity<MultiBuffer>),
+    VectorDrawable(Entity<MultiBuffer>),
     TabularData(Entity<Editor>),
 }
 
@@ -56,6 +57,10 @@ impl QuickActionBar {
             && SvgPreviewView::is_svg_file(&buffer, cx)
         {
             PreviewTarget::Svg(buffer)
+        } else if let Some(buffer) = active_item.act_as::<MultiBuffer>(cx)
+            && SvgPreviewView::is_vector_drawable_file(&buffer, cx)
+        {
+            PreviewTarget::VectorDrawable(buffer)
         } else if let Some(editor) = editor
             && TabularDataPreviewPane::is_tabular_data_file(&editor, cx)
         {
@@ -74,6 +79,11 @@ impl QuickActionBar {
                 "toggle-svg-preview",
                 "Preview SVG",
                 &svg_preview::OpenPreview as &dyn gpui::Action,
+            ),
+            PreviewTarget::VectorDrawable(_) => (
+                "toggle-vector-drawable-preview",
+                "Preview Vector Drawable",
+                &svg_preview::OpenVectorDrawablePreview as &dyn gpui::Action,
             ),
             PreviewTarget::TabularData(_) => (
                 "toggle-tabular-preview",
@@ -127,7 +137,7 @@ impl QuickActionBar {
                                     );
                                 }
                             }
-                            PreviewTarget::Svg(buffer) => {
+                            PreviewTarget::Svg(buffer) | PreviewTarget::VectorDrawable(buffer) => {
                                 let buffer = buffer.clone();
                                 if open_to_the_side {
                                     SvgPreviewView::open_preview_to_the_side_of_pane(
