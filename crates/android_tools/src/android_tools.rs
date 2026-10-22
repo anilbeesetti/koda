@@ -2,6 +2,7 @@ pub mod deployment;
 pub mod logcat;
 pub mod managed;
 pub mod preview;
+pub mod project_detection;
 pub mod project_model;
 pub mod provision;
 pub(crate) mod shared_sdk;
