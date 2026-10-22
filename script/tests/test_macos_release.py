@@ -34,11 +34,23 @@ class ReservationTests(unittest.TestCase):
         return release_version.reserve("owner/repo", "123", COMMIT, clock=clock, wait=lambda _: None, channel=channel)
 
     def test_timestamp_timezone_and_exact_commit(self):
-        # 18:35 UTC is 00:05 next day in Asia/Calcutta.
-        timestamp = datetime.datetime(2026, 9, 30, 18, 35, tzinfo=datetime.timezone.utc).astimezone(ZoneInfo("Asia/Calcutta"))
+        # 18:35 UTC is 00:05 next day in Asia/Kolkata.
+        timestamp = datetime.datetime(2026, 9, 30, 18, 35, tzinfo=datetime.timezone.utc).astimezone(ZoneInfo("Asia/Kolkata"))
         self.assertEqual(self.reserve(lambda: timestamp), "2026.10.01.00.05")
         self.assertEqual(self.remote.call_args_list[0].args[1]["object"], COMMIT)
         self.assertEqual(self.remote.call_args_list[1].args[1]["sha"], "tag-object")
+
+    def test_default_clock_uses_canonical_timezone_for_both_channels(self):
+        timestamp = datetime.datetime(2026, 9, 30, 18, 35, tzinfo=datetime.timezone.utc)
+        for channel, prefix in (("stable", ""), ("nightly", "nightly-")):
+            with self.subTest(channel=channel), \
+                    patch.object(release_version.datetime, "datetime") as clock, \
+                    patch.object(release_version, "ZoneInfo", wraps=ZoneInfo) as timezone:
+                clock.now.side_effect = lambda tz: timestamp.astimezone(tz)
+                self.remote.side_effect = [{"sha": "tag-object"}, {"ref": "reserved"}]
+                tag = release_version.reserve("owner/repo", "123", COMMIT, channel=channel)
+                self.assertEqual(tag, prefix + "2026.10.01.00.05")
+                timezone.assert_called_once_with("Asia/Kolkata")
 
     def test_collision_waits_for_real_next_minute(self):
         self.remote.side_effect = [{"sha": "first"}, None, {"sha": "second"}, {"ref": "reserved"}]

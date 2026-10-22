@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Atomically reserve year.month.day.hour.minute tags, reusing them on retries.
 
-Tag and release timestamps use Asia/Calcutta. Colliding releases wait for the next
+Tag and release timestamps use Asia/Kolkata. Colliding releases wait for the next
 available minute, so the format never needs a suffix or a fabricated future date.
 Annotated tags record the run ID and point at the selected workflow commit. Failed
 builds leave a reserved tag; rerunning that workflow reuses it.
@@ -37,7 +37,8 @@ def api(endpoint, payload):
 def reserve(repository, run_id, commit, clock=None, wait=time.sleep, channel="stable"):
     if channel not in ("stable", "nightly"):
         raise ValueError(f"Unsupported release channel: {channel}")
-    clock = clock or (lambda: datetime.datetime.now(ZoneInfo("Asia/Calcutta")))
+    # Use the canonical name: minimal tzdata installs can omit legacy aliases.
+    clock = clock or (lambda: datetime.datetime.now(ZoneInfo("Asia/Kolkata")))
     prefix = "nightly-" if channel == "nightly" else ""
     name = "Nightly" if channel == "nightly" else "Main"
     marker = f"{name} macOS release for workflow run {run_id}"
