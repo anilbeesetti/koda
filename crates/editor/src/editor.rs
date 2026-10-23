@@ -40,6 +40,7 @@ mod lsp_ext;
 mod mouse_context_menu;
 pub mod movement;
 mod persistence;
+mod resource_rename;
 mod runnables;
 mod rust_analyzer_ext;
 pub mod scroll;
@@ -1071,6 +1072,7 @@ pub struct Editor {
     linked_editing_range_task: Option<Task<Option<()>>>,
     linked_edit_ranges: linked_editing_ranges::LinkedEditingRanges,
     pending_rename: Option<RenameState>,
+    rename_preparation: Option<futures::channel::oneshot::Sender<()>>,
     pending_inline_input: Option<InlineInputState>,
     searchable: bool,
     cursor_shape: CursorShape,
@@ -2463,6 +2465,7 @@ impl Editor {
             document_highlights_task: None,
             linked_editing_range_task: None,
             pending_rename: None,
+            rename_preparation: None,
             pending_inline_input: None,
             searchable: !is_minimap,
             cursor_shape: EditorSettings::get_global(cx)
@@ -3583,6 +3586,7 @@ impl Editor {
     ) -> bool {
         let mut dismissed = false;
 
+        dismissed |= self.rename_preparation.take().is_some();
         dismissed |= self.take_rename(false, window, cx).is_some();
         dismissed |= self.take_inline_input(window, cx).is_some();
         dismissed |= self.hide_blame_popover(true, cx);
@@ -8128,6 +8132,8 @@ impl Editor {
     ) -> Option<Task<Result<()>>> {
         use language::ToOffset as _;
 
+        self.rename_preparation.take();
+
         if self.read_only(cx) {
             return None;
         }
@@ -8148,21 +8154,44 @@ impl Editor {
             return None;
         }
 
+        let source_multibuffer = self.buffer.clone();
         let snapshot = cursor_buffer.read(cx).snapshot();
+        let source_version = snapshot.version().clone();
         let cursor_buffer_offset = cursor_buffer_position.to_offset(&snapshot);
         let head_buffer_offset = head_buffer_position.to_offset(&snapshot);
         let cursor_buffer_offset_end = cursor_buffer_position_end.to_offset(&snapshot);
         let prepare_rename = provider.range_for_rename(&cursor_buffer, cursor_buffer_position, cx);
         drop(snapshot);
+        let (cancel, cancelled) = futures::channel::oneshot::channel();
+        self.rename_preparation = Some(cancel);
 
         Some(cx.spawn_in(window, async move |this, cx| {
-            let rename_target = prepare_rename.await?;
+            let Some(rename_target) =
+                resource_rename::await_preparation(prepare_rename, cancelled).await
+            else {
+                return Ok(());
+            };
+            this.update(cx, |this, _| {
+                this.rename_preparation.take();
+            })?;
+            let rename_target = rename_target?;
             if let Some(RenameTarget {
                 range: rename_range,
                 language_server_id,
             }) = rename_target
             {
                 this.update_in(cx, |this, window, cx| {
+                    // The target range belongs to the text and cursor captured before
+                    // preparation. Mixing it with later offsets can cross an excerpt
+                    // boundary or put the inline rename outside the current buffer.
+                    if this.read_only(cx)
+                        || this.buffer != source_multibuffer
+                        || cursor_buffer.read(cx).version() != source_version
+                        || this.selections.newest_anchor().head() != selection.head()
+                        || this.selections.newest_anchor().tail() != selection.tail()
+                    {
+                        return;
+                    }
                     let snapshot = cursor_buffer.read(cx).snapshot();
                     let rename_buffer_range = rename_range.to_offset(&snapshot);
                     let cursor_offset_in_rename_range =
@@ -8172,13 +8201,33 @@ impl Editor {
                     let tail_offset_in_rename_range =
                         cursor_buffer_offset_end.saturating_sub(rename_buffer_range.start);
 
-                    this.take_rename(false, window, cx);
                     let buffer = this.buffer.read(cx).read(cx);
+                    if !buffer.can_resolve(&cursor) {
+                        return;
+                    }
                     let cursor_offset = cursor.to_offset(&buffer);
                     let rename_start =
                         cursor_offset.saturating_sub_usize(cursor_offset_in_rename_range);
                     let rename_end = rename_start + rename_buffer_range.len();
+                    if rename_end > buffer.len() {
+                        return;
+                    }
                     let range = buffer.anchor_before(rename_start)..buffer.anchor_after(rename_end);
+                    if ![
+                        (range.start, rename_buffer_range.start),
+                        (range.end, rename_buffer_range.end),
+                    ]
+                    .into_iter()
+                    .all(|(anchor, offset)| {
+                        buffer
+                            .anchor_to_buffer_anchor(anchor)
+                            .is_some_and(|(anchor, source)| {
+                                source.remote_id() == snapshot.remote_id()
+                                    && anchor.to_offset(source) == offset
+                            })
+                    }) {
+                        return;
+                    }
                     let mut old_highlight_id = None;
                     let old_name: Arc<str> = buffer
                         .chunks(
@@ -8198,6 +8247,7 @@ impl Editor {
                         .into();
 
                     drop(buffer);
+                    this.take_rename(false, window, cx);
 
                     // Position the selection in the rename editor so that it matches the current selection.
                     this.show_local_selections = false;
@@ -8352,6 +8402,101 @@ impl Editor {
         }
 
         let old_name = rename.old_name;
+
+        if let Some(project) = self.project.clone() {
+            let position = language::ToPointUtf16::to_point_utf16(&start, buffer.read(cx));
+            let plan = project.update(cx, |project, cx| {
+                project.prepare_android_resource_rename_if_applicable(
+                    &buffer,
+                    position,
+                    new_name.clone(),
+                    cx,
+                )
+            });
+            if let Some(plan) = plan {
+                let (cancel, cancelled) = futures::channel::oneshot::channel();
+                self.rename_preparation = Some(cancel);
+                return Some(cx.spawn_in(window, async move |editor, cx| {
+                    let executor = cx.background_executor().clone();
+                    let preparation = async move {
+                        let Some(plan) = plan.await? else {
+                            return anyhow::Ok(None);
+                        };
+                        let prepared = executor
+                            .spawn(async move {
+                                let preview = plan.preview();
+                                (plan, preview)
+                            })
+                            .await;
+                        Ok(Some(prepared))
+                    };
+                    let Some(prepared) =
+                        resource_rename::await_preparation(preparation, cancelled).await
+                    else {
+                        return Ok(());
+                    };
+                    editor.update(cx, |editor, _| {
+                        editor.rename_preparation.take();
+                    })?;
+                    let Some((plan, preview)) = prepared? else {
+                        let rename = editor
+                            .update(cx, |editor, cx| {
+                                editor.semantics_provider.as_ref()?.perform_rename(
+                                    &buffer,
+                                    start,
+                                    new_name.clone(),
+                                    rename.language_server_id,
+                                    cx,
+                                )
+                            })?
+                            .context("The language server cannot rename this symbol")?;
+                        let transaction = rename.await?;
+                        Self::open_project_transaction(
+                            &editor,
+                            workspace,
+                            transaction,
+                            format!("Rename: {old_name} → {new_name}"),
+                            cx,
+                        )
+                        .await?;
+                        editor.update(cx, |editor, cx| {
+                            editor.refresh_document_highlights(cx);
+                        })?;
+                        return Ok(());
+                    };
+                    let (decision, answer) = futures::channel::oneshot::channel();
+                    workspace.update_in(cx, |workspace, window, cx| {
+                        // A completed background request must not dismiss a review
+                        // or replace a modal the user opened while it was preparing.
+                        if workspace.has_active_modal(window, cx) {
+                            return;
+                        }
+                        workspace.toggle_modal(window, cx, |window, cx| {
+                            resource_rename::ResourceRenameReview::new(
+                                preview, decision, window, cx,
+                            )
+                        });
+                    })?;
+                    if !answer.await.unwrap_or(false) {
+                        return Ok(());
+                    }
+                    let transaction = project
+                        .update(cx, |project, cx| {
+                            project.apply_android_resource_rename(plan, cx)
+                        })
+                        .await?;
+                    Self::open_project_transaction(
+                        &editor,
+                        workspace,
+                        transaction,
+                        format!("Rename resource: {old_name} → {new_name}"),
+                        cx,
+                    )
+                    .await?;
+                    Ok(())
+                }));
+            }
+        }
 
         let rename = self.semantics_provider.as_ref()?.perform_rename(
             &buffer,

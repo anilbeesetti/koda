@@ -1,6 +1,7 @@
 pub mod agent_registry_store;
 pub mod agent_server_store;
 mod android_resources;
+pub use android_resources::AndroidResourceRename;
 pub mod bookmark_store;
 pub mod buffer_store;
 pub mod color_extractor;
@@ -4436,17 +4437,27 @@ impl Project {
             let buffer = buffer.clone();
             return cx.spawn(async move |project, cx| {
                 let _guard = guard;
-                let locations = resources.await?;
-                if !locations.is_empty() {
+                if let Some(locations) = resources.await? {
                     return Ok(Some(locations));
                 }
                 project
                     .update(cx, |project, cx| {
+                        if let Some(task) =
+                            project.android_manifest_provenance(&buffer, position, cx)
+                        {
+                            return cx.background_spawn(async move { Ok(Some(task.await?.0)) });
+                        }
                         project
                             .lsp_store
                             .update(cx, |store, cx| store.definitions(&buffer, position, cx))
                     })?
                     .await
+            });
+        }
+        if let Some(task) = self.android_manifest_provenance(buffer, position, cx) {
+            return cx.background_spawn(async move {
+                let _guard = guard;
+                Ok(Some(task.await?.0))
             });
         }
         let task = self.lsp_store.update(cx, |lsp_store, cx| {
@@ -4534,6 +4545,21 @@ impl Project {
     ) -> Task<Result<Option<Vec<Location>>>> {
         let position = position.to_point_utf16(buffer.read(cx));
         let guard = self.retain_remotely_created_models(cx);
+        if let Some(task) = self.android_resource_references(buffer, position, cx) {
+            let buffer = buffer.clone();
+            return cx.spawn(async move |project, cx| {
+                let _guard = guard;
+                if let Some(locations) = task.await? {
+                    return Ok(Some(locations));
+                }
+                let fallback = project.update(cx, |project, cx| {
+                    project
+                        .lsp_store
+                        .update(cx, |store, cx| store.references(&buffer, position, cx))
+                })?;
+                fallback.await
+            });
+        }
         let task = self.lsp_store.update(cx, |lsp_store, cx| {
             lsp_store.references(buffer, position, cx)
         });
@@ -4686,6 +4712,32 @@ impl Project {
         cx: &mut Context<Self>,
     ) -> Task<Option<Vec<Hover>>> {
         let position = position.to_point_utf16(buffer.read(cx));
+        if let Some(task) = self.android_resource_hover(buffer, position, cx) {
+            let buffer = buffer.clone();
+            return cx.spawn(async move |project, cx| {
+                if let Some(hover) = task.await.log_err()? {
+                    return Some(hover);
+                }
+                let fallback = project
+                    .update(cx, |project, cx| {
+                        if let Some(task) =
+                            project.android_manifest_provenance(&buffer, position, cx)
+                        {
+                            return cx.background_spawn(async move {
+                                task.await.log_err().map(|result| result.1)
+                            });
+                        }
+                        project
+                            .lsp_store
+                            .update(cx, |store, cx| store.hover(&buffer, position, cx))
+                    })
+                    .ok()?;
+                fallback.await
+            });
+        }
+        if let Some(task) = self.android_manifest_provenance(buffer, position, cx) {
+            return cx.background_spawn(async move { task.await.log_err().map(|result| result.1) });
+        }
         self.lsp_store
             .update(cx, |lsp_store, cx| lsp_store.hover(buffer, position, cx))
     }
@@ -4709,8 +4761,68 @@ impl Project {
         cx: &mut Context<Self>,
     ) -> Task<Result<Vec<CompletionResponse>>> {
         let position = position.to_point_utf16(buffer.read(cx));
-        self.lsp_store.update(cx, |lsp_store, cx| {
+        if let Some(unavailable) = self.android_resource_model_unavailable(buffer, position, cx) {
+            let buffer = buffer.clone();
+            return cx.spawn(async move |project, cx| {
+                if unavailable.await? {
+                    return Ok(Vec::new());
+                }
+                project
+                    .update(cx, |project, cx| {
+                        project.completions_after_resource_classification(
+                            &buffer, position, context, cx,
+                        )
+                    })?
+                    .await
+            });
+        }
+        self.completions_after_resource_classification(buffer, position, context, cx)
+    }
+
+    fn completions_after_resource_classification(
+        &self,
+        buffer: &Entity<Buffer>,
+        position: PointUtf16,
+        context: CompletionContext,
+        cx: &mut Context<Self>,
+    ) -> Task<Result<Vec<CompletionResponse>>> {
+        let resources = self.android_resource_completions(buffer, position, cx);
+        let resource_request = resources.as_ref().map(|_| {
+            let snapshot = buffer.read(cx).snapshot();
+            let path = snapshot.file().map(|file| file.full_path(cx));
+            (self.android_model.token(), buffer.clone(), snapshot, path)
+        });
+        let lsp = self.lsp_store.update(cx, |lsp_store, cx| {
             lsp_store.completions(buffer, position, context, cx)
+        });
+        cx.spawn(async move |project, cx| {
+            // Queue the resource provider only after this request is polled;
+            // the existing LSP task runs concurrently.
+            let resources = resources.map(|future| cx.foreground_executor().spawn(future));
+            let mut responses = lsp.await?;
+            if let Some(resources) = resources {
+                responses.push(resources.await?);
+            }
+            if let Some((token, buffer, snapshot, path)) = resource_request
+                && !project.read_with(cx, |project, cx| {
+                    let buffer = buffer.read(cx);
+                    project.android_model.is_current(&token)
+                        && project.is_local()
+                        && !crate::trusted_worktrees::TrustedWorktrees::has_restricted_worktrees(
+                            &project.worktree_store(),
+                            cx,
+                        )
+                        && buffer.version() == *snapshot.version()
+                        && buffer.file().is_some_and(|file| {
+                            !file.disk_state().is_deleted()
+                                && project.worktree_for_id(file.worktree_id(cx), cx).is_some()
+                                && Some(file.full_path(cx)) == path
+                        })
+                })?
+            {
+                responses.clear();
+            }
+            Ok(responses)
         })
     }
 
@@ -4759,6 +4871,23 @@ impl Project {
         cx: &mut Context<Self>,
     ) -> Task<Result<PrepareRenameResponse>> {
         let position = position.to_point_utf16(buffer.read(cx));
+        if let Some(task) = self.android_prepare_resource_rename(&buffer, position, cx) {
+            return cx.spawn(async move |project, cx| {
+                if let Some(response) = task.await? {
+                    return Ok(response);
+                }
+                project
+                    .update(cx, |project, cx| {
+                        project.request_lsp(
+                            buffer,
+                            LanguageServerToQuery::FirstCapable,
+                            PrepareRename { position },
+                            cx,
+                        )
+                    })?
+                    .await
+            });
+        }
         self.request_lsp(
             buffer,
             LanguageServerToQuery::FirstCapable,
@@ -4775,8 +4904,38 @@ impl Project {
         language_server_id: Option<LanguageServerId>,
         cx: &mut Context<Self>,
     ) -> Task<Result<ProjectTransaction>> {
-        let push_to_history = true;
         let position = position.to_point_utf16(buffer.read(cx));
+        if let Some(resource) = self.android_query_is_resource(&buffer, position, cx) {
+            return cx.spawn(async move |project, cx| {
+                anyhow::ensure!(
+                    !resource.await?,
+                    "Android resource rename requires a reviewed resource edit plan"
+                );
+                project
+                    .update(cx, |project, cx| {
+                        project.perform_rename_via_lsp(
+                            buffer,
+                            position,
+                            new_name,
+                            language_server_id,
+                            cx,
+                        )
+                    })?
+                    .await
+            });
+        }
+        self.perform_rename_via_lsp(buffer, position, new_name, language_server_id, cx)
+    }
+
+    fn perform_rename_via_lsp(
+        &mut self,
+        buffer: Entity<Buffer>,
+        position: PointUtf16,
+        new_name: String,
+        language_server_id: Option<LanguageServerId>,
+        cx: &mut Context<Self>,
+    ) -> Task<Result<ProjectTransaction>> {
+        let push_to_history = true;
         let mut request = PerformRename {
             position,
             new_name,
