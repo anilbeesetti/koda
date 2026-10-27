@@ -1463,7 +1463,6 @@ impl AndroidPanel {
                     root.file_name().unwrap_or_default().to_string_lossy()
                 ),
                 false,
-                window,
                 cx,
             )
         });
@@ -1998,7 +1997,7 @@ impl AndroidPanel {
             .env
             .clone();
         let (session_id, output, logs) = self.build_panel.update(cx, |panel, cx| {
-            panel.begin(BuildTab::Output, label.clone(), false, window, cx)
+            panel.begin(BuildTab::Output, label.clone(), false, cx)
         });
         let (cancel, cancelled) = oneshot::channel();
         self.command_cancel = Some(cancel);
@@ -2386,7 +2385,6 @@ impl AndroidPanel {
                 }
                 .into(),
                 true,
-                window,
                 cx,
             )
         });
@@ -2865,7 +2863,6 @@ impl AndroidPanel {
                 BuildTab::Sync,
                 "Generating Android resources for Kotlin import".into(),
                 true,
-                window,
                 cx,
             )
         });
@@ -3034,7 +3031,6 @@ impl AndroidPanel {
                 BuildTab::Sync,
                 "Importing Android Java model".into(),
                 true,
-                window,
                 cx,
             )
         });
@@ -3869,7 +3865,6 @@ impl AndroidPanel {
                 BuildTab::Output,
                 format!("Stop Android Emulator · {serial}"),
                 false,
-                window,
                 cx,
             )
         });
@@ -5200,6 +5195,102 @@ mod tests {
     use workspace::AppState;
 
     #[gpui::test]
+    async fn gradle_file_changes_sync_without_displacing_the_terminal(cx: &mut TestAppContext) {
+        use workspace::dock::{DockPosition, test::TestPanel};
+
+        let _state = cx.update(AppState::test);
+        let directory = tempfile::tempdir().expect("Project directory");
+        let root = directory.path().canonicalize().expect("Project root");
+        let filesystem = FakeFs::new(cx.executor());
+        filesystem
+            .insert_tree(
+                &root,
+                json!({
+                    "settings.gradle.kts": "",
+                    "gradlew": "",
+                    "build.gradle.kts": "plugins { id(\"com.android.application\") }",
+                }),
+            )
+            .await;
+        let project = Project::test(filesystem.clone(), [root.as_path()], cx).await;
+        let (workspace, cx) =
+            cx.add_window_view(|window, cx| Workspace::test_new(project.clone(), window, cx));
+        let panel = cx.new(|cx| test_android_panel(workspace.downgrade(), project, cx));
+        let terminal = cx.new(|cx| TestPanel::new(DockPosition::Bottom, 0, cx));
+        workspace.update_in(cx, |workspace, window, cx| {
+            register_controller(workspace, &panel, cx);
+            workspace.add_panel(panel.read(cx).build_panel.clone(), window, cx);
+            workspace.add_panel(terminal.clone(), window, cx);
+            workspace.focus_panel::<TestPanel>(window, cx);
+        });
+        panel.update_in(cx, |panel, window, cx| {
+            panel.root = Some(root.clone());
+            panel.auto_sync_root = Some(root.clone());
+            panel.running = true;
+            panel.refreshing_devices = true;
+            panel.observe_project_open(window, cx);
+        });
+        cx.run_until_parked();
+        panel.update(cx, |panel, _| {
+            panel.running = false;
+            panel.startup_settings_ready = false;
+        });
+
+        for attempt in 0..2 {
+            panel.read_with(cx, |panel, _| assert!(panel.sync_task.is_none()));
+            filesystem
+                .insert_file(
+                    root.join("build.gradle.kts"),
+                    format!("plugins {{ id(\"com.android.application\") }}\n// Save {attempt}")
+                        .into_bytes(),
+                )
+                .await;
+            cx.run_until_parked();
+            panel.read_with(cx, |panel, _| {
+                assert!(
+                    panel.kotlin_refresh_task.is_some(),
+                    "File change queues sync"
+                );
+            });
+            cx.executor().advance_clock(Duration::from_millis(500));
+            cx.run_until_parked();
+            let task = panel.update(cx, |panel, _| {
+                panel.sync_task.take().expect("File change starts sync")
+            });
+            task.await;
+            cx.run_until_parked();
+            panel.read_with(cx, |panel, _| {
+                assert!(!panel.syncing);
+                // Only FakeFs has a wrapper, so sync fails before spawning Gradle.
+                assert!(
+                    panel
+                        .error
+                        .as_ref()
+                        .is_some_and(|error| error.contains("no Gradle wrapper"))
+                );
+            });
+            workspace.update_in(cx, |workspace, window, cx| {
+                let dock = workspace.dock_at_position(DockPosition::Bottom).read(cx);
+                assert!(dock.is_open());
+                assert_eq!(
+                    dock.active_panel().map(|panel| panel.panel_id()),
+                    Some(terminal.entity_id())
+                );
+                assert!(terminal.read(cx).focus_handle.contains_focused(window, cx));
+            });
+            assert!(cx.debug_bounds("build-console").is_none());
+        }
+        workspace.update_in(cx, |workspace, window, cx| {
+            workspace.toggle_panel_focus::<BuildPanel>(window, cx);
+        });
+        cx.run_until_parked();
+        assert!(
+            cx.debug_bounds("build-console").is_some(),
+            "Explicit opening shows failed sync output"
+        );
+    }
+
+    #[gpui::test]
     async fn first_project_waits_for_detection_and_opens_setup_once_without_a_sidebar(
         cx: &mut TestAppContext,
     ) {
@@ -6161,7 +6252,7 @@ fi
             publish_test_android_model(panel, &target, cx);
             let token = panel.project.read(cx).android_model().token();
             let (session_id, output, logs) = panel.build_panel.update(cx, |panel, cx| {
-                panel.begin(BuildTab::Output, "Android Run".into(), false, window, cx)
+                panel.begin(BuildTab::Output, "Android Run".into(), false, cx)
             });
             logs.detach();
             let operation = Arc::new(DeviceOperation {
@@ -6229,7 +6320,7 @@ fi
             panel.selected_serial = Some("emulator-5556".into());
             panel.selected_avd = Some("Selected".into());
             let (session_id, output, logs) = panel.build_panel.update(cx, |panel, cx| {
-                panel.begin(BuildTab::Output, "Stop Emulator".into(), false, window, cx)
+                panel.begin(BuildTab::Output, "Stop Emulator".into(), false, cx)
             });
             drop(output);
             logs.detach();
@@ -6443,7 +6534,7 @@ fi
         panel.update_in(cx, |panel, window, cx| {
             let id = panel.build_panel.update(cx, |pane, cx| {
                 let (id, output, logs) =
-                    pane.begin(BuildTab::Output, "Run Android".into(), false, window, cx);
+                    pane.begin(BuildTab::Output, "Run Android".into(), false, cx);
                 drop(output);
                 logs.detach();
                 id
@@ -6709,13 +6800,12 @@ fi
         let panel = cx.new(|cx| test_android_panel(workspace.downgrade(), project, cx));
         let (send_cancel, receiver) = oneshot::channel();
         drop(receiver);
-        panel.update_in(cx, |panel, window, cx| {
+        panel.update(cx, |panel, cx| {
             let (id, output, logs) = panel.build_panel.update(cx, |pane, cx| {
                 pane.begin(
                     BuildTab::Sync,
                     "Waiting for Kotlin import".into(),
                     false,
-                    window,
                     cx,
                 )
             });
@@ -6751,7 +6841,7 @@ fi
         for closed in [false, true] {
             panel.update_in(cx, |panel, window, cx| {
                 let (session, output, logs) = panel.build_panel.update(cx, |build, cx| {
-                    build.begin(BuildTab::Output, "Install tools".into(), false, window, cx)
+                    build.begin(BuildTab::Output, "Install tools".into(), false, cx)
                 });
                 drop(output);
                 logs.detach();
