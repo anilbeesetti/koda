@@ -1477,7 +1477,7 @@ async fn restore_can_be_retried_after_collision(cx: &mut TestAppContext) {
 async fn test_realfs_archive_sources(executor: BackgroundExecutor, cx: &mut TestAppContext) {
     cx.executor().allow_parking();
     use async_zip::{Compression, ZipEntryBuilder, base::write::ZipFileWriter};
-    use std::io::Read;
+    use std::io::{Read, Seek, SeekFrom};
 
     let directory = TempDir::new().unwrap();
     let archive = directory.path().join("library sources.jar");
@@ -1514,12 +1514,17 @@ async fn test_realfs_archive_sources(executor: BackgroundExecutor, cx: &mut Test
     assert!(fs.is_file(&path).await);
     assert_eq!(fs.load_bytes(&path).await.unwrap(), source);
     let mut content = String::new();
-    fs.open_sync(&path)
-        .await
-        .unwrap()
-        .read_to_string(&mut content)
-        .unwrap();
+    let mut reader = fs.open_sync(&path).await.unwrap();
+    reader.read_to_string(&mut content).unwrap();
     assert_eq!(content.as_bytes(), source);
+    assert_eq!(reader.seek(SeekFrom::Start(6)).unwrap(), 6);
+    content.clear();
+    reader.read_to_string(&mut content).unwrap();
+    assert_eq!(content, "Typography(val headlineSmall: String)");
+    reader.seek(SeekFrom::End(-7)).unwrap();
+    content.clear();
+    reader.read_to_string(&mut content).unwrap();
+    assert_eq!(content, "String)");
     let canonical = fs.canonicalize(&path).await.unwrap();
     assert_eq!(
         fs.open_handle(&path)
