@@ -127,7 +127,7 @@ pub fn detect_project(files: &HashMap<String, String>) -> ProjectEcosystems {
         {
             continue;
         }
-        let Ok(catalog) = text.parse::<toml::Value>() else {
+        let Ok(catalog) = toml::from_str::<toml::Value>(text) else {
             continue;
         };
         let Some(plugins) = catalog.get("plugins").and_then(toml::Value::as_table) else {
