@@ -9,6 +9,8 @@ mod android_tool_setup;
 mod first_launch_setup_tests;
 mod project_surfaces;
 mod startup_kotlin;
+pub mod tabbed_toolbar;
+
 pub use project_surfaces::{
     ApplicationMenuTemplates, application_menus, install_application_menus,
 };
