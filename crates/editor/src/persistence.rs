@@ -238,6 +238,10 @@ impl Domain for EditorDb {
             );
         ),
         sql!(ALTER TABLE editors ADD COLUMN language_server_document TEXT;),
+        sql!(
+            CREATE INDEX editor_selections_editor_id_workspace_id
+            ON editor_selections (editor_id, workspace_id);
+        ),
     ];
 }
 
@@ -309,6 +313,7 @@ impl EditorDb {
             SELECT start, end
             FROM editor_selections
             WHERE editor_id = ?1 AND workspace_id = ?2
+            ORDER BY item_id
         }
     }
 
