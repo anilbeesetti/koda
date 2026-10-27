@@ -63,6 +63,57 @@ async fn repeated_appends_preserve_the_viewed_message(cx: &mut TestAppContext) {
 }
 
 #[gpui::test]
+async fn wheel_up_before_retention_repaint_does_not_jump_to_newer_messages(
+    cx: &mut TestAppContext,
+) {
+    let (_, view, cx) = viewer(cx, true).await;
+    let message = entry("Tag", "message");
+    view.update_in(cx, |view, _, cx| {
+        view.query = Query::default();
+        view.buffer = Buffer::new(entry_bytes(&message) * 100);
+        view.receive(vec![message.clone(); 100], cx);
+    });
+    draw_view(&view, cx);
+    view.update_in(cx, |view, _, cx| {
+        view.list_state.scroll_to(gpui::ListOffset {
+            item_ix: 50,
+            offset_in_item: px(7.),
+        });
+        cx.notify();
+    });
+    repaint(cx);
+    let anchor = view.read_with(cx, |view, _| scroll_anchor(view));
+    let viewport = cx
+        .debug_bounds("logcat-scrollbar-frame")
+        .expect("Logcat viewport");
+    // Test-mode App updates paint dirty windows on exit, so dispatch within
+    // the same update to exercise input arriving before the next frame.
+    cx.update(|window, cx| {
+        view.update(cx, |view, cx| {
+            view.receive(vec![message; 40], cx);
+            assert_eq!(scroll_anchor(view), anchor);
+        });
+        window.dispatch_event(
+            gpui::PlatformInput::ScrollWheel(gpui::ScrollWheelEvent {
+                position: viewport.center(),
+                delta: gpui::ScrollDelta::Pixels(point(px(0.), px(70.))),
+                ..Default::default()
+            }),
+            cx,
+        );
+    });
+    repaint(cx);
+    view.read_with(cx, |view, _| {
+        let after = scroll_anchor(view);
+        assert!(
+            after.0 < anchor.0 || (after.0 == anchor.0 && after.1 <= anchor.1),
+            "Scrolling upward after retention must not jump newer: {anchor:?} -> {after:?}"
+        );
+        assert!(!view.list_state.is_following_tail());
+    });
+}
+
+#[gpui::test]
 async fn retention_keeps_surviving_anchors_and_clamps_evicted_anchors_to_oldest(
     cx: &mut TestAppContext,
 ) {
