@@ -974,7 +974,6 @@ impl LogcatView {
                 .unwrap_or(u64::MAX);
             let removed = self.visible.partition_point(|entry| entry.id < first_id);
             self.visible.drain(..removed);
-            self.list_state.splice(0..removed, 0);
             appended.retain(|entry| entry.id >= first_id);
             let previous_length = self.visible.len();
             for entry in &appended {
@@ -985,10 +984,14 @@ impl LogcatView {
                 }
             }
             self.visible.extend(appended);
+            // Append before trimming so an evicted anchor stays at the oldest
+            // retained row, even when no previously visible rows survive.
+            let previous_count = previous_length + removed;
             self.list_state.splice(
-                previous_length..previous_length,
+                previous_count..previous_count,
                 self.visible.len() - previous_length,
             );
+            self.list_state.splice(0..removed, 0);
             if removed > 0 {
                 self.retain_selection();
                 self.search_matches.retain_mut(|index| {
@@ -1195,13 +1198,29 @@ impl LogcatView {
                 .zip(retained)
                 .all(|(new, old)| new.id == old.id)
         {
-            self.list_state.splice(0..removed, 0);
+            let previous_count = self.visible.len();
             self.list_state.splice(
-                retained.len()..retained.len(),
+                previous_count..previous_count,
                 visible.len() - retained.len(),
             );
+            self.list_state.splice(0..removed, 0);
         } else {
+            let offset = self.list_state.logical_scroll_top();
+            let anchor = (!self.list_state.is_following_tail())
+                .then(|| self.visible.get(offset.item_ix).map(|entry| entry.id))
+                .flatten();
             self.list_state.reset(visible.len());
+            if let Some(id) = anchor {
+                let index = visible.partition_point(|entry| entry.id < id);
+                self.list_state.scroll_to(gpui::ListOffset {
+                    item_ix: index.min(visible.len().saturating_sub(1)),
+                    offset_in_item: if visible.get(index).is_some_and(|entry| entry.id == id) {
+                        offset.offset_in_item
+                    } else {
+                        px(0.)
+                    },
+                });
+            }
         }
         self.visible = visible;
         self.unwrapped_columns = columns;

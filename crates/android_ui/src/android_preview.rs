@@ -3699,7 +3699,15 @@ mod tests {
         let (workspace, cx) =
             cx.add_window_view(|window, cx| Workspace::test_new(project.clone(), window, cx));
         let (view, panel, pane) = workspace.update_in(cx, |workspace, window, cx| {
-            add_preview(workspace, project, buffer, window, cx)
+            let (view, panel, pane) = add_preview(workspace, project, buffer, window, cx);
+            view.update(cx, |view, cx| {
+                // This checks source-tab ownership; keep refresh queued instead
+                // of starting real installation or Gradle work from the UI test.
+                view.building = true;
+                view.render_task =
+                    Some(cx.spawn(async |_, _| futures::future::pending::<()>().await));
+            });
+            (view, panel, pane)
         });
         pane.update_in(cx, |pane, window, cx| {
             let other = cx.new(TestItem::new);
@@ -3710,6 +3718,11 @@ mod tests {
             panel.show_compose_preview(window, cx)
         });
         cx.run_until_parked();
+        view.read_with(cx, |view, _| {
+            assert!(view.building && view.pending && view.pending_manual);
+            assert!(view.render_task.is_some());
+            assert!(view.debounce_task.is_none());
+        });
         assert_eq!(
             pane.read_with(cx, |pane, _| pane
                 .active_item()
@@ -3719,6 +3732,7 @@ mod tests {
         );
         assert_eq!(pane.read_with(cx, |pane, _| pane.items_len()), 2);
         workspace.read_with(cx, |workspace, _| assert_eq!(workspace.panes().len(), 1));
+        view.update(cx, |view, cx| view.stop(cx));
     }
 
     #[gpui::test]
