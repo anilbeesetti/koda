@@ -1617,6 +1617,25 @@ impl Element for List {
                     // handler is replaced. Previously applied deltas are already
                     // included in the rebased position.
                     scroll_top = state.logical_scroll_top();
+                    if state.logical_scroll_top.is_none()
+                        && state.alignment == ListAlignment::Bottom
+                    {
+                        // Bottom alignment stores an implicit end anchor, but
+                        // wheel deltas start at the top of the visible viewport.
+                        let padding = state.last_padding.unwrap_or_default();
+                        let offset = (state.items.summary().height + padding.top + padding.bottom
+                            - height)
+                            .max(px(0.));
+                        let (start, ..) = state.items.find::<ListItemSummary, _>(
+                            (),
+                            &Height(offset),
+                            Bias::Right,
+                        );
+                        scroll_top = ListOffset {
+                            item_ix: start.count,
+                            offset_in_item: offset - start.height,
+                        };
+                    }
                     splice_revision = state.splice_revision;
                     accumulated_scroll_delta = ScrollDelta::default();
                 }
@@ -1988,6 +2007,61 @@ mod test {
             assert_eq!(offset.item_ix, 4);
             assert_eq!(offset.offset_in_item, px(17.));
         });
+    }
+
+    #[gpui::test]
+    fn test_bottom_aligned_tail_accepts_upward_wheel_after_append_before_paint(
+        cx: &mut TestAppContext,
+    ) {
+        struct PaddedListView(ListState, Pixels);
+
+        impl Render for PaddedListView {
+            fn render(&mut self, _: &mut Window, _: &mut Context<Self>) -> impl IntoElement {
+                list(self.0.clone(), |_, _, _| {
+                    div().h(px(20.)).w_full().into_any()
+                })
+                .w_full()
+                .h_full()
+                .py(self.1)
+            }
+        }
+
+        for (padding, expected_item) in [(px(0.), 103), (px(20.), 105)] {
+            let cx = cx.add_empty_window();
+            let state = ListState::new(100, ListAlignment::Bottom, px(0.))
+                .with_uniform_item_height(px(20.));
+            state.set_follow_mode(FollowMode::Tail);
+            let view = cx.update(|_, cx| cx.new(|_| PaddedListView(state.clone(), padding)));
+            cx.draw(point(px(0.), px(0.)), size(px(100.), px(100.)), |_, _| {
+                view.clone().into_any_element()
+            });
+            assert!(state.is_following_tail());
+            assert!(state.0.borrow().logical_scroll_top.is_none());
+
+            cx.update(|window, cx| {
+                state.splice(100..100, 10);
+                window.dispatch_event(
+                    gpui::PlatformInput::ScrollWheel(ScrollWheelEvent {
+                        position: point(px(50.), px(50.)),
+                        delta: ScrollDelta::Pixels(point(px(0.), px(30.))),
+                        ..Default::default()
+                    }),
+                    cx,
+                );
+                assert!(!state.is_following_tail());
+                let offset = state.logical_scroll_top();
+                assert_eq!(offset.item_ix, expected_item);
+                assert_eq!(offset.offset_in_item, px(10.));
+            });
+
+            cx.draw(point(px(0.), px(0.)), size(px(100.), px(100.)), |_, _| {
+                view.clone().into_any_element()
+            });
+            assert!(!state.is_following_tail());
+            let offset = state.logical_scroll_top();
+            assert_eq!(offset.item_ix, expected_item);
+            assert_eq!(offset.offset_in_item, px(10.));
+        }
     }
 
     #[gpui::test]
