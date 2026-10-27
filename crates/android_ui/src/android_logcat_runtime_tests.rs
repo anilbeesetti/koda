@@ -1,4 +1,4 @@
-use super::tests::viewer;
+use super::tests::{draw_view, viewer};
 use super::*;
 use gpui::TestAppContext;
 
@@ -9,6 +9,297 @@ fn entry(tag: &str, message: &str) -> Entry {
     entry.tag = tag.into();
     entry.message = message.into();
     entry
+}
+
+fn repaint(cx: &mut gpui::VisualTestContext) {
+    cx.run_until_parked();
+    cx.update(|window, cx| window.draw(cx).clear(cx));
+}
+
+fn scroll_anchor(view: &LogcatView) -> (u64, Pixels) {
+    let offset = view.list_state.logical_scroll_top();
+    (view.visible[offset.item_ix].id, offset.offset_in_item)
+}
+
+#[gpui::test]
+async fn repeated_appends_preserve_the_viewed_message(cx: &mut TestAppContext) {
+    let (_, view, cx) = viewer(cx, true).await;
+    view.update_in(cx, |view, _, cx| {
+        view.query = Query::default();
+        view.receive(vec![entry("Tag", "message"); 200], cx);
+    });
+    draw_view(&view, cx);
+    for wrap in [false, true] {
+        view.update_in(cx, |view, _, cx| {
+            view.preferences.wrap = wrap;
+            view.list_state.scroll_to(gpui::ListOffset {
+                item_ix: 100,
+                offset_in_item: px(7.),
+            });
+            cx.notify();
+        });
+        repaint(cx);
+        let viewport = cx
+            .debug_bounds("logcat-scrollbar-frame")
+            .expect("Logcat viewport");
+        cx.simulate_event(gpui::ScrollWheelEvent {
+            position: viewport.center(),
+            delta: gpui::ScrollDelta::Pixels(point(px(0.), px(70.))),
+            ..Default::default()
+        });
+        repaint(cx);
+        let anchor = view.read_with(cx, |view, _| scroll_anchor(view));
+        for index in 1..=12 {
+            view.update_in(cx, |view, _, cx| {
+                view.receive(vec![entry("Tag", &"long message ".repeat(index * 50))], cx);
+            });
+            repaint(cx);
+            view.read_with(cx, |view, _| {
+                assert_eq!(scroll_anchor(view), anchor);
+                assert!(!view.list_state.is_following_tail());
+            });
+        }
+    }
+}
+
+#[gpui::test]
+async fn retention_keeps_surviving_anchors_and_clamps_evicted_anchors_to_oldest(
+    cx: &mut TestAppContext,
+) {
+    let (_, view, cx) = viewer(cx, true).await;
+    let message = entry("Tag", "message");
+    view.update_in(cx, |view, _, cx| {
+        view.query = Query::default();
+        view.buffer = Buffer::new(entry_bytes(&message) * 100);
+        view.receive(vec![message.clone(); 100], cx);
+    });
+    draw_view(&view, cx);
+    view.update_in(cx, |view, _, cx| {
+        view.list_state.scroll_to(gpui::ListOffset {
+            item_ix: 50,
+            offset_in_item: px(7.),
+        });
+        cx.notify();
+    });
+    repaint(cx);
+    let anchor = view.read_with(cx, |view, _| scroll_anchor(view));
+    for _ in 0..4 {
+        view.update_in(cx, |view, _, cx| {
+            view.receive(vec![message.clone(); 10], cx)
+        });
+        repaint(cx);
+        view.read_with(cx, |view, _| assert_eq!(scroll_anchor(view), anchor));
+    }
+    // This batch replaces every retained row without an intervening paint.
+    view.update_in(cx, |view, _, cx| {
+        view.receive(vec![message.clone(); 150], cx)
+    });
+    repaint(cx);
+    view.read_with(cx, |view, _| {
+        assert_eq!(scroll_anchor(view), (view.visible[0].id, px(0.)));
+        assert!(!view.list_state.is_following_tail());
+    });
+    for _ in 0..3 {
+        view.update_in(cx, |view, _, cx| {
+            view.receive(vec![message.clone(); 100], cx)
+        });
+        repaint(cx);
+        view.read_with(cx, |view, _| {
+            assert_eq!(scroll_anchor(view), (view.visible[0].id, px(0.)));
+            assert!(!view.list_state.is_following_tail());
+        });
+    }
+}
+
+#[gpui::test]
+async fn a_bounded_capture_batch_can_replace_all_filtered_rows(cx: &mut TestAppContext) {
+    let (_, view, cx) = viewer(cx, true).await;
+    let matching = entry("Keep", "message");
+    let hidden = entry("Hide", &"x".repeat(32 * 1024));
+    view.update_in(cx, |view, _, cx| {
+        view.query = Query::parse("tag=:Keep", false).expect("Filter");
+        view.buffer = Buffer::new(1024 * 1024);
+        let mut initial = vec![matching.clone(); 60];
+        initial.extend(vec![hidden.clone(); 31]);
+        view.receive(initial, cx);
+        assert_eq!(view.visible.len(), 60);
+    });
+    draw_view(&view, cx);
+    view.update_in(cx, |view, _, cx| {
+        view.list_state.scroll_to(gpui::ListOffset {
+            item_ix: 30,
+            offset_in_item: px(7.),
+        });
+        cx.notify();
+    });
+    repaint(cx);
+    view.update_in(cx, |view, _, cx| {
+        let mut batch = vec![hidden; 3];
+        batch.extend(vec![matching; 100]);
+        assert!(batch.len() <= CAPTURE_BATCH_LIMIT);
+        assert!(batch.iter().map(entry_bytes).sum::<usize>() <= CAPTURE_BATCH_BYTES);
+        view.receive(batch, cx);
+        assert_eq!(view.visible.len(), 100);
+    });
+    repaint(cx);
+    view.read_with(cx, |view, _| {
+        assert_eq!(scroll_anchor(view), (view.visible[0].id, px(0.)));
+        assert!(!view.list_state.is_following_tail());
+    });
+}
+
+#[gpui::test]
+async fn discovery_rebuild_preserves_surviving_message_and_pixel_offset(cx: &mut TestAppContext) {
+    let (_, view, cx) = viewer(cx, true).await;
+    let discovery = |package: &str| {
+        Ok(Discovery {
+            devices: Vec::new(),
+            processes: Ok(Vec::new()),
+            packages: vec![package.to_string()],
+            metadata_error: None,
+        })
+    };
+    view.update_in(cx, |view, _, cx| {
+        view.query = Query::parse("package:mine", false).expect("Current app filter");
+        view.project_packages = vec!["dev.first".into(), "dev.second".into()];
+        let entries = backlog()
+            .into_iter()
+            .map(|mut entry| {
+                entry.package = if entry.tag == "First" {
+                    "dev.first".into()
+                } else {
+                    "dev.second".into()
+                };
+                entry
+            })
+            .collect();
+        view.receive(entries, cx);
+    });
+    draw_view(&view, cx);
+    view.update_in(cx, |view, _, cx| {
+        view.list_state.scroll_to(gpui::ListOffset {
+            item_ix: 500,
+            offset_in_item: px(7.),
+        });
+        cx.notify();
+    });
+    repaint(cx);
+    let anchor = view.read_with(cx, |view, _| scroll_anchor(view));
+    view.update_in(cx, |view, _, cx| {
+        view.apply_discovery(discovery("dev.first"), cx);
+        assert!(view.rebuild_task.is_some());
+        let mut tail = entry("First", "matching tail");
+        tail.package = "dev.first".into();
+        view.receive(vec![tail; 10], cx);
+    });
+    repaint(cx);
+    view.read_with(cx, |view, _| {
+        assert_eq!(scroll_anchor(view), anchor);
+        assert!(!view.list_state.is_following_tail());
+    });
+    view.update_in(cx, |view, _, cx| {
+        view.apply_discovery(discovery("dev.second"), cx);
+    });
+    repaint(cx);
+    view.read_with(cx, |view, _| {
+        assert_eq!(scroll_anchor(view), (anchor.0 + 1, px(0.)));
+        assert!(!view.list_state.is_following_tail());
+    });
+}
+
+#[gpui::test]
+async fn intentional_follow_tail_survives_appends_retention_and_filtering(cx: &mut TestAppContext) {
+    let (_, view, cx) = viewer(cx, true).await;
+    let message = entry("Tag", "message");
+    view.update_in(cx, |view, _, cx| {
+        view.query = Query::default();
+        view.buffer = Buffer::new(entry_bytes(&message) * 100);
+        view.receive(vec![message.clone(); 100], cx);
+    });
+    draw_view(&view, cx);
+    for _ in 0..4 {
+        view.update_in(cx, |view, _, cx| {
+            view.receive(vec![message.clone(); 150], cx)
+        });
+        repaint(cx);
+        view.read_with(cx, |view, _| {
+            assert!(view.list_state.is_following_tail());
+            assert_eq!(view.list_state.is_scrolled_to_end(), Some(true));
+        });
+    }
+    view.update_in(cx, |view, _, cx| {
+        view.list_state.scroll_to(gpui::ListOffset::default());
+        cx.notify();
+    });
+    repaint(cx);
+    let viewport = cx
+        .debug_bounds("logcat-scrollbar-frame")
+        .expect("Logcat viewport");
+    cx.simulate_event(gpui::ScrollWheelEvent {
+        position: viewport.center(),
+        delta: gpui::ScrollDelta::Pixels(point(px(0.), px(-100_000.))),
+        ..Default::default()
+    });
+    repaint(cx);
+    view.update_in(cx, |view, _, cx| {
+        assert!(view.list_state.is_following_tail());
+        view.list_state.scroll_to(gpui::ListOffset::default());
+        cx.notify();
+    });
+    repaint(cx);
+    view.update_in(cx, |view, _, cx| {
+        view.list_state.set_follow_mode(FollowMode::Tail);
+        view.receive(vec![entry("Other", "message"); 50], cx);
+        view.query = Query::parse("tag=:Tag", false).expect("Filter");
+        view.rebuild(cx);
+    });
+    repaint(cx);
+    view.read_with(cx, |view, _| {
+        assert!(view.list_state.is_following_tail());
+        assert_eq!(view.list_state.is_scrolled_to_end(), Some(true));
+    });
+}
+
+#[gpui::test]
+async fn resuming_after_retention_clamps_to_oldest_and_empty_filters_stay_stable(
+    cx: &mut TestAppContext,
+) {
+    let (_, view, cx) = viewer(cx, true).await;
+    let message = entry("Tag", "message");
+    view.update_in(cx, |view, _, cx| {
+        view.query = Query::default();
+        view.buffer = Buffer::new(entry_bytes(&message) * 100);
+        view.receive(vec![message.clone(); 100], cx);
+    });
+    draw_view(&view, cx);
+    view.update_in(cx, |view, _, cx| {
+        view.list_state.scroll_to(gpui::ListOffset {
+            item_ix: 50,
+            offset_in_item: px(7.),
+        });
+        view.pause(cx);
+        view.receive(vec![message.clone(); 150], cx);
+        view.pause(cx);
+    });
+    repaint(cx);
+    view.read_with(cx, |view, _| {
+        assert_eq!(scroll_anchor(view), (view.visible[0].id, px(0.)));
+        assert!(!view.list_state.is_following_tail());
+    });
+    view.update_in(cx, |view, _, cx| {
+        view.query = Query::parse("tag=:Missing", false).expect("Empty filter");
+        view.rebuild(cx);
+    });
+    repaint(cx);
+    view.read_with(cx, |view, _| assert!(view.visible.is_empty()));
+    view.update_in(cx, |view, _, cx| {
+        view.receive(vec![entry("Missing", "new matching message"); 100], cx);
+    });
+    repaint(cx);
+    view.read_with(cx, |view, _| {
+        assert!(view.list_state.logical_scroll_top().item_ix < view.visible.len());
+        assert_eq!(view.list_state.item_count(), view.visible.len());
+    });
 }
 
 #[gpui::test]
