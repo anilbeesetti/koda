@@ -6233,7 +6233,7 @@ fi
         let (workspace, cx) =
             cx.add_window_view(|window, cx| Workspace::test_new(project.clone(), window, cx));
         let panel = cx.new(|cx| test_android_panel(workspace.downgrade(), project, cx));
-        panel.update_in(cx, |panel, window, cx| {
+        panel.update(cx, |panel, cx| {
             let root = PathBuf::from("/android");
             let target = AndroidTarget {
                 module: ":app".into(),
@@ -6304,7 +6304,7 @@ fi
         let (workspace, cx) =
             cx.add_window_view(|window, cx| Workspace::test_new(project.clone(), window, cx));
         let panel = cx.new(|cx| test_android_panel(workspace.downgrade(), project, cx));
-        panel.update_in(cx, |panel, window, cx| {
+        panel.update(cx, |panel, cx| {
             panel.root = Some("/android".into());
             let target = AndroidTarget {
                 module: ":app".into(),

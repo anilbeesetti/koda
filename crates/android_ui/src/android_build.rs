@@ -2532,7 +2532,7 @@ mod tests {
             }
         }
         workspace.update_in(cx, |workspace, window, cx| {
-            workspace.close_panel::<BuildPanel>(window, cx);
+            workspace.focus_panel::<TestPanel>(window, cx);
             workspace.toggle_panel_focus::<BuildPanel>(window, cx);
         });
         cx.run_until_parked();
