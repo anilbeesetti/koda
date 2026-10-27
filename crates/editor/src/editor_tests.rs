@@ -32684,6 +32684,7 @@ async fn test_jumps_unfold_enclosing_sections(cx: &mut TestAppContext) {
                     let snapshot = editor.buffer.read(cx).snapshot(cx);
                     assert!(editor.navigate(
                         Arc::new(NavigationData {
+                            language_server_document: None,
                             cursor_anchor: snapshot.anchor_before(target),
                             cursor_position: target,
                             scroll_anchor: ScrollAnchor {
