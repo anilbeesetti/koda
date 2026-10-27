@@ -235,6 +235,8 @@ jobs:
           restore-keys: |
             fork-ci-build-v2-${{ runner.os }}-${{ runner.arch }}-ubuntu24.04-dev-debug0-${{ hashFiles('rust-toolchain.toml') }}-${{ hashFiles('Cargo.lock') }}-
             fork-ci-build-v2-${{ runner.os }}-${{ runner.arch }}-ubuntu24.04-dev-debug0-${{ hashFiles('rust-toolchain.toml') }}-
+      - name: Invalidate restored workspace artifacts
+        run: python3 script/ci-build-cache --target-dir target --include-test-extension
       - name: Report cache reuse
         env:
           SOURCE_CACHE_HIT: ${{ steps.source-cache.outputs.cache-hit }}
@@ -387,6 +389,8 @@ jobs:
           printf 'Shared source exact hit: %s; shared key: %s; legacy source key: %s; build exact hit: %s; build key: %s\n' \
             "$SOURCE_CACHE_HIT" "$SOURCE_CACHE_KEY" "$LEGACY_SOURCE_CACHE_KEY" \
             "$BUILD_CACHE_HIT" "$BUILD_CACHE_KEY" | tee -a "$GITHUB_STEP_SUMMARY"
+      - name: Invalidate restored workspace artifacts
+        run: python3 script/ci-build-cache --target-dir target
       - name: Install WASI SDK
         run: ./script/download-wasi-sdk
       - name: Check Xcode toolchain

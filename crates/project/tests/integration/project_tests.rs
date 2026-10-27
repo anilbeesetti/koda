@@ -2251,7 +2251,7 @@ async fn test_language_servers_disabled_by_default(cx: &mut gpui::TestAppContext
         fs.insert_tree(
             path!("/the-root"),
             json!({
-                ".zed": {
+                ".koda": {
                     "settings.json": settings_json_contents.to_string(),
                 },
                 "main.rs": "",
