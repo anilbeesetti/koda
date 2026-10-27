@@ -504,7 +504,6 @@ impl BuildPanel {
         tab: BuildTab,
         label: String,
         retain_output: bool,
-        window: &mut Window,
         cx: &mut Context<Self>,
     ) -> (u64, mpsc::Sender<OutputLine>, Task<()>) {
         self.next_id += 1;
@@ -553,15 +552,6 @@ impl BuildPanel {
             stderr: false,
         });
         self.sessions[tab.index()] = Some(session);
-        self.select(tab, cx);
-        let workspace = self.workspace.clone();
-        window.defer(cx, move |window, cx| {
-            workspace
-                .update(cx, |workspace, cx| {
-                    workspace.reveal_panel::<BuildPanel>(window, cx)
-                })
-                .log_err();
-        });
         let (sender, receiver) = mpsc::channel(128);
         let logs = cx.spawn(async move |panel, cx| {
             let mut batches = receiver.ready_chunks(128);
@@ -2401,6 +2391,163 @@ mod tests {
     }
 
     #[gpui::test]
+    async fn background_sessions_preserve_dock_focus_zoom_and_selected_tab(
+        cx: &mut gpui::TestAppContext,
+    ) {
+        use workspace::dock::test::TestPanel;
+
+        let _app_state = cx.update(workspace::AppState::test);
+        let fs = project::FakeFs::new(cx.executor());
+        fs.insert_tree("/android", serde_json::json!({"settings.gradle.kts": ""}))
+            .await;
+        let project = project::Project::test(fs, [std::path::Path::new("/android")], cx).await;
+        let (workspace, cx) =
+            cx.add_window_view(|window, cx| Workspace::test_new(project.clone(), window, cx));
+        let controller =
+            cx.new(|cx| crate::tests::test_android_panel(workspace.downgrade(), project, cx));
+        let pane = controller.read_with(cx, |controller, _| controller.build_panel.clone());
+        // A panel in the terminal's dock exercises the same activation and zoom
+        // behavior without starting a shell in the deterministic test executor.
+        let terminal = cx.new(|cx| TestPanel::new(DockPosition::Bottom, 0, cx));
+        workspace.update_in(cx, |workspace, window, cx| {
+            crate::register_controller(workspace, &controller, cx);
+            workspace.add_panel(pane.clone(), window, cx);
+            workspace.add_panel(terminal.clone(), window, cx);
+        });
+        cx.run_until_parked();
+
+        for view in [
+            "center",
+            "terminal",
+            "zoomed terminal",
+            "sync output",
+            "build output",
+        ] {
+            workspace.update_in(cx, |workspace, window, cx| {
+                workspace.close_panel::<BuildPanel>(window, cx);
+                terminal.update(cx, |terminal, cx| terminal.set_zoomed(false, window, cx));
+                match view {
+                    "terminal" | "zoomed terminal" => {
+                        workspace.focus_panel::<TestPanel>(window, cx);
+                        terminal.update(cx, |terminal, cx| {
+                            if view == "zoomed terminal" {
+                                cx.emit(PanelEvent::ZoomIn);
+                            }
+                            terminal.focus_handle.focus(window, cx);
+                        });
+                    }
+                    "sync output" | "build output" => {
+                        pane.update(cx, |pane, cx| {
+                            pane.select(
+                                if view == "sync output" {
+                                    BuildTab::Sync
+                                } else {
+                                    BuildTab::Output
+                                },
+                                cx,
+                            );
+                        });
+                        workspace.focus_panel::<BuildPanel>(window, cx);
+                    }
+                    _ => {
+                        let focus = workspace.active_pane().read(cx).focus_handle(cx);
+                        focus.focus(window, cx);
+                    }
+                }
+            });
+            cx.run_until_parked();
+            let snapshot = |cx: &mut gpui::VisualTestContext| {
+                workspace.update_in(cx, |workspace, window, cx| {
+                    let dock = workspace.dock_at_position(DockPosition::Bottom).read(cx);
+                    (
+                        dock.is_open(),
+                        dock.active_panel().map(|panel| panel.panel_id()),
+                        terminal.read(cx).zoomed,
+                        window.focused(cx),
+                        pane.read(cx).selected,
+                    )
+                })
+            };
+            let expected = snapshot(cx);
+            assert_eq!(expected.0, view != "center");
+            assert_eq!(expected.2, view == "zoomed terminal");
+            assert!(expected.3.is_some(), "The current view has keyboard focus");
+            for tab in [
+                BuildTab::Sync,
+                BuildTab::Output,
+                BuildTab::Sync,
+                BuildTab::Output,
+            ] {
+                for status in [
+                    BuildStatus::Succeeded,
+                    BuildStatus::Failed,
+                    BuildStatus::Cancelled,
+                ] {
+                    let (id, mut output, logs) = pane.update(cx, |pane, cx| {
+                        pane.begin(tab, "Background operation".into(), false, cx)
+                    });
+                    cx.run_until_parked();
+                    assert_eq!(snapshot(cx), expected, "Starting {tab:?} preserves {view}");
+                    output
+                        .send(OutputLine {
+                            text: "error: captured output".into(),
+                            stderr: true,
+                        })
+                        .await
+                        .expect("Output receiver");
+                    drop(output);
+                    logs.await;
+                    cx.run_until_parked();
+                    assert_eq!(snapshot(cx), expected, "Output preserves {view}");
+                    pane.update(cx, |pane, cx| {
+                        pane.finish(tab, id, status, "Finished operation".into(), cx)
+                    });
+                    cx.run_until_parked();
+                    assert_eq!(
+                        snapshot(cx),
+                        expected,
+                        "Finishing {tab:?} with {status:?} preserves {view}"
+                    );
+                    pane.read_with(cx, |pane, _| {
+                        let session = pane.sessions[tab.index()]
+                            .as_ref()
+                            .expect("Session retained");
+                        assert_eq!(session.status, status);
+                        assert!(
+                            session
+                                .lines
+                                .iter()
+                                .any(|line| line.text == "error: captured output" && line.stderr)
+                        );
+                        assert_eq!(
+                            session
+                                .messages
+                                .iter()
+                                .any(|message| message.error
+                                    && message.label == "Finished operation"),
+                            status == BuildStatus::Failed
+                        );
+                    });
+                }
+            }
+        }
+        workspace.update_in(cx, |workspace, window, cx| {
+            workspace.focus_panel::<TestPanel>(window, cx);
+            workspace.toggle_panel_focus::<BuildPanel>(window, cx);
+        });
+        cx.run_until_parked();
+        workspace.update_in(cx, |workspace, window, cx| {
+            let dock = workspace.dock_at_position(DockPosition::Bottom).read(cx);
+            assert!(dock.is_open());
+            assert_eq!(
+                dock.active_panel().map(|panel| panel.panel_id()),
+                Some(pane.entity_id())
+            );
+            assert!(pane.read(cx).focus_handle.contains_focused(window, cx));
+        });
+    }
+
+    #[gpui::test]
     async fn model_console_copy_after_interrupted_and_repeated_sync(cx: &mut gpui::TestAppContext) {
         let _app_state = cx.update(workspace::AppState::test);
         let fs = project::FakeFs::new(cx.executor());
@@ -2420,8 +2567,8 @@ mod tests {
         .enumerate()
         {
             let label = format!("Sync attempt {attempt}");
-            let (id, sender, logs) = pane.update_in(cx, |pane, window, cx| {
-                pane.begin(BuildTab::Sync, label.clone(), false, window, cx)
+            let (id, sender, logs) = pane.update(cx, |pane, cx| {
+                pane.begin(BuildTab::Sync, label.clone(), false, cx)
             });
             let raw = "KODA_ANDROID_PROJECT_MODEL={hidden}\nw: visible warning\n";
             assert_eq!(
@@ -2470,9 +2617,9 @@ mod tests {
             .add_window_view(|window, cx| Workspace::test_new(project, window, cx))
             .0;
         let (pane, cx) = cx.add_window_view(|_, cx| BuildPanel::new(workspace.downgrade(), cx));
-        pane.update_in(cx, |pane, window, cx| {
+        pane.update(cx, |pane, cx| {
             for tab in [BuildTab::Sync, BuildTab::Output] {
-                let (id, output, logs) = pane.begin(tab, tab.label().into(), false, window, cx);
+                let (id, output, logs) = pane.begin(tab, tab.label().into(), false, cx);
                 drop(output);
                 logs.detach();
                 pane.finish(tab, id, BuildStatus::Succeeded, "Finished".into(), cx);
@@ -2554,9 +2701,9 @@ mod tests {
         let (pane, cx) = cx.add_window_view(|_, cx| BuildPanel::new(workspace.downgrade(), cx));
         cx.run_until_parked();
         assert!(cx.debug_bounds("build-empty").is_some());
-        pane.update_in(cx, |pane, window, cx| {
+        pane.update(cx, |pane, cx| {
             for tab in [BuildTab::Sync, BuildTab::Output] {
-                let (id, output, logs) = pane.begin(tab, tab.label().into(), false, window, cx);
+                let (id, output, logs) = pane.begin(tab, tab.label().into(), false, cx);
                 drop(output);
                 logs.detach();
                 pane.finish(
@@ -2574,6 +2721,7 @@ mod tests {
                 });
             }
         });
+        pane.update(cx, |pane, cx| pane.select(BuildTab::Output, cx));
         cx.run_until_parked();
         assert_eq!(
             pane.read_with(cx, |pane, _| pane.selected),
@@ -2581,7 +2729,7 @@ mod tests {
         );
         assert!(
             cx.debug_bounds("tabbed-toolbar-active-1").is_some(),
-            "Starting output activates its real toolbar tab"
+            "Explicit selection activates its toolbar tab"
         );
         assert!(cx.debug_bounds("tabbed-toolbar-tab-icon-0").is_some());
         assert!(cx.debug_bounds("tabbed-toolbar-tab-icon-1").is_some());
@@ -2872,9 +3020,8 @@ mod tests {
             .add_window_view(|window, cx| Workspace::test_new(project, window, cx))
             .0;
         let (pane, cx) = cx.add_window_view(|_, cx| BuildPanel::new(workspace.downgrade(), cx));
-        pane.update_in(cx, |pane, window, cx| {
-            let (id, output, logs) =
-                pane.begin(BuildTab::Sync, "Sync project".into(), false, window, cx);
+        pane.update(cx, |pane, cx| {
+            let (id, output, logs) = pane.begin(BuildTab::Sync, "Sync project".into(), false, cx);
             drop(output);
             logs.detach();
             pane.finish(
@@ -2895,7 +3042,6 @@ mod tests {
                 BuildTab::Sync,
                 "Generating Android resources for Kotlin import".into(),
                 true,
-                window,
                 cx,
             );
             drop(output);
@@ -2942,7 +3088,6 @@ mod tests {
                 BuildTab::Sync,
                 "Importing Android Java model".into(),
                 true,
-                window,
                 cx,
             );
             drop(output);

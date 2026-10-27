@@ -2794,7 +2794,7 @@ impl AndroidPanel {
         self.tool_setup.last_operation = Some((tool, operation));
         let label = format!("{}: {operation}", tool.label());
         let (session, output, logs) = self.build_panel.update(cx, |panel, cx| {
-            panel.begin(BuildTab::Output, label.clone(), false, window, cx)
+            panel.begin(BuildTab::Output, label.clone(), false, cx)
         });
         let (cancel, cancelled) = oneshot::channel();
         self.command_cancel = Some(cancel);

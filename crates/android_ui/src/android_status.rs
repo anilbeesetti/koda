@@ -257,10 +257,12 @@ mod tests {
         let idle_bounds = ["completions", "language", "cursor"]
             .map(|label| (label, cx.debug_bounds(label).expect("Regular status item")));
         for tab in [BuildTab::Sync, BuildTab::Output] {
-            panel.update_in(cx, |panel, window, cx| {
+            workspace.update_in(cx, |workspace, window, cx| {
+                workspace.close_panel::<BuildPanel>(window, cx)
+            });
+            panel.update(cx, |panel, cx| {
                 let id = panel.build_panel.update(cx, |pane, cx| {
-                    let (id, output, logs) =
-                        pane.begin(tab, "Android operation".into(), false, window, cx);
+                    let (id, output, logs) = pane.begin(tab, "Android operation".into(), false, cx);
                     drop(output);
                     logs.detach();
                     id
@@ -279,10 +281,6 @@ mod tests {
             let details = cx
                 .debug_bounds("android-operation-details")
                 .expect("Activity details");
-            workspace.update_in(cx, |workspace, window, cx| {
-                workspace.close_panel::<BuildPanel>(window, cx)
-            });
-            cx.run_until_parked();
             assert!(cx.debug_bounds("build-console").is_none());
             let status = cx
                 .debug_bounds("android-operation-status")
@@ -312,6 +310,14 @@ mod tests {
             assert!(
                 cx.debug_bounds("build-console").is_some(),
                 "Activity reopens output"
+            );
+            assert!(
+                cx.debug_bounds(match tab {
+                    BuildTab::Sync => "tabbed-toolbar-active-0",
+                    BuildTab::Output => "tabbed-toolbar-active-1",
+                })
+                .is_some(),
+                "Activity opens the requested output tab"
             );
             if tab == BuildTab::Output {
                 panel.update(cx, |panel, cx| {
