@@ -1951,8 +1951,8 @@ mod test {
     #[gpui::test]
     fn test_wheel_after_splice_rebases_without_reapplying_previous_delta(cx: &mut TestAppContext) {
         let cx = cx.add_empty_window();
-        let state = ListState::new(100, ListAlignment::Top, px(0.))
-            .with_uniform_item_height(px(20.));
+        let state =
+            ListState::new(100, ListAlignment::Top, px(0.)).with_uniform_item_height(px(20.));
         state.scroll_to(gpui::ListOffset {
             item_ix: 50,
             offset_in_item: px(7.),
@@ -1993,8 +1993,8 @@ mod test {
     #[gpui::test]
     fn test_noop_splice_preserves_same_frame_wheel_coalescing(cx: &mut TestAppContext) {
         let cx = cx.add_empty_window();
-        let state = ListState::new(100, ListAlignment::Top, px(0.))
-            .with_uniform_item_height(px(20.));
+        let state =
+            ListState::new(100, ListAlignment::Top, px(0.)).with_uniform_item_height(px(20.));
         state.scroll_to(gpui::ListOffset {
             item_ix: 50,
             offset_in_item: px(7.),
