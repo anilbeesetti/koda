@@ -2,6 +2,7 @@ import importlib.machinery
 import importlib.util
 import os
 from pathlib import Path
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -17,11 +18,11 @@ loader.exec_module(cache)
 
 
 class BuildCacheTests(unittest.TestCase):
-    def test_missing_cache_does_not_invoke_cargo(self):
+    def test_missing_cache_is_initialized_by_cargo(self):
         with tempfile.TemporaryDirectory() as temporary:
             with patch.object(cache.subprocess, "run") as run:
                 cache.clean_workspace(Path(temporary) / "missing")
-            run.assert_not_called()
+            run.assert_called_once()
 
     def test_cleanup_is_locked_workspace_only_and_failure_is_fatal(self):
         with tempfile.TemporaryDirectory() as temporary:
@@ -62,7 +63,8 @@ class BuildCacheTests(unittest.TestCase):
     def test_cache_format_preserves_cargo_markers_and_excludes_markerless_legacy_keys(self):
         workflow = (SCRIPT.parents[1] / ".github/workflows/fork_ci.yml").read_text()
         self.assertNotIn("fork-ci-build-v2-", workflow)
-        self.assertIn("fork-ci-build-v3-", workflow)
+        self.assertNotIn("fork-ci-build-v3-", workflow)
+        self.assertIn("fork-ci-build-v4-", workflow)
         self.assertEqual(workflow.count("            target/CACHEDIR.TAG\n"), 4)
         self.assertEqual(workflow.count("            extensions/test-extension/target/CACHEDIR.TAG\n"), 2)
 
@@ -112,6 +114,15 @@ class BuildCacheTests(unittest.TestCase):
 
             run("generate-lockfile")
             env["CARGO_NET_OFFLINE"] = "true"
+            self.assertFalse(target.exists())
+            self.assertFalse(extension_target.exists())
+            subprocess.run([sys.executable, str(SCRIPT), "--target-dir", str(target), "--include-test-extension"],
+                           cwd=workspace, env=env, check=True, capture_output=True, text=True)
+            for directory in (target, extension_target):
+                self.assertTrue((directory / "CACHEDIR.TAG").is_file())
+            sdk_version = target / "wasi-sdk/VERSION"
+            sdk_version.parent.mkdir()
+            sdk_version.write_text("34.0\n")
             run("build", "--offline", "--locked", "-p", "ci_cache_app")
             run("build", "--offline", "--locked", "-p", "ci_cache_api", "--target-dir", str(extension_target))
             run("build", "--offline", "--locked", "-p", "ci_cache_api", "--target-dir", str(extension_target), "--target", "wasm32-wasip2")
@@ -124,6 +135,27 @@ class BuildCacheTests(unittest.TestCase):
             external_artifacts += list(extension_target.glob("wasm32-wasip2/debug/deps/libci_cached_dependency-*.rlib"))
             self.assertEqual(len(external_artifacts), 3)
             external_mtimes = {path: path.stat().st_mtime_ns for path in external_artifacts}
+
+            for directory in (target, extension_target):
+                snapshot = root / "saved-cache" / directory.relative_to(workspace)
+                snapshot.mkdir(parents=True)
+                shutil.copy2(directory / "CACHEDIR.TAG", snapshot / "CACHEDIR.TAG")
+                for profile in (Path("debug"), Path("wasm32-wasip2/debug")):
+                    for name in (".fingerprint", "build"):
+                        source = directory / profile / name
+                        if source.exists():
+                            shutil.copytree(source, snapshot / profile / name)
+                    dependencies = directory / profile / "deps"
+                    if dependencies.exists():
+                        destination = snapshot / profile / "deps"
+                        destination.mkdir(parents=True, exist_ok=True)
+                        for artifact in dependencies.iterdir():
+                            if artifact.is_file() and artifact.suffix in (".rlib", ".rmeta", ".so", ".dylib", ".a", ".d"):
+                                shutil.copy2(artifact, destination / artifact.name)
+                shutil.rmtree(directory)
+                shutil.copytree(snapshot, directory)
+            sdk_version.parent.mkdir()
+            sdk_version.write_text("34.0\n")
 
             api_source.write_text("pub fn new_api() -> u32 { ci_cached_dependency::value() }")
             os.utime(api_source, ns=(original_mtime, original_mtime))
@@ -146,6 +178,7 @@ class BuildCacheTests(unittest.TestCase):
             subprocess.run([sys.executable, str(SCRIPT), "--target-dir", str(target), "--include-test-extension"],
                            cwd=workspace, env=env, check=True, capture_output=True, text=True)
             self.assertTrue(all(not path.exists() for path in local_artifacts))
+            self.assertEqual(sdk_version.read_text(), "34.0\n")
             run("build", "--offline", "--locked", "-p", "ci_cache_app")
             for path, mtime in external_mtimes.items():
                 self.assertEqual(path.stat().st_mtime_ns, mtime)
