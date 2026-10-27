@@ -8,8 +8,8 @@ import subprocess
 
 
 def clean_workspace(target_dir, target=None):
-    if not Path(target_dir).is_dir():
-        return
+    # Cargo must initialize cold targets before tools such as the WASI installer
+    # create them without the safety marker required by subsequent cleanup.
     # A cache built after checkout can make Cargo consider older, different
     # workspace source fresh. Keep immutable third-party dependency artifacts.
     command = [os.environ.get("CARGO", "cargo"), "clean", "--locked", "--workspace",
