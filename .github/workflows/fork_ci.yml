@@ -213,6 +213,7 @@ jobs:
         continue-on-error: true
         with:
           path: |
+            target/CACHEDIR.TAG
             target/debug/.fingerprint
             target/debug/build
             target/debug/deps/*.rlib
@@ -220,6 +221,7 @@ jobs:
             target/debug/deps/*.so
             target/debug/deps/*.a
             target/debug/deps/*.d
+            extensions/test-extension/target/CACHEDIR.TAG
             extensions/test-extension/target/debug/.fingerprint
             extensions/test-extension/target/debug/build
             extensions/test-extension/target/debug/deps/*.rlib
@@ -231,10 +233,10 @@ jobs:
             extensions/test-extension/target/wasm32-wasip2/debug/build
             extensions/test-extension/target/wasm32-wasip2/debug/deps
             extensions/test-extension/target/wasm32-wasip2/debug/*.wasm
-          key: fork-ci-build-v2-${{ runner.os }}-${{ runner.arch }}-ubuntu24.04-dev-debug0-${{ hashFiles('rust-toolchain.toml') }}-${{ hashFiles('Cargo.lock') }}-${{ github.event.pull_request.base.sha || github.sha }}
+          key: fork-ci-build-v3-${{ runner.os }}-${{ runner.arch }}-ubuntu24.04-dev-debug0-${{ hashFiles('rust-toolchain.toml') }}-${{ hashFiles('Cargo.lock') }}-${{ github.event.pull_request.base.sha || github.sha }}
           restore-keys: |
-            fork-ci-build-v2-${{ runner.os }}-${{ runner.arch }}-ubuntu24.04-dev-debug0-${{ hashFiles('rust-toolchain.toml') }}-${{ hashFiles('Cargo.lock') }}-
-            fork-ci-build-v2-${{ runner.os }}-${{ runner.arch }}-ubuntu24.04-dev-debug0-${{ hashFiles('rust-toolchain.toml') }}-
+            fork-ci-build-v3-${{ runner.os }}-${{ runner.arch }}-ubuntu24.04-dev-debug0-${{ hashFiles('rust-toolchain.toml') }}-${{ hashFiles('Cargo.lock') }}-
+            fork-ci-build-v3-${{ runner.os }}-${{ runner.arch }}-ubuntu24.04-dev-debug0-${{ hashFiles('rust-toolchain.toml') }}-
       - name: Invalidate restored workspace artifacts
         run: python3 script/ci-build-cache --target-dir target --include-test-extension
       - name: Report cache reuse
@@ -296,6 +298,7 @@ jobs:
         uses: actions/cache/save@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
         with:
           path: |
+            target/CACHEDIR.TAG
             target/debug/.fingerprint
             target/debug/build
             target/debug/deps/*.rlib
@@ -303,6 +306,7 @@ jobs:
             target/debug/deps/*.so
             target/debug/deps/*.a
             target/debug/deps/*.d
+            extensions/test-extension/target/CACHEDIR.TAG
             extensions/test-extension/target/debug/.fingerprint
             extensions/test-extension/target/debug/build
             extensions/test-extension/target/debug/deps/*.rlib
@@ -367,6 +371,7 @@ jobs:
         continue-on-error: true
         with:
           path: |
+            target/CACHEDIR.TAG
             target/debug/.fingerprint
             target/debug/build
             target/debug/deps/*.rlib
@@ -374,10 +379,10 @@ jobs:
             target/debug/deps/*.dylib
             target/debug/deps/*.a
             target/debug/deps/*.d
-          key: fork-ci-build-v2-${{ runner.os }}-${{ runner.arch }}-macos15-xcode16.4-dev-debug0-${{ hashFiles('rust-toolchain.toml') }}-${{ hashFiles('Cargo.lock') }}-${{ github.event.pull_request.base.sha || github.sha }}
+          key: fork-ci-build-v3-${{ runner.os }}-${{ runner.arch }}-macos15-xcode16.4-dev-debug0-${{ hashFiles('rust-toolchain.toml') }}-${{ hashFiles('Cargo.lock') }}-${{ github.event.pull_request.base.sha || github.sha }}
           restore-keys: |
-            fork-ci-build-v2-${{ runner.os }}-${{ runner.arch }}-macos15-xcode16.4-dev-debug0-${{ hashFiles('rust-toolchain.toml') }}-${{ hashFiles('Cargo.lock') }}-
-            fork-ci-build-v2-${{ runner.os }}-${{ runner.arch }}-macos15-xcode16.4-dev-debug0-${{ hashFiles('rust-toolchain.toml') }}-
+            fork-ci-build-v3-${{ runner.os }}-${{ runner.arch }}-macos15-xcode16.4-dev-debug0-${{ hashFiles('rust-toolchain.toml') }}-${{ hashFiles('Cargo.lock') }}-
+            fork-ci-build-v3-${{ runner.os }}-${{ runner.arch }}-macos15-xcode16.4-dev-debug0-${{ hashFiles('rust-toolchain.toml') }}-
       - name: Report cache reuse
         env:
           SOURCE_CACHE_HIT: ${{ steps.source-cache.outputs.cache-hit }}
@@ -408,6 +413,7 @@ jobs:
         uses: actions/cache/save@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
         with:
           path: |
+            target/CACHEDIR.TAG
             target/debug/.fingerprint
             target/debug/build
             target/debug/deps/*.rlib

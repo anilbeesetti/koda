@@ -59,6 +59,13 @@ class BuildCacheTests(unittest.TestCase):
             self.assertNotIn("continue-on-error", guard_step)
             self.assertNotIn("if:", guard_step)
 
+    def test_cache_format_preserves_cargo_markers_and_excludes_markerless_legacy_keys(self):
+        workflow = (SCRIPT.parents[1] / ".github/workflows/fork_ci.yml").read_text()
+        self.assertNotIn("fork-ci-build-v2-", workflow)
+        self.assertIn("fork-ci-build-v3-", workflow)
+        self.assertEqual(workflow.count("            target/CACHEDIR.TAG\n"), 4)
+        self.assertEqual(workflow.count("            extensions/test-extension/target/CACHEDIR.TAG\n"), 2)
+
     def test_real_cargo_rebuilds_stale_local_api_and_preserves_external_artifacts(self):
         cargo = subprocess.check_output(["rustup", "which", "cargo"], text=True).strip()
         rustc = subprocess.check_output(["rustup", "which", "rustc"], text=True).strip()
@@ -124,6 +131,17 @@ class BuildCacheTests(unittest.TestCase):
             stale = run("build", "--offline", "--locked", "-p", "ci_cache_app", check=False)
             self.assertNotEqual(stale.returncode, 0)
             self.assertIn("cannot find function `new_api`", stale.stderr)
+
+            marker = target / "CACHEDIR.TAG"
+            cached_marker = marker.read_bytes()
+            marker.unlink()
+            refused = subprocess.run([sys.executable, str(SCRIPT), "--target-dir", str(target)],
+                                     cwd=workspace, env=env, capture_output=True, text=True)
+            self.assertNotEqual(refused.returncode, 0)
+            self.assertIn("CACHEDIR.TAG", refused.stderr)
+            self.assertFalse(marker.exists())
+            self.assertTrue(all(path.exists() for path in local_artifacts))
+            marker.write_bytes(cached_marker)
 
             subprocess.run([sys.executable, str(SCRIPT), "--target-dir", str(target), "--include-test-extension"],
                            cwd=workspace, env=env, check=True, capture_output=True, text=True)
