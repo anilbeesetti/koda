@@ -7,7 +7,7 @@
 //! to reuse existing language server.
 
 use std::{
-    collections::{BTreeMap, BTreeSet},
+    collections::{BTreeMap, BTreeSet, btree_map::Entry},
     sync::{Arc, Weak},
 };
 
@@ -71,10 +71,14 @@ impl LanguageServerTreeNode {
     /// May return None if the node no longer belongs to the server tree it was created in.
     pub(crate) fn server_id_or_init(
         &self,
-        init: impl FnOnce(&Arc<LaunchDisposition>) -> LanguageServerId,
+        init: impl FnOnce(&Arc<LaunchDisposition>) -> Option<LanguageServerId>,
     ) -> Option<LanguageServerId> {
-        let this = self.0.upgrade()?;
-        Some(*this.id.get_or_init(|| init(&this.disposition)))
+        let node = self.0.upgrade()?;
+        if let Some(server_id) = node.id.get() {
+            return Some(*server_id);
+        }
+        let server_id = init(&node.disposition)?;
+        Some(*node.id.get_or_init(|| server_id))
     }
 
     /// Returns a language server name as the language server adapter would return.
@@ -98,6 +102,10 @@ pub struct InnerTreeNode {
 }
 
 impl InnerTreeNode {
+    pub(crate) fn id(&self) -> Option<LanguageServerId> {
+        self.id.get().copied()
+    }
+
     fn new(
         server_name: LanguageServerName,
         path: ProjectPath,
@@ -193,23 +201,29 @@ impl LanguageServerTree {
                 .entry(root_path.path.clone())
                 .or_default()
                 .entry(adapter.name());
-            let (node, languages) = inner_node.or_insert_with(|| {
+            let new_node = || {
                 let toolchain = self.toolchains.read(cx).active_toolchain(
                     root_path.worktree_id,
                     &root_path.path,
                     language_name.clone(),
                 );
 
-                (
-                    Arc::new(InnerTreeNode::new(
-                        adapter.name(),
-                        root_path.clone(),
-                        settings.clone(),
-                        toolchain,
-                    )),
-                    Default::default(),
-                )
-            });
+                Arc::new(InnerTreeNode::new(
+                    adapter.name(),
+                    root_path.clone(),
+                    settings,
+                    toolchain,
+                ))
+            };
+            let (node, languages) = match inner_node {
+                Entry::Occupied(mut entry) => {
+                    if entry.get().0.id.get().is_none() {
+                        entry.get_mut().0 = new_node();
+                    }
+                    entry.into_mut()
+                }
+                Entry::Vacant(entry) => entry.insert((new_node(), BTreeSet::new())),
+            };
             languages.insert(language_name.clone());
             Arc::downgrade(node).into()
         })
@@ -362,6 +376,11 @@ impl LanguageServerTree {
             .entry(RelPath::empty_arc())
             .or_default()
             .entry(node.disposition.server_name.clone())
+            .and_modify(|(existing, _)| {
+                if existing.id().is_none() {
+                    *existing = node.clone();
+                }
+            })
             .or_insert_with(|| (node, BTreeSet::new()))
             .1
             .insert(language_name);
@@ -373,9 +392,6 @@ pub(crate) struct ServerTreeRebase {
     new_tree: LanguageServerTree,
     /// All server IDs seen in the old tree.
     all_server_ids: BTreeMap<LanguageServerId, LanguageServerName>,
-    /// Server IDs we've preserved for a new iteration of the tree. `all_server_ids - rebased_server_ids` is the
-    /// set of server IDs that can be shut down.
-    rebased_server_ids: BTreeSet<LanguageServerId>,
 }
 
 impl ServerTreeRebase {
@@ -405,7 +421,6 @@ impl ServerTreeRebase {
             old_contents,
             all_server_ids,
             new_tree,
-            rebased_server_ids: BTreeSet::new(),
         }
     }
 
@@ -454,7 +469,6 @@ impl ServerTreeRebase {
                     return Some(node);
                 };
                 if let Some(existing_id) = existing_node.id.get() {
-                    self.rebased_server_ids.insert(*existing_id);
                     live_node.id.set(*existing_id).ok();
                 }
 
@@ -469,11 +483,19 @@ impl ServerTreeRebase {
         LanguageServerTree,
         BTreeMap<LanguageServerId, LanguageServerName>,
     ) {
+        let preserved_server_ids = self
+            .new_tree
+            .instances
+            .values()
+            .flat_map(|servers| servers.roots.values())
+            .flat_map(|nodes| nodes.values())
+            .filter_map(|(node, _)| node.id())
+            .collect::<BTreeSet<_>>();
         (
             self.new_tree,
             self.all_server_ids
                 .into_iter()
-                .filter(|(id, _)| !self.rebased_server_ids.contains(id))
+                .filter(|(id, _)| !preserved_server_ids.contains(id))
                 .collect(),
         )
     }

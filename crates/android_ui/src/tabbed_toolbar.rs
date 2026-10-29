@@ -484,7 +484,7 @@ impl Render for TabbedToolbar {
                             .h_full()
                             .overflow_x_scroll()
                             .track_scroll(&self.scroll)
-                            .on_scroll_wheel(cx.listener(|toolbar, _, _, _| {
+                            .on_scroll(cx.listener(|toolbar, _, _, _| {
                                 toolbar.pending_reveal = None;
                             }))
                             .role(gpui::Role::TabList)
@@ -1140,7 +1140,7 @@ mod tests {
         let viewport = cx
             .debug_bounds("tabbed-toolbar-tabs")
             .expect("Scrollable tabs");
-        cx.simulate_event(gpui::ScrollWheelEvent {
+        cx.simulate_event(gpui::ScrollEvent {
             position: viewport.center(),
             delta: gpui::ScrollDelta::Pixels(point(px(-60.), px(0.))),
             ..Default::default()
@@ -1214,7 +1214,7 @@ mod tests {
         toolbar.update(cx, |toolbar, cx| toolbar.scroll_by(px(-10_000.), cx));
         settle_frames(cx);
         let viewport = cx.debug_bounds("tabbed-toolbar-tabs").expect("Viewport");
-        cx.simulate_event(gpui::ScrollWheelEvent {
+        cx.simulate_event(gpui::ScrollEvent {
             position: viewport.center(),
             delta: gpui::ScrollDelta::Pixels(point(px(-60.), px(0.))),
             ..Default::default()
@@ -1614,7 +1614,7 @@ mod tests {
         focus_tab(&toolbar, 0, cx);
         cx.simulate_keystrokes("tab");
         let viewport = cx.debug_bounds("tabbed-toolbar-tabs").expect("Viewport");
-        cx.simulate_event(gpui::ScrollWheelEvent {
+        cx.simulate_event(gpui::ScrollEvent {
             position: viewport.center(),
             delta: gpui::ScrollDelta::Pixels(point(px(-20.), px(0.))),
             ..Default::default()

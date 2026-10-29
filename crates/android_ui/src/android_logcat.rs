@@ -3695,7 +3695,7 @@ pub(super) mod tests {
         view.read_with(cx, |view, _| {
             assert!(view.completion_scroll.max_offset().y > px(0.))
         });
-        cx.simulate_event(gpui::ScrollWheelEvent {
+        cx.simulate_event(gpui::ScrollEvent {
             position: popup.center(),
             delta: gpui::ScrollDelta::Pixels(point(px(0.), px(-80.))),
             ..Default::default()
@@ -4092,7 +4092,7 @@ pub(super) mod tests {
                 view.list_state.scroll_px_offset_for_scrollbar().y,
             )
         });
-        cx.simulate_event(gpui::ScrollWheelEvent {
+        cx.simulate_event(gpui::ScrollEvent {
             position: bounds.center(),
             delta: gpui::ScrollDelta::Pixels(point(px(-120.), px(0.))),
             ..Default::default()
@@ -4109,7 +4109,7 @@ pub(super) mod tests {
             );
         });
         let horizontal_offset = view.read_with(cx, |view, _| view.horizontal_scroll.offset().x);
-        cx.simulate_event(gpui::ScrollWheelEvent {
+        cx.simulate_event(gpui::ScrollEvent {
             position: bounds.center(),
             delta: gpui::ScrollDelta::Pixels(point(px(0.), px(40.))),
             ..Default::default()

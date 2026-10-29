@@ -987,16 +987,14 @@ impl BuildPanel {
         )
         .with_horizontal_sizing_behavior(ListHorizontalSizingBehavior::Unconstrained)
         .size_full()
-        .on_scroll_wheel(cx.listener(
-            move |panel, event: &gpui::ScrollWheelEvent, _, cx| {
-                if event.delta.pixel_delta(px(24.)).y != px(0.) {
-                    if let Some(session) = &mut panel.sessions[tab.index()] {
-                        session.follow = false;
-                    }
-                    cx.notify();
+        .on_scroll(cx.listener(move |panel, event: &gpui::ScrollEvent, _, cx| {
+            if event.delta.pixel_delta(px(24.)).y != px(0.) {
+                if let Some(session) = &mut panel.sessions[tab.index()] {
+                    session.follow = false;
                 }
-            },
-        ));
+                cx.notify();
+            }
+        }));
         let console_tools = v_flex()
             .debug_selector(|| "build-right-actions".into())
             .h_full()

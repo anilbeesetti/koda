@@ -3776,7 +3776,6 @@ Examples:
 - Description:
   Preview tabs allow you to open files in preview mode. A pane keeps at most one preview tab at a time, so opening another file in preview mode takes over that slot. Switching to a file that is already open does not close the preview tab. This is useful for quickly viewing files without cluttering your workspace. Preview tabs display their file names in italics. \
   There are several ways to convert a preview tab into a regular tab:
-
   - Double-clicking on the file
   - Double-clicking on the tab header
   - Using the {#action project_panel::OpenPermanent} action
@@ -6020,6 +6019,16 @@ Available variables:
 {
   "project_panel": {
     "sort_order": "unicode"
+  }
+}
+```
+
+5. Files are grouped by their last extension (case-insensitive) in ascending order, with extensionless files, including dotfiles such as `.gitignore`, first. Dotfiles with a further suffix, such as `.config.json`, keep that extension. Files with the same extension are sorted by name using natural sort, and directories are placed according to `sort_mode`.
+
+```json [settings]
+{
+  "project_panel": {
+    "sort_order": "extension"
   }
 }
 ```
