@@ -1879,7 +1879,7 @@ impl ComposePreviewView {
                     .p_2()
                     .max_h(px(180.))
                     .overflow_y_scroll()
-                    .on_scroll_wheel(|_, _, cx| cx.stop_propagation())
+                    .on_scroll(|_, _, cx| cx.stop_propagation())
                     .border_1()
                     .border_color(cx.theme().colors().border)
                     .child(
@@ -3416,7 +3416,7 @@ mod tests {
         cx.run_until_parked();
         let diagnostic = cx.debug_bounds("compose-card-error-0").expect("Diagnostic");
         let before = view.read_with(cx, |view, _| view.list_state.logical_scroll_top());
-        cx.simulate_event(gpui::ScrollWheelEvent {
+        cx.simulate_event(gpui::ScrollEvent {
             position: diagnostic.center(),
             delta: gpui::ScrollDelta::Pixels(point(px(0.), px(-80.))),
             ..Default::default()

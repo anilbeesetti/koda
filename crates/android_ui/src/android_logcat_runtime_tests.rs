@@ -42,7 +42,7 @@ async fn repeated_appends_preserve_the_viewed_message(cx: &mut TestAppContext) {
         let viewport = cx
             .debug_bounds("logcat-scrollbar-frame")
             .expect("Logcat viewport");
-        cx.simulate_event(gpui::ScrollWheelEvent {
+        cx.simulate_event(gpui::ScrollEvent {
             position: viewport.center(),
             delta: gpui::ScrollDelta::Pixels(point(px(0.), px(70.))),
             ..Default::default()
@@ -94,7 +94,7 @@ async fn wheel_up_before_retention_repaint_does_not_jump_to_newer_messages(
             assert_eq!(scroll_anchor(view), anchor);
         });
         window.dispatch_event(
-            gpui::PlatformInput::ScrollWheel(gpui::ScrollWheelEvent {
+            gpui::PlatformInput::Scroll(gpui::ScrollEvent {
                 position: viewport.center(),
                 delta: gpui::ScrollDelta::Pixels(point(px(0.), px(70.))),
                 ..Default::default()
@@ -286,7 +286,7 @@ async fn intentional_follow_tail_survives_appends_retention_and_filtering(cx: &m
     let viewport = cx
         .debug_bounds("logcat-scrollbar-frame")
         .expect("Logcat viewport");
-    cx.simulate_event(gpui::ScrollWheelEvent {
+    cx.simulate_event(gpui::ScrollEvent {
         position: viewport.center(),
         delta: gpui::ScrollDelta::Pixels(point(px(0.), px(-100_000.))),
         ..Default::default()

@@ -1962,7 +1962,7 @@ mod tests {
             .debug_bounds("android-setup-reuse-jdk")
             .expect("Reuse JDK");
         let viewport = wizard.read_with(cx, |wizard, _| wizard.content_scroll.bounds());
-        cx.simulate_event(gpui::ScrollWheelEvent {
+        cx.simulate_event(gpui::ScrollEvent {
             position: viewport.center(),
             delta: gpui::ScrollDelta::Pixels(gpui::point(
                 px(0.),
@@ -1986,7 +1986,7 @@ mod tests {
         wizard.read_with(cx, |wizard, _| assert!(!wizard.can_advance()));
         let sdk = cx.debug_bounds("android-setup-sdk").expect("SDK component");
         let viewport = wizard.read_with(cx, |wizard, _| wizard.content_scroll.bounds());
-        cx.simulate_event(gpui::ScrollWheelEvent {
+        cx.simulate_event(gpui::ScrollEvent {
             position: viewport.center(),
             delta: gpui::ScrollDelta::Pixels(gpui::point(
                 px(0.),
@@ -2091,7 +2091,7 @@ mod tests {
             .debug_bounds("android-setup-summary-sdk-folder-control")
             .expect("Change SDK folder button");
         let viewport = wizard.read_with(cx, |wizard, _| wizard.content_scroll.bounds());
-        cx.simulate_event(gpui::ScrollWheelEvent {
+        cx.simulate_event(gpui::ScrollEvent {
             position: viewport.center(),
             delta: gpui::ScrollDelta::Pixels(gpui::point(
                 px(0.),
@@ -2395,7 +2395,7 @@ mod tests {
             assert_eq!(wizard.license_scroll.bounds(), license_bounds);
             wizard.content_scroll.offset()
         });
-        cx.simulate_event(gpui::ScrollWheelEvent {
+        cx.simulate_event(gpui::ScrollEvent {
             position: license_bounds.center(),
             delta: gpui::ScrollDelta::Pixels(gpui::point(px(0.), px(-120.))),
             ..Default::default()
