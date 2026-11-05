@@ -8043,6 +8043,7 @@ impl LspStore {
                                     buffer,
                                     adapter,
                                     server,
+                                    cx,
                                 )
                             })
                             .is_some_and(|(adapter, _)| adapter.name().0.as_ref() == "kotlin-lsp")
@@ -8812,7 +8813,7 @@ impl LspStore {
             local.language_servers_for_buffer(buffer, cx)
                 .find(|(adapter, candidate)| {
                     (matches!(server, LanguageServerToQuery::FirstCapable) || matches!(server, LanguageServerToQuery::Other(id) if id == candidate.server_id()))
-                        && lsp_command_allowed_for_buffer(local, &request, buffer, adapter, candidate)
+                        && lsp_command_allowed_for_buffer(local, &request, buffer, adapter, candidate, cx)
                 }).map(|(_, server)| server.server_id())
         });
         let session = server_id.and_then(|server_id| {
@@ -16530,6 +16531,17 @@ fn document_selector_context_for_server_document(
             _ => "file",
         },
         path: DocumentSelectorPath::Absent,
+    }
+}
+
+fn document_selector_context_for_language(
+    language: &LanguageName,
+    adapter: &CachedLspAdapter,
+) -> DocumentSelectorContext {
+    DocumentSelectorContext {
+        language_id: Some(adapter.language_id(language)),
+        scheme: "file",
+        path: DocumentSelectorPath::Unknown,
     }
 }
 
