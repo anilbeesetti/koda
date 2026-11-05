@@ -1734,10 +1734,11 @@ mod tests {
                 ])))
             });
         let point = cx.pixel_position("fn first() {}\nfn secˇond() {}\n");
-        cx.simulate_mouse_move(point, None, Modifiers::secondary_key());
+        let modifiers = cx.read(Modifiers::secondary_key);
+        cx.simulate_mouse_move(point, None, modifiers);
         requests.next().await;
         cx.run_until_parked();
-        cx.simulate_click(point, Modifiers::secondary_key());
+        cx.simulate_click(point, modifiers);
         cx.run_until_parked();
         cx.assert_editor_state("fn first() {}\nfn secˇond() {}\n");
     }

@@ -1145,7 +1145,7 @@ mod tests {
             .set_request_handler::<lsp::request::References, _, _>(async move |_, _| {
                 Ok(Some(Vec::new()))
             });
-        cx.simulate_click(screen_coord, gpui::Modifiers::secondary_key());
+        cx.simulate_click(screen_coord, modifiers);
         cx.run_until_parked();
         assert!(active_picker(&mut cx).is_none());
         assert!(cx.editor(|editor, _, _| editor.has_mouse_context_menu()));
