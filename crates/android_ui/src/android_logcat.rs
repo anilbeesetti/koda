@@ -2282,7 +2282,7 @@ impl Item for LogcatView {
 impl Render for LogcatView {
     fn render(&mut self, window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
         self.text_layouts.borrow_mut().clear();
-        let mut filter_context = KeyContext::new_with_defaults();
+        let mut filter_context = KeyContext::new_with_defaults(cx.platform_info().os);
         filter_context.add("AndroidLogcatFilter");
         if !self.completions.is_empty() {
             filter_context.add("showing_suggestions");

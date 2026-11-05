@@ -1752,7 +1752,8 @@ mod tests {
     fn press_key(cx: &mut gpui::VisualTestContext, key: &str) {
         // simulate_keystrokes dispatches only key-down; clickable controls
         // activate on key-up, so exercise a complete keyboard press here.
-        let keystroke = Keystroke::parse(key).expect("Keyboard fixture key");
+        let keystroke = Keystroke::parse_with_os(key, cx.read(|cx| cx.platform_info().os))
+            .expect("Keyboard fixture key");
         cx.simulate_event(KeyDownEvent {
             keystroke: keystroke.clone(),
             is_held: false,
