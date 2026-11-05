@@ -3,6 +3,7 @@
 import json
 import os
 from pathlib import Path
+import plistlib
 import shutil
 import subprocess
 import tempfile
@@ -11,6 +12,23 @@ import unittest
 
 
 REPOSITORY = Path(__file__).resolve().parents[2]
+
+
+def prepare_sdk_fixture(root, settings=None):
+    sdk = root / "MacOSX.sdk"
+    sdk.mkdir()
+    (sdk / "SDKSettings.plist").write_bytes(plistlib.dumps(
+        settings if settings is not None else {"CanonicalName": "macosx26.0", "Version": "26.0"}))
+    plist_buddy = root / "PlistBuddy"
+    plist_buddy.write_text("""#!/usr/bin/env python3
+import plistlib, sys
+with open(sys.argv[3], 'rb') as stream:
+    print(plistlib.load(stream)[sys.argv[2].removeprefix('Print :')])
+""")
+    plist_buddy.chmod(0o755)
+    script = (REPOSITORY / "script/bundle-mac").read_text()
+    # Redirect only the native plist reader in the temporary script copy.
+    return sdk, script.replace("/usr/libexec/PlistBuddy", f"'{plist_buddy}'")
 
 
 class BundleMetadataTests(unittest.TestCase):
@@ -23,7 +41,8 @@ class BundleMetadataTests(unittest.TestCase):
                     root = Path(directory)
                     scripts = root / "script"
                     scripts.mkdir()
-                    shutil.copyfile(REPOSITORY / "script/bundle-mac", scripts / "bundle-mac")
+                    sdk, bundle_script = prepare_sdk_fixture(root)
+                    (scripts / "bundle-mac").write_text(bundle_script)
                     (scripts / "lib").mkdir()
                     (scripts / "lib/blob-store.sh").write_text("")
                     licenses = scripts / "generate-licenses"
@@ -59,6 +78,7 @@ elif sys.argv[1] == 'bundle':
                         tool.chmod(0o755)
                     snapshot = root / "bundle.json"
                     environment = dict(os.environ, PATH=f"{tools}:{os.environ['PATH']}",
+                                       SDKROOT=str(sdk),
                                        BUNDLE_TEST_SNAPSHOT=str(snapshot), ZED_BUNDLE_TIMINGS="0",
                                        ZED_RELEASE_INPUTS_MANIFEST="")
                     result = subprocess.run(["bash", str(scripts / "bundle-mac"), target],
@@ -71,6 +91,39 @@ elif sys.argv[1] == 'bundle':
                     self.assertEqual(bundled["arguments"],
                                      ["bundle", "--release", "--bin", "koda", "--target", target,
                                       "--select-workspace-root"])
+
+
+class SdkValidationTests(unittest.TestCase):
+    def test_sdk_validation_before_build(self):
+        cases = [
+            ({"CanonicalName": "macosx26.0", "Version": "26.0"}, True),
+            ({"CanonicalName": "macosx27.1", "Version": "27.1"}, True),
+            ({"CanonicalName": "macosx25.0", "Version": "25.0"}, False),
+            ({"CanonicalName": "iphoneos26.0", "Version": "26.0"}, False),
+            ({"CanonicalName": "macosx26.0", "Version": "26.invalid"}, False),
+            ({"CanonicalName": "macosx26.0"}, False),
+        ]
+        for settings, valid in cases:
+            with self.subTest(settings=settings), tempfile.TemporaryDirectory() as directory:
+                root = Path(directory)
+                sdk, script = prepare_sdk_fixture(root, settings)
+                (root / "script/lib").mkdir(parents=True)
+                (root / "script/lib/blob-store.sh").write_text("")
+                script = script.replace("# Get release channel", """printf 'validated:%s:%s\\n' "$SDKROOT" "$MACOSX_DEPLOYMENT_TARGET"
+exit 23
+# Get release channel""", 1)
+                bundle_script = root / "script/bundle-mac"
+                bundle_script.write_text(script)
+                result = subprocess.run(["bash", str(bundle_script)], cwd=root,
+                                        env=dict(os.environ, SDKROOT=str(sdk)),
+                                        capture_output=True, text=True, timeout=10)
+                self.assertEqual(result.returncode, 23 if valid else 1,
+                                 result.stdout + result.stderr)
+                if valid:
+                    self.assertIn(f"validated:{sdk}:12.0", result.stdout)
+                else:
+                    self.assertIn("macOS SDK 26 or newer is required", result.stderr)
+                    self.assertNotIn("validated:", result.stdout)
 
 
 class CliVersionVerificationTests(unittest.TestCase):

@@ -257,6 +257,7 @@ pub enum IconName {
     SquareDot,
     SquareMinus,
     SquarePlus,
+    SquareR,
     Star,
     StarFilled,
     Stop,

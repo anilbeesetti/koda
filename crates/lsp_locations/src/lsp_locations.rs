@@ -1130,7 +1130,8 @@ mod tests {
         let screen_coord = cx
             .editor(|editor, _, cx| editor.pixel_position_of_cursor(cx))
             .unwrap();
-        cx.simulate_click(screen_coord, gpui::Modifiers::secondary_key());
+        let modifiers = cx.read(gpui::Modifiers::secondary_key);
+        cx.simulate_click(screen_coord, modifiers);
         cx.run_until_parked();
 
         assert!(
@@ -1144,7 +1145,7 @@ mod tests {
             .set_request_handler::<lsp::request::References, _, _>(async move |_, _| {
                 Ok(Some(Vec::new()))
             });
-        cx.simulate_click(screen_coord, gpui::Modifiers::secondary_key());
+        cx.simulate_click(screen_coord, modifiers);
         cx.run_until_parked();
         assert!(active_picker(&mut cx).is_none());
         assert!(cx.editor(|editor, _, _| editor.has_mouse_context_menu()));
@@ -1426,7 +1427,7 @@ mod tests {
         let modifiers = Modifiers {
             shift,
             alt: split,
-            ..Modifiers::secondary_key()
+            ..cx.read(Modifiers::secondary_key)
         };
         let mut expected_requests = Vec::new();
         let query = lsp::TextDocumentPositionParams {
@@ -1563,9 +1564,11 @@ mod tests {
             .editor(|editor, _, cx| editor.pixel_position_of_cursor(cx))
             .expect("click pixel");
         if empty_hover {
-            cx.simulate_mouse_move(position, None, Modifiers::secondary_key());
+            let modifiers = cx.read(Modifiers::secondary_key);
+            cx.simulate_mouse_move(position, None, modifiers);
         }
-        cx.simulate_click(position, Modifiers::secondary_key());
+        let modifiers = cx.read(Modifiers::secondary_key);
+        cx.simulate_click(position, modifiers);
         cx.simulate_modifiers_change(Modifiers::none());
         (cx, requests)
     }
