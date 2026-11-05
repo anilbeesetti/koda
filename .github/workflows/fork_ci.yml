@@ -326,7 +326,7 @@ jobs:
     if: needs.checks.outputs.native_checks == 'true'
     runs-on: macos-15
     env:
-      DEVELOPER_DIR: /Applications/Xcode_16.4.app/Contents/Developer
+      DEVELOPER_DIR: /Applications/Xcode_26.3.app/Contents/Developer
     timeout-minutes: 120
     steps:
       - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
@@ -379,10 +379,10 @@ jobs:
             target/debug/deps/*.dylib
             target/debug/deps/*.a
             target/debug/deps/*.d
-          key: fork-ci-build-v4-${{ runner.os }}-${{ runner.arch }}-macos15-xcode16.4-dev-debug0-${{ hashFiles('rust-toolchain.toml') }}-${{ hashFiles('Cargo.lock') }}-${{ github.event.pull_request.base.sha || github.sha }}
+          key: fork-ci-build-v4-${{ runner.os }}-${{ runner.arch }}-macos15-xcode26.3-dev-debug0-${{ hashFiles('rust-toolchain.toml') }}-${{ hashFiles('Cargo.lock') }}-${{ github.event.pull_request.base.sha || github.sha }}
           restore-keys: |
-            fork-ci-build-v4-${{ runner.os }}-${{ runner.arch }}-macos15-xcode16.4-dev-debug0-${{ hashFiles('rust-toolchain.toml') }}-${{ hashFiles('Cargo.lock') }}-
-            fork-ci-build-v4-${{ runner.os }}-${{ runner.arch }}-macos15-xcode16.4-dev-debug0-${{ hashFiles('rust-toolchain.toml') }}-
+            fork-ci-build-v4-${{ runner.os }}-${{ runner.arch }}-macos15-xcode26.3-dev-debug0-${{ hashFiles('rust-toolchain.toml') }}-${{ hashFiles('Cargo.lock') }}-
+            fork-ci-build-v4-${{ runner.os }}-${{ runner.arch }}-macos15-xcode26.3-dev-debug0-${{ hashFiles('rust-toolchain.toml') }}-
       - name: Report cache reuse
         env:
           SOURCE_CACHE_HIT: ${{ steps.source-cache.outputs.cache-hit }}
@@ -403,6 +403,9 @@ jobs:
           xcodebuild -version
           xcrun clang --version
           xcrun --find metal
+          sdk_version=$(xcrun --sdk macosx --show-sdk-version)
+          echo "macOS SDK: $sdk_version"
+          test "${sdk_version%%.*}" -ge 26
       - name: Check macOS Zed application
         run: python3 script/ci-run stage 'macOS app check' -- cargo check --locked --keep-going -p zed --bin koda
       - name: Test published managed Kotlin runtime

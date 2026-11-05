@@ -60,7 +60,7 @@ jobs:
       ZED_COMMIT_SHA: ${{ github.sha }}
       TARGET_TRIPLE: aarch64-apple-darwin
       ARCHITECTURE: aarch64
-      DEVELOPER_DIR: /Applications/Xcode_16.4.app/Contents/Developer
+      DEVELOPER_DIR: /Applications/Xcode_26.3.app/Contents/Developer
     steps:
       - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd
         with:
@@ -112,11 +112,11 @@ jobs:
             target/aarch64-apple-darwin/release/deps/*.dylib
             target/aarch64-apple-darwin/release/deps/*.a
             target/aarch64-apple-darwin/release/deps/*.d
-          key: macos15-aarch64-xcode16.4-release-v2-rust-${{ hashFiles('rust-toolchain.toml') }}-profile-${{ hashFiles('Cargo.toml', '.cargo/config.toml', '.cargo/bundle-config.toml') }}-lock-${{ hashFiles('Cargo.lock') }}-${{ inputs.channel }}-${{ github.sha }}
+          key: macos15-aarch64-xcode26.3-release-v2-rust-${{ hashFiles('rust-toolchain.toml') }}-profile-${{ hashFiles('Cargo.toml', '.cargo/config.toml', '.cargo/bundle-config.toml') }}-lock-${{ hashFiles('Cargo.lock') }}-${{ inputs.channel }}-${{ github.sha }}
           restore-keys: |
-            macos15-aarch64-xcode16.4-release-v2-rust-${{ hashFiles('rust-toolchain.toml') }}-profile-${{ hashFiles('Cargo.toml', '.cargo/config.toml', '.cargo/bundle-config.toml') }}-lock-${{ hashFiles('Cargo.lock') }}-${{ inputs.channel }}-
-            macos15-aarch64-xcode16.4-release-v2-rust-${{ hashFiles('rust-toolchain.toml') }}-profile-${{ hashFiles('Cargo.toml', '.cargo/config.toml', '.cargo/bundle-config.toml') }}-lock-${{ hashFiles('Cargo.lock') }}-
-            macos15-aarch64-xcode16.4-release-v2-rust-${{ hashFiles('rust-toolchain.toml') }}-profile-${{ hashFiles('Cargo.toml', '.cargo/config.toml', '.cargo/bundle-config.toml') }}-
+            macos15-aarch64-xcode26.3-release-v2-rust-${{ hashFiles('rust-toolchain.toml') }}-profile-${{ hashFiles('Cargo.toml', '.cargo/config.toml', '.cargo/bundle-config.toml') }}-lock-${{ hashFiles('Cargo.lock') }}-${{ inputs.channel }}-
+            macos15-aarch64-xcode26.3-release-v2-rust-${{ hashFiles('rust-toolchain.toml') }}-profile-${{ hashFiles('Cargo.toml', '.cargo/config.toml', '.cargo/bundle-config.toml') }}-lock-${{ hashFiles('Cargo.lock') }}-
+            macos15-aarch64-xcode26.3-release-v2-rust-${{ hashFiles('rust-toolchain.toml') }}-profile-${{ hashFiles('Cargo.toml', '.cargo/config.toml', '.cargo/bundle-config.toml') }}-
       - name: Restore legacy compiled dependencies during cache migration
         id: legacy_build_cache
         if: steps.rust_build_cache.outputs.cache-matched-key == ''
@@ -132,17 +132,17 @@ jobs:
             target/aarch64-apple-darwin/release/.fingerprint
             target/aarch64-apple-darwin/release/build
             target/aarch64-apple-darwin/release/deps
-          key: macos-aarch64-xcode16.4-release-rust-${{ hashFiles('rust-toolchain.toml') }}-lock-${{ hashFiles('Cargo.lock') }}-${{ github.sha }}
+          key: macos-aarch64-xcode26.3-release-rust-${{ hashFiles('rust-toolchain.toml') }}-lock-${{ hashFiles('Cargo.lock') }}-${{ github.sha }}
           restore-keys: |
-            macos-aarch64-xcode16.4-release-rust-${{ hashFiles('rust-toolchain.toml') }}-lock-${{ hashFiles('Cargo.lock') }}-
-            macos-aarch64-xcode16.4-release-rust-${{ hashFiles('rust-toolchain.toml') }}-
+            macos-aarch64-xcode26.3-release-rust-${{ hashFiles('rust-toolchain.toml') }}-lock-${{ hashFiles('Cargo.lock') }}-
+            macos-aarch64-xcode26.3-release-rust-${{ hashFiles('rust-toolchain.toml') }}-
       - name: Restore exact release tool binaries
         id: release_tools_cache
         uses: actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830
         continue-on-error: true
         with:
           path: .ci-cache/macos-release-tools/bin
-          key: macos-aarch64-xcode16.4-release-tools-v1-${{ hashFiles('rust-toolchain.toml', 'script/macos-release-tools') }}
+          key: macos-aarch64-xcode26.3-release-tools-v1-${{ hashFiles('rust-toolchain.toml', 'script/macos-release-tools') }}
       - name: Report release resources and cache reuse
         env:
           SOURCE_CACHE_KEY: ${{ steps.source_cache.outputs.cache-matched-key }}
