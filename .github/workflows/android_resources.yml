@@ -1,0 +1,146 @@
+name: Android resource exporter
+
+on:
+  pull_request:
+    branches: [main]
+    types: [opened, synchronize, reopened, ready_for_review]
+    paths:
+      - .github/workflows/android_resources.yml
+      - Cargo.toml
+      - Cargo.lock
+      - rust-toolchain.toml
+      - crates/android_tools/**
+      - extensions/test-extension/**
+      - script/linux
+      - script/download-wasi-sdk
+      - script/test-android-resources
+      - script/test-android-project-model
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: android-resources-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+env:
+  CARGO_TERM_COLOR: always
+  CARGO_INCREMENTAL: '0'
+  CARGO_PROFILE_DEV_DEBUG: '0'
+  CARGO_PROFILE_DEV_BUILD_OVERRIDE_DEBUG: '0'
+  CARGO_BUILD_JOBS: '2'
+  RUST_TEST_THREADS: '2'
+  RUST_BACKTRACE: '1'
+  CC: clang
+  CXX: clang++
+  WGPU_BACKEND: vulkan
+  GRADLE_OPTS: -Dorg.gradle.daemon=false -Dorg.gradle.jvmargs=-Xmx2g
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  resources:
+    name: Resource model tests and AGP 8.9.1 / 9.4.0 fixtures
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
+        with:
+          persist-credentials: false
+          ref: ${{ github.sha }}
+      - name: Initialize owned SDK, Gradle and artifact paths
+        run: |
+          printf 'ANDROID_HOME=%s\nANDROID_SDK_ROOT=%s\nGRADLE_USER_HOME=%s\nRESOURCE_ARTIFACTS=%s\n' \
+            "$RUNNER_TEMP/resource-android-sdk" "$RUNNER_TEMP/resource-android-sdk" \
+            "$RUNNER_TEMP/resource-gradle-home" "$RUNNER_TEMP/resource-artifacts" >> "$GITHUB_ENV"
+          mkdir -p "$RUNNER_TEMP/resource-artifacts"
+      - name: Install repository Rust toolchain
+        run: rustup show active-toolchain
+      - uses: actions/setup-java@cf277c60eb25467037889841efdb72551f06f6c3 # v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - name: Install pinned Android SDK and Gradle distributions
+        # SDK, JVM and Gradle are required official execution runtimes. Fixture
+        # construction, model validation and resource assertions remain Rust.
+        run: |
+          set -euo pipefail
+          resource_tools="$RUNNER_TEMP/resource-toolchains"
+          mkdir -p "$resource_tools" "$ANDROID_HOME/cmdline-tools" "$RESOURCE_ARTIFACTS"
+          curl --fail --location --retry 3 --connect-timeout 30 --max-time 600 \
+            https://dl.google.com/android/repository/commandlinetools-linux-15859902_latest.zip \
+            --output "$resource_tools/android-commandline-tools.zip"
+          printf '%s  %s\n' \
+            4e4c464f145a7512b57d088ac6c278c03c9eea610886b35a5e0804e74eedf583 \
+            "$resource_tools/android-commandline-tools.zip" | sha256sum --check --strict
+          unzip -q "$resource_tools/android-commandline-tools.zip" -d "$resource_tools/android-commandline-tools"
+          mv "$resource_tools/android-commandline-tools/cmdline-tools" "$ANDROID_HOME/cmdline-tools/pinned"
+          resource_sdkmanager="$ANDROID_HOME/cmdline-tools/pinned/bin/sdkmanager"
+          "$resource_sdkmanager" --sdk_root="$ANDROID_HOME" --licenses <<'ANDROID_LICENSES'
+          y
+          y
+          y
+          y
+          y
+          y
+          y
+          y
+          y
+          y
+          y
+          y
+          y
+          y
+          y
+          y
+          ANDROID_LICENSES
+          "$resource_sdkmanager" --sdk_root="$ANDROID_HOME" \
+            'platforms;android-35' 'build-tools;35.0.0' 'build-tools;36.0.0' < /dev/null
+          test -f "$ANDROID_HOME/platforms/android-35/android.jar"
+          test -x "$ANDROID_HOME/build-tools/35.0.0/aapt2"
+          test -x "$ANDROID_HOME/build-tools/36.0.0/aapt2"
+          [[ "$("$JAVA_HOME/bin/javac" -version 2>&1)" == javac\ 21.* ]]
+          curl --fail --location --retry 3 --connect-timeout 30 --max-time 600 \
+            https://services.gradle.org/distributions/gradle-8.11.1-bin.zip \
+            --output "$resource_tools/gradle-8.11.1-bin.zip"
+          printf '%s  %s\n' \
+            f397b287023acdba1e9f6fc5ea72d22dd63669d59ed4a289a29b1a76eee151c6 \
+            "$resource_tools/gradle-8.11.1-bin.zip" | sha256sum --check --strict
+          unzip -q "$resource_tools/gradle-8.11.1-bin.zip" -d "$resource_tools"
+          curl --fail --location --retry 3 --connect-timeout 30 --max-time 600 \
+            https://services.gradle.org/distributions/gradle-9.6.1-bin.zip \
+            --output "$resource_tools/gradle-9.6.1-bin.zip"
+          printf '%s  %s\n' \
+            9c0f7faeeb306cb14e4279a3e084ca6b596894089a0638e68a07c945a32c9e14 \
+            "$resource_tools/gradle-9.6.1-bin.zip" | sha256sum --check --strict
+          unzip -q "$resource_tools/gradle-9.6.1-bin.zip" -d "$resource_tools"
+          printf 'RESOURCE_GRADLE8=%s\nRESOURCE_GRADLE9=%s\n' \
+            "$resource_tools/gradle-8.11.1/bin/gradle" \
+            "$resource_tools/gradle-9.6.1/bin/gradle" >> "$GITHUB_ENV"
+      - name: Run tooling and resource fixture unit tests
+        run: |
+          cargo test --locked -p android_tools --lib 2>&1 | tee "$RESOURCE_ARTIFACTS/android-tools-tests.log"
+          cargo test --locked -p android_tools --example resource_model_probe 2>&1 | tee "$RESOURCE_ARTIFACTS/resource-probe-example-tests.log"
+      - name: Run all eleven Rust resource predicates against AGP 8.9.1
+        run: |
+          bash script/test-android-resources --gradle "$RESOURCE_GRADLE8" --sdk "$ANDROID_HOME" \
+            --agp 8.9.1 --keep "$RESOURCE_ARTIFACTS/agp8-resources" \
+            2>&1 | tee "$RESOURCE_ARTIFACTS/agp8-resource-probe.log"
+      - name: Run all eleven Rust resource predicates against AGP 9.4.0
+        run: |
+          bash script/test-android-resources --gradle "$RESOURCE_GRADLE9" --sdk "$ANDROID_HOME" \
+            --agp 9.4.0 --keep "$RESOURCE_ARTIFACTS/agp9-resources" \
+            2>&1 | tee "$RESOURCE_ARTIFACTS/agp9-resource-probe.log"
+      - name: Retain focused test and fixture logs
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: android-resource-parity-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/resource-artifacts/**/*.log
+          if-no-files-found: warn
+          retention-days: 7
+          include-hidden-files: false
+          overwrite: false

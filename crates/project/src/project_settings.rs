@@ -1,5 +1,5 @@
 use anyhow::Context as _;
-use collections::HashMap;
+use collections::{HashMap, HashSet};
 use context_server::ContextServerCommand;
 use dap::adapters::DebugAdapterName;
 use fs::Fs;
@@ -827,6 +827,8 @@ pub struct SettingsObserver {
     project_id: u64,
     task_store: Entity<TaskStore>,
     local_settings_tasks: HashMap<WorktreeId, Shared<Task<()>>>,
+    resource_roots_without_settings: HashSet<PathBuf>,
+    resource_worktree_ids: HashSet<WorktreeId>,
     pending_local_settings:
         HashMap<PathTrust, BTreeMap<(WorktreeId, Arc<RelPath>), Option<String>>>,
     _trusted_worktrees_watcher: Option<Subscription>,
@@ -842,6 +844,22 @@ pub struct SettingsObserver {
 /// In ssh mode it also monitors ~/.config/zed/{settings, task}.json and sends the content
 /// upstream.
 impl SettingsObserver {
+    /// Resource indexes may group external files in hidden directory worktrees.
+    /// Register their canonical roots before creating those worktrees so neither
+    /// initial configuration nor later watcher updates enable dependency settings.
+    pub(crate) fn exclude_resource_root_settings(&mut self, root: PathBuf) {
+        self.resource_roots_without_settings.insert(root);
+    }
+
+    fn resource_settings_disabled(&self, worktree: &Worktree) -> bool {
+        !worktree.is_visible()
+            && (self.resource_worktree_ids.contains(&worktree.id())
+                || self
+                    .resource_roots_without_settings
+                    .iter()
+                    .any(|root| worktree.abs_path().starts_with(root)))
+    }
+
     pub fn init(client: &AnyProtoClient) {
         client.add_entity_message_handler(Self::handle_update_worktree_settings);
         client.add_entity_message_handler(Self::handle_update_user_settings);
@@ -945,6 +963,8 @@ impl SettingsObserver {
             downstream_client: None,
             _trusted_worktrees_watcher,
             pending_local_settings: HashMap::default(),
+            resource_roots_without_settings: HashSet::default(),
+            resource_worktree_ids: HashSet::default(),
             local_settings_tasks: HashMap::default(),
             _user_settings_watcher: None,
             _editorconfig_watcher: Some(_editorconfig_watcher),
@@ -1010,6 +1030,8 @@ impl SettingsObserver {
             project_id: REMOTE_SERVER_PROJECT_ID,
             _trusted_worktrees_watcher: None,
             pending_local_settings: HashMap::default(),
+            resource_roots_without_settings: HashSet::default(),
+            resource_worktree_ids: HashSet::default(),
             local_settings_tasks: HashMap::default(),
             _user_settings_watcher: user_settings_watcher,
             _editorconfig_watcher: None,
@@ -1145,14 +1167,21 @@ impl SettingsObserver {
         cx: &mut Context<Self>,
     ) {
         match event {
-            WorktreeStoreEvent::WorktreeAdded(worktree) => cx
-                .subscribe(worktree, |this, worktree, event, cx| {
+            WorktreeStoreEvent::WorktreeAdded(worktree) => {
+                // Worktrees follow filesystem root renames. Latch the identity
+                // so moving a dependency directory cannot enable its settings.
+                if self.resource_settings_disabled(worktree.read(cx)) {
+                    self.resource_worktree_ids.insert(worktree.read(cx).id());
+                }
+                cx.subscribe(worktree, |this, worktree, event, cx| {
                     if let worktree::Event::UpdatedEntries(changes) = event {
                         this.update_local_worktree_settings(&worktree, changes, cx)
                     }
                 })
-                .detach(),
+                .detach();
+            }
             WorktreeStoreEvent::WorktreeRemoved(_, worktree_id) => {
+                self.resource_worktree_ids.remove(worktree_id);
                 self.local_settings_tasks.remove(worktree_id);
                 cx.update_global::<SettingsStore, _>(|store, cx| {
                     store.clear_local_settings(*worktree_id, cx).log_err();
@@ -1168,6 +1197,9 @@ impl SettingsObserver {
         changes: &UpdatedEntriesSet,
         cx: &mut Context<Self>,
     ) {
+        if self.resource_settings_disabled(worktree.read(cx)) {
+            return;
+        }
         let SettingsObserverMode::Local(fs) = &self.mode else {
             return;
         };
@@ -1388,6 +1420,11 @@ impl SettingsObserver {
         is_via_collab: bool,
         cx: &mut Context<Self>,
     ) {
+        // Recheck at application time as asynchronous configuration loads may
+        // have started before the resource root was registered.
+        if self.resource_settings_disabled(worktree.read(cx)) {
+            return;
+        }
         let worktree_id = worktree.read(cx).id();
         let remote_worktree_id = worktree.read(cx).id();
         let task_store = self.task_store.clone();

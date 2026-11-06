@@ -1,0 +1,39 @@
+{
+  "agp": "9.4.0",
+  "fixture_origin": {
+    "resource_probe": "script/test-android-resources",
+    "resource_probe_SHA256": "e8588eaef12ee4a2450e7bfbfa1bbc031fe867aee26cb5405a633feae4590b91",
+    "shared_model_probe": "script/test-android-project-model",
+    "shared_model_probe_SHA256": "f7e333977baf9a80b3da118df14836944734fb0315274bd385b46332da4f380f",
+    "note": "Byte-exact original authored fixture data; SDK-specific local.properties is written at runtime. Not an AOSP test port."
+  },
+  "files": {
+    "app/build.gradle": "plugins { id 'com.android.application' }\n\nandroid {\n namespace 'dev.koda.app'; compileSdk 35\n defaultConfig { applicationId 'dev.koda.app'; minSdk 24; targetSdk 35 }\n flavorDimensions 'edition'\n productFlavors { demo { dimension 'edition'; matchingFallbacks = ['free'] }; full { dimension 'edition'; matchingFallbacks = ['free'] } }\n buildTypes { debug { matchingFallbacks = ['release'] } }\n buildFeatures { buildConfig true }\n dynamicFeatures = [':feature']\n}\nclass GeneratedSource extends DefaultTask {\n @OutputDirectory final DirectoryProperty outputDirectory = project.objects.directoryProperty()\n @TaskAction void generate() { def directory = outputDirectory.get().asFile; directory.mkdirs(); new File(directory, 'Generated.java').text = 'package dev.koda.generated; public class Generated {}' }\n}\nandroidComponents.onVariants(androidComponents.selector().all()) { variant ->\n def generated = tasks.register('generate' + variant.name.capitalize() + 'Probe', GeneratedSource) { outputDirectory.set(layout.projectDirectory.dir('probe-generated/' + variant.name)) }\n variant.sources.java.addGeneratedSourceDirectory(generated) { it.outputDirectory }\n}\ndependencies { implementation project(':library'); testImplementation project(':testing'); testImplementation testFixtures(project(':library')); testImplementation 'junit:junit:4.13.2' }\n\nandroid {\n buildFeatures { resValues true }\n sourceSets.main.res.srcDirs = ['custom/main-res', 'custom/equal-res']\n sourceSets.demo.res.srcDirs = ['custom/demo-res']\n defaultConfig { resValue 'string', 'generated_probe', 'Generated' }\n}\ndependencies { implementation 'androidx.core:core:1.16.0' }\n",
+    "app/custom/demo-res/values/probe.xml": "<resources><string name=\"overlay_probe\">Probe</string></resources>",
+    "app/custom/equal-res/values/probe.xml": "<resources><string name=\"overlay_probe\">Probe</string></resources>",
+    "app/custom/main-res/values/probe.xml": "<resources><string name=\"overlay_probe\">Probe</string></resources>",
+    "app/custom/main-res/values-fr/probe.xml": "<resources><string name=\"overlay_probe\">French</string></resources>",
+    "app/src/androidTest/res/values/probe.xml": "<resources><string name=\"overlay_probe\">Probe</string></resources>",
+    "app/src/debug/res/values/probe.xml": "<resources><string name=\"overlay_probe\">Probe</string></resources>",
+    "app/src/demo/res/values/strings.xml": "<resources><string name=\"title\">demo</string></resources>",
+    "app/src/demoDebug/res/values/probe.xml": "<resources><string name=\"overlay_probe\">Probe</string></resources>",
+    "app/src/full/res/values/strings.xml": "<resources><string name=\"title\">full</string></resources>",
+    "app/src/main/AndroidManifest.xml": "<manifest xmlns:android=\"http://schemas.android.com/apk/res/android\"/>",
+    "app/src/main/java/Example.kt": "package dev.koda.app\nclass Example\n",
+    "app/src/test/java/ExampleTest.java": "package dev.koda.app; public class ExampleTest { dev.koda.testing.Helper helper; dev.koda.testing.GeneratedHelper generated; dev.koda.library.FixtureHelper fixture; org.junit.Test test; }\n",
+    "build.gradle": "plugins {\n id 'com.android.application' version '9.4.0' apply false\n id 'com.android.library' version '9.4.0' apply false\n id 'com.android.dynamic-feature' version '9.4.0' apply false\n \n}\n",
+    "feature/build.gradle": "plugins { id 'com.android.dynamic-feature' }\n\nandroid {\n namespace 'dev.koda.feature'; compileSdk 35\n defaultConfig { minSdk 24 }\n flavorDimensions 'edition'; productFlavors { demo { dimension 'edition'; matchingFallbacks = ['free'] }; full { dimension 'edition'; matchingFallbacks = ['free'] } }\n buildTypes { debug { matchingFallbacks = ['release'] } }\n}\ndependencies { implementation project(':app') }\n",
+    "feature/src/main/AndroidManifest.xml": "<manifest xmlns:android=\"http://schemas.android.com/apk/res/android\"/>",
+    "feature/src/main/java/Example.kt": "package dev.koda.feature\nclass Example\n",
+    "gradle.properties": "android.useAndroidX=true\nandroid.nonTransitiveRClass=true\n",
+    "library/build.gradle": "plugins { id 'com.android.library' }\n\nandroid {\n namespace 'dev.koda.library'; compileSdk 35\n defaultConfig { minSdk 24 }\n flavorDimensions 'edition'; productFlavors { free { dimension 'edition' } }\n testFixtures { enable true }\n}\nandroidComponents.beforeVariants(androidComponents.selector().withBuildType('debug')) { it.enable = false }\ndependencies { testFixturesImplementation 'junit:junit:4.13.2' }\n",
+    "library/src/main/AndroidManifest.xml": "<manifest xmlns:android=\"http://schemas.android.com/apk/res/android\"/>",
+    "library/src/main/java/Example.kt": "package dev.koda.library\nclass Example\n",
+    "library/src/main/res/values/probe.xml": "<resources><string name=\"library_probe\">Library</string></resources>",
+    "library/src/main/res/values/public.xml": "<resources><public type=\"string\" name=\"library_probe\"/></resources>",
+    "library/src/testFixtures/java/FixtureHelper.java": "package dev.koda.library; public class FixtureHelper { public org.junit.Test annotation; }\n",
+    "settings.gradle": "pluginManagement { repositories { google(); mavenCentral(); gradlePluginPortal() } }\n dependencyResolutionManagement { repositories { google(); mavenCentral() } }\n rootProject.name = 'koda-model-probe'\n include ':app', ':library', ':testing', ':feature'\n",
+    "testing/build.gradle": "plugins { id 'java-library' }\nabstract class GenerateTestingJava extends DefaultTask {\n @OutputDirectory abstract DirectoryProperty getOutputDirectory()\n @TaskAction void generate() {\n  def source = outputDirectory.file('dev/koda/testing/GeneratedHelper.java').get().asFile\n  source.parentFile.mkdirs()\n  source.text = 'package dev.koda.testing; public class GeneratedHelper {}'\n }\n}\ndef generator = tasks.register('generateTestingJava', GenerateTestingJava) {\n outputDirectory.set(layout.buildDirectory.dir('generated/probe'))\n}\nsourceSets.main.java.srcDir(generator.flatMap { it.outputDirectory })\n",
+    "testing/src/main/java/Helper.java": "package dev.koda.testing; public class Helper {}\n"
+  }
+}

@@ -5,6 +5,7 @@ pub mod preview;
 pub mod project_detection;
 pub mod project_model;
 pub mod provision;
+pub mod resources;
 pub(crate) mod shared_sdk;
 pub mod sync_cache;
 pub mod vector_drawable;

@@ -527,6 +527,12 @@ impl Gallery {
     }
 }
 
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+enum PreviewDiagnosticKind {
+    Failure,
+    SaveRequired,
+}
+
 pub(super) struct ComposePreviewView {
     panel: WeakEntity<AndroidPanel>,
     workspace: WeakEntity<Workspace>,
@@ -562,6 +568,7 @@ pub(super) struct ComposePreviewView {
     pan_position: Option<gpui::Point<Pixels>>,
     status: SharedString,
     error: Option<String>,
+    diagnostic_kind: PreviewDiagnosticKind,
     debounce_task: Option<Task<()>>,
     render_task: Option<Task<()>>,
     source_task: Option<Task<()>>,
@@ -734,6 +741,7 @@ impl ComposePreviewView {
             pan_position: None,
             status: "Preparing Compose previews…".into(),
             error: None,
+            diagnostic_kind: PreviewDiagnosticKind::Failure,
             debounce_task: None,
             render_task: None,
             source_task: None,
@@ -797,6 +805,7 @@ impl ComposePreviewView {
                             view.invalidate(window, cx);
                         } else {
                             view.stop(cx);
+                            view.diagnostic_kind = PreviewDiagnosticKind::Failure;
                             view.error =
                                 Some("The preview source moved outside the Android project".into());
                         }
@@ -851,6 +860,7 @@ impl ComposePreviewView {
                 self.configure(root, target, window, cx);
                 self.navigation_source = inspected_source;
                 if recovering {
+                    self.diagnostic_kind = PreviewDiagnosticKind::Failure;
                     self.error = None;
                     self.invalidate(window, cx);
                 }
@@ -860,6 +870,7 @@ impl ComposePreviewView {
                 self.configuration_suspended = true;
                 self.release_gallery(window, cx);
                 self.list_state.reset(0);
+                self.diagnostic_kind = PreviewDiagnosticKind::Failure;
                 self.error = Some(format!("{error:#}"));
                 cx.notify();
             }
@@ -1005,31 +1016,7 @@ impl ComposePreviewView {
             .as_ref()
             .and_then(|selected| {
                 let absolute = selected.model.root.join(path.as_std_path());
-                let visible = selected.visible_modules(
-                    &selected.selected.module,
-                    android_tools::project_model::SourceScope::Main,
-                );
-                selected
-                    .modules()
-                    .flat_map(|(module, variant)| {
-                        variant
-                            .components
-                            .iter()
-                            .map(move |component| (module, component))
-                    })
-                    .flat_map(|(module, component)| {
-                        component
-                            .sources
-                            .iter()
-                            .map(move |source| (module, component, source))
-                    })
-                    .filter(|(_, _, source)| absolute.starts_with(&source.path))
-                    .max_by_key(|(_, _, source)| source.path.components().count())
-                    .map(|(module, component, source)| {
-                        visible.contains(&module.path)
-                            && !source.generated
-                            && component.scope == android_tools::project_model::SourceScope::Main
-                    })
+                preview_model_input(selected, &absolute, None)
             })
             .unwrap_or_else(|| preview_input(path))
     }
@@ -1046,6 +1033,46 @@ impl ComposePreviewView {
                         && panel.selected_target.as_ref() == Some(&self.target)
                 })
                 .unwrap_or(false)
+    }
+
+    fn unsaved_resource_path(
+        &self,
+        selected: &android_tools::project_model::SelectedProject,
+        root: &Path,
+        cx: &App,
+    ) -> Option<PathBuf> {
+        self.project
+            .read(cx)
+            .opened_buffers(cx)
+            .into_iter()
+            .find_map(|buffer| {
+                let path = buffer_path(&buffer, cx)?;
+                if !buffer.read(cx).is_dirty()
+                    || path.extension().is_none_or(|extension| extension != "xml")
+                {
+                    return None;
+                }
+                let absolute = selected.model.root.join(path.strip_prefix(root).ok()?);
+                preview_model_input(
+                    selected,
+                    &absolute,
+                    Some(android_tools::project_model::SourceKind::Resources),
+                )
+                .is_some_and(|active| active)
+                .then_some(path)
+            })
+    }
+
+    fn require_saved_resource(&mut self, path: &Path) {
+        self.pending = false;
+        self.pending_manual = false;
+        self.stale = true;
+        self.diagnostic_kind = PreviewDiagnosticKind::SaveRequired;
+        self.error = Some(format!(
+            "Save {} before refreshing Compose previews. Resource declarations are read from disk; unsaved Kotlin changes remain supported.",
+            path.display()
+        ));
+        self.status = "Save resources to refresh previews".into();
     }
 
     fn selected_model(
@@ -1115,6 +1142,10 @@ impl ComposePreviewView {
                 self.source_path.starts_with(&root),
                 "The preview file belongs to a different Android project"
             );
+            if let Some(path) = self.unsaved_resource_path(&selected, &root, cx) {
+                self.require_saved_resource(&path);
+                return Ok(());
+            }
             let source_text = self.source.read(cx).snapshot().text();
             let source_path = self.source_path.clone();
             let package = preview::kotlin_package(&source_text);
@@ -1154,6 +1185,7 @@ impl ComposePreviewView {
             self.pending = false;
             self.pending_manual = false;
             self.building = true;
+            self.diagnostic_kind = PreviewDiagnosticKind::Failure;
             self.error = None;
             self.status = "Preparing Compose preview libraries…".into();
             let installation_cancel = preview::InstallationCancellation::default();
@@ -1341,7 +1373,11 @@ impl ComposePreviewView {
                                 && panel.selected_target.as_ref() == Some(&request_target)
                         })
                         .unwrap_or(false);
-                    if view.revision == revision && valid {
+                    let unsaved_resource = view.project.read(cx).android_model().selected.clone()
+                        .and_then(|selected| view.unsaved_resource_path(&selected, &view.root, cx));
+                    if valid && let Some(path) = unsaved_resource {
+                        view.require_saved_resource(&path);
+                    } else if view.revision == revision && valid {
                         match result {
                             Ok(gallery) => {
                                 view.status = if gallery.cards.is_empty() {
@@ -1353,6 +1389,7 @@ impl ComposePreviewView {
                                 view.stale = false;
                             }
                             Err(error) => {
+                                view.diagnostic_kind = PreviewDiagnosticKind::Failure;
                                 view.error = Some(format!("{error:#}"));
                                 view.status = "Preview refresh failed".into();
                             }
@@ -1372,6 +1409,7 @@ impl ComposePreviewView {
         if let Err(error) = result {
             self.pending = false;
             self.pending_manual = false;
+            self.diagnostic_kind = PreviewDiagnosticKind::Failure;
             self.error = Some(format!("{error:#}"));
             self.status = "Preview refresh failed".into();
         }
@@ -1564,6 +1602,7 @@ impl ComposePreviewView {
                 view.navigation_pending = false;
                 if let Err(error) = result {
                     view.navigation_source = None;
+                    view.diagnostic_kind = PreviewDiagnosticKind::Failure;
                     view.error = Some(format!("Could not navigate to source: {error:#}"));
                     cx.notify();
                 }
@@ -2056,6 +2095,44 @@ fn buffer_path(buffer: &Entity<Buffer>, cx: &App) -> Option<PathBuf> {
     Some(buffer.read(cx).file()?.as_local()?.abs_path(cx))
 }
 
+// Use the same evaluated-model/deepest-root classification for refresh events
+// and dirty XML admission. Inactive, generated and test roots can be deeper
+// than selected main roots; equal-depth active main roots remain active.
+fn preview_model_input(
+    selected: &android_tools::project_model::SelectedProject,
+    absolute: &Path,
+    kind: Option<android_tools::project_model::SourceKind>,
+) -> Option<bool> {
+    use android_tools::project_model::SourceScope;
+    let visible = selected.visible_modules(&selected.selected.module, SourceScope::Main);
+    let mut input: Option<(usize, bool)> = None;
+    for module in &selected.model.modules {
+        for variant in &module.variants {
+            for component in &variant.components {
+                for source in &component.sources {
+                    if !absolute.starts_with(&source.path) {
+                        continue;
+                    }
+                    let active = visible.contains(&module.path)
+                        && selected.variants.get(&module.path) == Some(&variant.name)
+                        && !source.generated
+                        && component.scope == SourceScope::Main
+                        && kind.as_ref().is_none_or(|kind| &source.kind == kind);
+                    let depth = source.path.components().count();
+                    match &mut input {
+                        Some((previous_depth, previous_active)) if *previous_depth == depth => {
+                            *previous_active |= active
+                        }
+                        Some((previous_depth, _)) if *previous_depth > depth => {}
+                        _ => input = Some((depth, active)),
+                    }
+                }
+            }
+        }
+    }
+    input.map(|(_, active)| active)
+}
+
 fn preview_input(path: &RelPath) -> bool {
     if path
         .components()
@@ -2134,11 +2211,24 @@ impl Render for ComposePreviewView {
             .as_ref()
             .map(|gallery| gallery.failures)
             .unwrap_or(0);
+        let save_required =
+            self.error.is_some() && self.diagnostic_kind == PreviewDiagnosticKind::SaveRequired;
+        let diagnostic_color = if save_required {
+            Color::Warning
+        } else {
+            Color::Error
+        };
         let (status_icon, status_label, status_color) = if self.building {
             (
                 IconName::LoadCircle,
                 "Refreshing…".to_string(),
                 Color::Muted,
+            )
+        } else if save_required {
+            (
+                IconName::Warning,
+                "Save resources".to_string(),
+                Color::Warning,
             )
         } else if self.error.is_some() {
             (
@@ -2159,6 +2249,7 @@ impl Render for ComposePreviewView {
         } else {
             (IconName::Check, "Up-to-date".to_string(), Color::Success)
         };
+        let status_selector = format!("compose-status-{status_label}");
         let viewport_width = self.viewport_width.clone();
         let view = cx.weak_entity();
         v_flex()
@@ -2248,6 +2339,7 @@ impl Render for ComposePreviewView {
                     .child(
                         div()
                             .id("compose-status")
+                            .debug_selector(move || status_selector)
                             .min_w_0()
                             .tooltip(Tooltip::text(self.status.clone()))
                             .child(
@@ -2300,7 +2392,11 @@ impl Render for ComposePreviewView {
                         .p_3()
                         .max_h_32()
                         .overflow_y_scroll()
-                        .child(Label::new(error).size(LabelSize::Small).color(Color::Error)),
+                        .child(
+                            Label::new(error)
+                                .size(LabelSize::Small)
+                                .color(diagnostic_color),
+                        ),
                 )
             })
             .child(
@@ -3988,13 +4084,30 @@ mod tests {
                         namespace: None,
                         scope: SourceScope::UnitTest,
                         dependencies: Vec::new(),
-                        sources: vec![SourceRoot {
-                            path: canonical_root.join("code/tests"),
-                            kind: SourceKind::Kotlin,
-                            generated: false,
-                        }],
+                        sources: vec![
+                            SourceRoot {
+                                path: canonical_root.join("code/tests"),
+                                kind: SourceKind::Kotlin,
+                                generated: false,
+                            },
+                            SourceRoot {
+                                path: canonical_root.join("code"),
+                                kind: SourceKind::Kotlin,
+                                generated: false,
+                            },
+                        ],
                     });
                 }
+                let mut inactive = module.variants.first().expect("Variant").clone();
+                inactive.name = "inactive".into();
+                for component in &mut inactive.components {
+                    component.sources = vec![SourceRoot {
+                        path: canonical_root.join("code/inactive"),
+                        kind: SourceKind::Kotlin,
+                        generated: false,
+                    }];
+                }
+                module.variants.push(inactive);
             }
             let token = project.invalidate_android_model(Some(canonical_root), cx);
             project
@@ -4015,6 +4128,7 @@ mod tests {
                 "code/custom-output/Generated.kt",
                 "custom-generated/Generated.kt",
                 "code/tests/Test.kt",
+                "code/inactive/Content.kt",
             ] {
                 assert!(
                     !view.preview_input(RelPath::from_unix_str(path).expect("Path"), cx),
@@ -4022,6 +4136,213 @@ mod tests {
                 );
             }
         });
+    }
+
+    #[gpui::test]
+    async fn save_required_renders_save_status_and_real_failure_replaces_it(
+        cx: &mut TestAppContext,
+    ) {
+        let (project, buffer) = test_project(cx).await;
+        let (workspace, cx) =
+            cx.add_window_view(|window, cx| Workspace::test_new(project.clone(), window, cx));
+        let (view, _, _) = workspace.update_in(cx, |workspace, window, cx| {
+            add_preview(workspace, project, buffer, window, cx)
+        });
+        view.update(cx, |view, cx| {
+            view.require_saved_resource(Path::new("/android/custom-res/values/strings.xml"));
+            assert_eq!(view.diagnostic_kind, PreviewDiagnosticKind::SaveRequired);
+            assert!(
+                view.error
+                    .as_ref()
+                    .is_some_and(|error| error.contains("custom-res/values/strings.xml"))
+            );
+            assert!(!view.building && view.render_task.is_none());
+            cx.notify();
+        });
+        cx.run_until_parked();
+        assert!(cx.debug_bounds("compose-status-Save resources").is_some());
+        assert!(cx.debug_bounds("compose-status-Refresh failed").is_none());
+        view.update_in(cx, |view, window, cx| {
+            view.source_path = PathBuf::from("/android/src/inactive/kotlin/Content.kt");
+            view.refresh(window, cx);
+            assert_eq!(view.diagnostic_kind, PreviewDiagnosticKind::Failure);
+            assert!(
+                view.error
+                    .as_ref()
+                    .is_some_and(|error| error.contains("selected Android variant's main sources"))
+            );
+        });
+        cx.run_until_parked();
+        assert!(cx.debug_bounds("compose-status-Refresh failed").is_some());
+        assert!(cx.debug_bounds("compose-status-Save resources").is_none());
+    }
+
+    #[gpui::test]
+    async fn unsaved_main_resources_require_save_before_preview_and_resume_after_save(
+        cx: &mut TestAppContext,
+    ) {
+        use android_tools::project_model::{
+            Component, SourceKind, SourceRoot, SourceScope, VariantId,
+        };
+        let (project, source) = test_project(cx).await;
+        let filesystem = project.read_with(cx, |project, _| project.fs().clone());
+        let resources = Path::new("/android/custom-res");
+        for (relative, text) in [
+            (
+                "values/strings.xml",
+                "<resources><string name='title'>Title</string></resources>",
+            ),
+            ("generated/generated.xml", "<resources/>"),
+            ("tests/test.xml", "<resources/>"),
+        ] {
+            let path = resources.join(relative);
+            filesystem
+                .create_dir(path.parent().expect("Resource directory"))
+                .await
+                .expect("Create resource directory");
+            filesystem
+                .atomic_write(path, text.into())
+                .await
+                .expect("Write resource");
+        }
+        let (workspace, cx) =
+            cx.add_window_view(|window, cx| Workspace::test_new(project.clone(), window, cx));
+        let (view, panel, _) = workspace.update_in(cx, |workspace, window, cx| {
+            add_preview(workspace, project.clone(), source.clone(), window, cx)
+        });
+        let target = panel.read_with(cx, |panel, _| {
+            panel.selected_target.clone().expect("Target")
+        });
+        project.update(cx, |project, cx| {
+            let mut model = project
+                .android_model()
+                .model
+                .as_deref()
+                .expect("Model")
+                .clone();
+            for variant in model
+                .modules
+                .iter_mut()
+                .flat_map(|module| &mut module.variants)
+            {
+                let main = variant
+                    .components
+                    .iter_mut()
+                    .find(|component| component.scope == SourceScope::Main)
+                    .expect("Main component");
+                main.sources.extend([
+                    SourceRoot {
+                        path: resources.into(),
+                        kind: SourceKind::Resources,
+                        generated: false,
+                    },
+                    SourceRoot {
+                        path: resources.join("generated"),
+                        kind: SourceKind::Resources,
+                        generated: true,
+                    },
+                ]);
+                variant.components.push(Component {
+                    name: format!("{}UnitTest", variant.name),
+                    namespace: None,
+                    scope: SourceScope::UnitTest,
+                    dependencies: Vec::new(),
+                    sources: vec![SourceRoot {
+                        path: resources.join("tests"),
+                        kind: SourceKind::Resources,
+                        generated: false,
+                    }],
+                });
+            }
+            let token = project.invalidate_android_model(Some(PathBuf::from("/android")), cx);
+            project
+                .publish_android_model(&token, model, cx)
+                .expect("Publish resource roots");
+            project
+                .select_android_variant(Some(VariantId::from(&target)), cx)
+                .expect("Select variant");
+        });
+        let mut buffers = Vec::new();
+        for path in [
+            "generated/generated.xml",
+            "tests/test.xml",
+            "values/strings.xml",
+        ] {
+            let path = resources.join(path);
+            buffers.push(
+                project
+                    .update(cx, |project, cx| project.open_local_buffer(&path, cx))
+                    .await
+                    .expect("Resource buffer"),
+            );
+        }
+        cx.run_until_parked();
+        source.update(cx, |buffer, cx| {
+            buffer.edit([(0..0, "// unsaved Kotlin\n")], None, cx)
+        });
+        for buffer in &buffers[..2] {
+            buffer.update(cx, |buffer, cx| {
+                buffer.edit([(0..0, "<!-- unsaved -->\n")], None, cx)
+            });
+        }
+        view.read_with(cx, |view, cx| {
+            let selected = view
+                .project
+                .read(cx)
+                .android_model()
+                .selected
+                .as_ref()
+                .expect("Model");
+            assert!(
+                view.unsaved_resource_path(selected, &view.root, cx)
+                    .is_none(),
+                "Kotlin, generated and test changes must not require saving main resources"
+            );
+        });
+        let resource = buffers.pop().expect("Main resource");
+        resource.update(cx, |buffer, cx| {
+            buffer.edit([(0..0, "<!-- resource rename -->\n")], None, cx)
+        });
+        view.update_in(cx, |view, window, cx| {
+            view.refresh(window, cx);
+            assert!(!view.building && view.render_task.is_none());
+            assert!(view.stale && !view.pending);
+            assert_eq!(view.status, "Save resources to refresh previews");
+            assert!(
+                view.error
+                    .as_ref()
+                    .is_some_and(|error| error.contains("custom-res/values/strings.xml"))
+            );
+        });
+        assert!(resource.read_with(cx, |buffer, _| buffer.is_dirty()));
+        let revision = view.read_with(cx, |view, _| view.revision);
+        project
+            .update(cx, |project, cx| project.save_buffer(resource.clone(), cx))
+            .await
+            .expect("Save resource");
+        cx.run_until_parked();
+        view.update(cx, |view, cx| {
+            let selected = view
+                .project
+                .read(cx)
+                .android_model()
+                .selected
+                .as_ref()
+                .expect("Model");
+            assert!(
+                view.unsaved_resource_path(selected, &view.root, cx)
+                    .is_none()
+            );
+            assert!(
+                view.revision > revision && view.pending && view.debounce_task.is_some(),
+                "Saving resources should schedule the next refresh"
+            );
+            view.stop(cx);
+        });
+        assert!(
+            source.read_with(cx, |buffer, _| buffer.is_dirty()),
+            "Kotlin changes must remain unsaved"
+        );
     }
 
     #[gpui::test]
