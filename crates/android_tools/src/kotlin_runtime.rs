@@ -1080,12 +1080,18 @@ mod tests {
     }
 
     #[cfg(unix)]
+    #[allow(
+        clippy::useless_conversion,
+        clippy::unnecessary_fallible_conversions,
+        reason = "waitid's id_t differs across Unix targets"
+    )]
     fn wait_for_unreaped_probe_exit(child: &std::process::Child) -> Result<()> {
+        let process: libc::id_t = child.id().try_into()?;
         let mut information = std::mem::MaybeUninit::<libc::siginfo_t>::zeroed();
         let result = unsafe {
             libc::waitid(
                 libc::P_PID,
-                child.id(),
+                process,
                 information.as_mut_ptr(),
                 libc::WEXITED | libc::WNOWAIT,
             )
@@ -1193,30 +1199,42 @@ mod tests {
 
     #[cfg(all(target_os = "macos", target_arch = "aarch64"))]
     #[test]
-    #[ignore = "Downloads and initializes the published macOS runtime"]
+    #[ignore = "Downloads and initializes the latest and pinned published macOS runtimes"]
     fn published_runtime_download_and_offline_reuse() -> Result<()> {
-        let profile = tempfile::tempdir()?;
-        let cancel = AtomicBool::new(false);
-        let binary = manage_at(
-            profile.path(),
-            "install",
-            false,
-            &cancel,
-            &|progress| eprintln!("{}", progress.message),
-            &latest,
-            &probe,
-        )?;
-        kotlin::validate_official_server(&binary)?;
-        let offline = manage_at(
-            profile.path(),
-            "update",
-            true,
-            &cancel,
-            &|_| {},
-            &|_| bail!("offline release discovery"),
-            &probe,
-        )?;
-        assert_eq!(offline, binary);
+        fn check_download_and_offline_reuse(
+            discover: &impl Fn(&AtomicBool) -> Result<Runtime>,
+        ) -> Result<()> {
+            let profile = tempfile::tempdir()?;
+            let cancel = AtomicBool::new(false);
+            let binary = manage_at(
+                profile.path(),
+                "install",
+                false,
+                &cancel,
+                &|progress| eprintln!("{}", progress.message),
+                discover,
+                &probe,
+            )?;
+            kotlin::validate_official_server(&binary)?;
+            let offline = manage_at(
+                profile.path(),
+                "update",
+                true,
+                &cancel,
+                &|_| {},
+                &|_| bail!("offline release discovery"),
+                &probe,
+            )?;
+            assert_eq!(offline, binary);
+            Ok(())
+        }
+
+        eprintln!("Checking latest published Kotlin runtime");
+        check_download_and_offline_reuse(&latest)?;
+        eprintln!("Checking pinned Kotlin bootstrap after release-discovery failure");
+        check_download_and_offline_reuse(&|_| {
+            bail!("Forced release-discovery failure for bootstrap validation")
+        })?;
         Ok(())
     }
 }
