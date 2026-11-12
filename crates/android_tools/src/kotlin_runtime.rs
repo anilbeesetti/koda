@@ -680,7 +680,7 @@ fn probe(directory: &Path, runtime: &Runtime, cancel: &AtomicBool) -> Result<()>
         command.process_group(0);
     }
     let mut child = command.spawn()?;
-    let mut stopped = false;
+    let mut cleanup_result = None;
     let result = (|| -> Result<()> {
         let request = serde_json::to_vec(
             &json!({"jsonrpc":"2.0","id":1,"method":"initialize","params":{"processId":std::process::id(),"rootUri":null,"workspaceFolders":[],"initializationOptions":{"projects":[]},"capabilities":{}}}),
@@ -711,18 +711,21 @@ fn probe(directory: &Path, runtime: &Runtime, cancel: &AtomicBool) -> Result<()>
                 Err(error) => break Err(error.into()),
             }
         };
-        let cleanup = stop_probe(&mut child);
-        stopped = cleanup.is_ok();
+        cleanup_result = Some(stop_probe(&mut child));
         reader
             .join()
             .map_err(|_| anyhow::anyhow!("Kotlin probe reader failed"))?;
-        cleanup?;
         result
     })();
     // Also clean up failures before the reader is started (for example a closed input pipe).
-    if !stopped {
-        stop_probe(&mut child)?;
-    }
+    let cleanup = cleanup_result.unwrap_or_else(|| stop_probe(&mut child));
+    let result = match (result, cleanup) {
+        (Err(error), Err(cleanup)) => {
+            Err(error.context(format!("Kotlin probe cleanup also failed: {cleanup:#}")))
+        }
+        (Ok(()), cleanup) => cleanup,
+        (result, Ok(())) => result,
+    };
     result.with_context(|| {
         format!(
             "Downloaded Kotlin server failed its startup check: {}",
@@ -747,6 +750,15 @@ fn stop_probe(child: &mut std::process::Child) -> Result<()> {
         let status = unsafe { libc::kill(-process, libc::SIGKILL) };
         if status != 0 {
             let error = std::io::Error::last_os_error();
+            if error.raw_os_error() == Some(libc::EPERM) && child.try_wait()?.is_some() {
+                // Darwin rejects zombie-only groups. After reaping, only inspect the
+                // group: its numeric ID may already have been reused.
+                if unsafe { libc::kill(-process, 0) } == -1
+                    && std::io::Error::last_os_error().raw_os_error() == Some(libc::ESRCH)
+                {
+                    return Ok(());
+                }
+            }
             if error.raw_os_error() != Some(libc::ESRCH) {
                 return Err(error.into());
             }
@@ -1068,6 +1080,93 @@ mod tests {
     }
 
     #[cfg(unix)]
+    #[allow(
+        clippy::useless_conversion,
+        clippy::unnecessary_fallible_conversions,
+        reason = "waitid's id_t differs across Unix targets"
+    )]
+    fn wait_for_unreaped_probe_exit(child: &std::process::Child) -> Result<()> {
+        let process: libc::id_t = child.id().try_into()?;
+        let mut information = std::mem::MaybeUninit::<libc::siginfo_t>::zeroed();
+        let result = unsafe {
+            libc::waitid(
+                libc::P_PID,
+                process,
+                information.as_mut_ptr(),
+                libc::WEXITED | libc::WNOWAIT,
+            )
+        };
+        if result != 0 {
+            return Err(std::io::Error::last_os_error().into());
+        }
+        Ok(())
+    }
+
+    #[cfg(unix)]
+    #[test]
+    #[allow(
+        clippy::disallowed_methods,
+        reason = "The test owns and reaps its synchronous child process"
+    )]
+    fn stop_probe_reaps_an_exited_group_leader() -> Result<()> {
+        use std::os::unix::process::CommandExt as _;
+
+        let mut child = Command::new("/bin/sh")
+            .args(["-c", "exit 0"])
+            .process_group(0)
+            .spawn()?;
+        wait_for_unreaped_probe_exit(&child)?;
+        let cleanup = stop_probe(&mut child);
+        let status = child.wait()?;
+        cleanup?;
+        ensure!(status.success(), "The fixture should exit successfully");
+        Ok(())
+    }
+
+    #[cfg(unix)]
+    #[test]
+    #[allow(
+        clippy::disallowed_methods,
+        reason = "The test owns and reaps its synchronous process group"
+    )]
+    fn stop_probe_kills_remaining_group_members_after_leader_exit() -> Result<()> {
+        use std::os::unix::process::CommandExt as _;
+
+        let mut leader = Command::new("/bin/sh")
+            .args(["-c", "read ignored"])
+            .stdin(Stdio::piped())
+            .process_group(0)
+            .spawn()?;
+        let mut member = Command::new("/bin/sh")
+            .args(["-c", "read ignored"])
+            .stdin(Stdio::piped())
+            .process_group(i32::try_from(leader.id())?)
+            .spawn()?;
+        drop(leader.stdin.take());
+        wait_for_unreaped_probe_exit(&leader)?;
+        let cleanup = stop_probe(&mut leader);
+        let deadline = Instant::now() + Duration::from_secs(5);
+        let stopped = loop {
+            if member.try_wait()?.is_some() {
+                break true;
+            }
+            if Instant::now() >= deadline {
+                member.kill()?;
+                member.wait()?;
+                break false;
+            }
+            std::thread::sleep(Duration::from_millis(10));
+        };
+        leader.wait()?;
+        cleanup?;
+        ensure!(
+            stopped,
+            "Probe cleanup must stop the remaining group member"
+        );
+        Ok(())
+    }
+
+    #[cfg(unix)]
     #[test]
     fn startup_probe_stops_process_group_and_reports_expiration() -> Result<()> {
         let profile = tempfile::tempdir()?;
@@ -1100,30 +1199,42 @@ mod tests {
 
     #[cfg(all(target_os = "macos", target_arch = "aarch64"))]
     #[test]
-    #[ignore = "Downloads and initializes the published macOS runtime"]
+    #[ignore = "Downloads and initializes the latest and pinned published macOS runtimes"]
     fn published_runtime_download_and_offline_reuse() -> Result<()> {
-        let profile = tempfile::tempdir()?;
-        let cancel = AtomicBool::new(false);
-        let binary = manage_at(
-            profile.path(),
-            "install",
-            false,
-            &cancel,
-            &|progress| eprintln!("{}", progress.message),
-            &latest,
-            &probe,
-        )?;
-        kotlin::validate_official_server(&binary)?;
-        let offline = manage_at(
-            profile.path(),
-            "update",
-            true,
-            &cancel,
-            &|_| {},
-            &|_| bail!("offline release discovery"),
-            &probe,
-        )?;
-        assert_eq!(offline, binary);
+        fn check_download_and_offline_reuse(
+            discover: &impl Fn(&AtomicBool) -> Result<Runtime>,
+        ) -> Result<()> {
+            let profile = tempfile::tempdir()?;
+            let cancel = AtomicBool::new(false);
+            let binary = manage_at(
+                profile.path(),
+                "install",
+                false,
+                &cancel,
+                &|progress| eprintln!("{}", progress.message),
+                discover,
+                &probe,
+            )?;
+            kotlin::validate_official_server(&binary)?;
+            let offline = manage_at(
+                profile.path(),
+                "update",
+                true,
+                &cancel,
+                &|_| {},
+                &|_| bail!("offline release discovery"),
+                &probe,
+            )?;
+            assert_eq!(offline, binary);
+            Ok(())
+        }
+
+        eprintln!("Checking latest published Kotlin runtime");
+        check_download_and_offline_reuse(&latest)?;
+        eprintln!("Checking pinned Kotlin bootstrap after release-discovery failure");
+        check_download_and_offline_reuse(&|_| {
+            bail!("Forced release-discovery failure for bootstrap validation")
+        })?;
         Ok(())
     }
 }
