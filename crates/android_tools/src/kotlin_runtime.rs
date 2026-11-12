@@ -680,7 +680,7 @@ fn probe(directory: &Path, runtime: &Runtime, cancel: &AtomicBool) -> Result<()>
         command.process_group(0);
     }
     let mut child = command.spawn()?;
-    let mut stopped = false;
+    let mut cleanup_result = None;
     let result = (|| -> Result<()> {
         let request = serde_json::to_vec(
             &json!({"jsonrpc":"2.0","id":1,"method":"initialize","params":{"processId":std::process::id(),"rootUri":null,"workspaceFolders":[],"initializationOptions":{"projects":[]},"capabilities":{}}}),
@@ -711,18 +711,21 @@ fn probe(directory: &Path, runtime: &Runtime, cancel: &AtomicBool) -> Result<()>
                 Err(error) => break Err(error.into()),
             }
         };
-        let cleanup = stop_probe(&mut child);
-        stopped = cleanup.is_ok();
+        cleanup_result = Some(stop_probe(&mut child));
         reader
             .join()
             .map_err(|_| anyhow::anyhow!("Kotlin probe reader failed"))?;
-        cleanup?;
         result
     })();
     // Also clean up failures before the reader is started (for example a closed input pipe).
-    if !stopped {
-        stop_probe(&mut child)?;
-    }
+    let cleanup = cleanup_result.unwrap_or_else(|| stop_probe(&mut child));
+    let result = match (result, cleanup) {
+        (Err(error), Err(cleanup)) => {
+            Err(error.context(format!("Kotlin probe cleanup also failed: {cleanup:#}")))
+        }
+        (Ok(()), cleanup) => cleanup,
+        (result, Ok(())) => result,
+    };
     result.with_context(|| {
         format!(
             "Downloaded Kotlin server failed its startup check: {}",
@@ -747,6 +750,15 @@ fn stop_probe(child: &mut std::process::Child) -> Result<()> {
         let status = unsafe { libc::kill(-process, libc::SIGKILL) };
         if status != 0 {
             let error = std::io::Error::last_os_error();
+            if error.raw_os_error() == Some(libc::EPERM) && child.try_wait()?.is_some() {
+                // Darwin rejects zombie-only groups. After reaping, only inspect the
+                // group: its numeric ID may already have been reused.
+                if unsafe { libc::kill(-process, 0) } == -1
+                    && std::io::Error::last_os_error().raw_os_error() == Some(libc::ESRCH)
+                {
+                    return Ok(());
+                }
+            }
             if error.raw_os_error() != Some(libc::ESRCH) {
                 return Err(error.into());
             }
@@ -1063,6 +1075,87 @@ mod tests {
                 "263.6379.0"
             )
             .is_err()
+        );
+        Ok(())
+    }
+
+    #[cfg(unix)]
+    fn wait_for_unreaped_probe_exit(child: &std::process::Child) -> Result<()> {
+        let mut information = std::mem::MaybeUninit::<libc::siginfo_t>::zeroed();
+        let result = unsafe {
+            libc::waitid(
+                libc::P_PID,
+                child.id(),
+                information.as_mut_ptr(),
+                libc::WEXITED | libc::WNOWAIT,
+            )
+        };
+        if result != 0 {
+            return Err(std::io::Error::last_os_error().into());
+        }
+        Ok(())
+    }
+
+    #[cfg(unix)]
+    #[test]
+    #[allow(
+        clippy::disallowed_methods,
+        reason = "The test owns and reaps its synchronous child process"
+    )]
+    fn stop_probe_reaps_an_exited_group_leader() -> Result<()> {
+        use std::os::unix::process::CommandExt as _;
+
+        let mut child = Command::new("/bin/sh")
+            .args(["-c", "exit 0"])
+            .process_group(0)
+            .spawn()?;
+        wait_for_unreaped_probe_exit(&child)?;
+        let cleanup = stop_probe(&mut child);
+        let status = child.wait()?;
+        cleanup?;
+        ensure!(status.success(), "The fixture should exit successfully");
+        Ok(())
+    }
+
+    #[cfg(unix)]
+    #[test]
+    #[allow(
+        clippy::disallowed_methods,
+        reason = "The test owns and reaps its synchronous process group"
+    )]
+    fn stop_probe_kills_remaining_group_members_after_leader_exit() -> Result<()> {
+        use std::os::unix::process::CommandExt as _;
+
+        let mut leader = Command::new("/bin/sh")
+            .args(["-c", "read ignored"])
+            .stdin(Stdio::piped())
+            .process_group(0)
+            .spawn()?;
+        let mut member = Command::new("/bin/sh")
+            .args(["-c", "read ignored"])
+            .stdin(Stdio::piped())
+            .process_group(i32::try_from(leader.id())?)
+            .spawn()?;
+        drop(leader.stdin.take());
+        wait_for_unreaped_probe_exit(&leader)?;
+        let cleanup = stop_probe(&mut leader);
+        let deadline = Instant::now() + Duration::from_secs(5);
+        let stopped = loop {
+            if member.try_wait()?.is_some() {
+                break true;
+            }
+            if Instant::now() >= deadline {
+                member.kill()?;
+                member.wait()?;
+                break false;
+            }
+            std::thread::sleep(Duration::from_millis(10));
+        };
+        leader.wait()?;
+        cleanup?;
+        ensure!(
+            stopped,
+            "Probe cleanup must stop the remaining group member"
         );
         Ok(())
     }
