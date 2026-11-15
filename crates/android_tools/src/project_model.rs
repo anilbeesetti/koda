@@ -53,6 +53,7 @@ pub enum SourceKind {
     Java,
     Kotlin,
     Resources,
+    Assets,
     Manifest,
 }
 
@@ -794,6 +795,53 @@ mod tests {
                 .any(|source| source.generated && !source.path.exists())
         );
         assert!(!variant.components[0].dependencies.iter().any(|dependency| matches!(dependency, Dependency::External { coordinate } if coordinate.contains("junit"))));
+        Ok(())
+    }
+
+    #[test]
+    fn retains_generated_assets_without_treating_them_as_java_sources() -> Result<()> {
+        let temporary = tempfile::tempdir()?;
+        let root = temporary.path().canonicalize()?;
+        let mut input = fixture(&root)?;
+        let assets = root.join("app/build/generated/assets/demo");
+        input.modules[0].variants[0].components[0]
+            .sources
+            .push(SourceRoot {
+                path: assets.clone(),
+                kind: SourceKind::Assets,
+                generated: true,
+            });
+        let model = Arc::new(parse_model(&output(&input)?, &root)?);
+        let source = &model.modules[0].variants[0].components[0].sources;
+        assert!(source.iter().any(|source| source.kind == SourceKind::Assets
+            && source.generated
+            && source.path == assets));
+        let selected = model.select(VariantId {
+            module: ":app".into(),
+            variant: "paidDebug".into(),
+        })?;
+        let mut java_modules = selected
+            .modules()
+            .map(|(module, variant)| crate::java::JavaModule {
+                project: module.path.clone(),
+                variant: variant.name.clone(),
+                directory: module.directory.clone(),
+                source_compatibility: "11".into(),
+                target_compatibility: "11".into(),
+                sources: Vec::new(),
+                test_sources: Vec::new(),
+                libraries: Vec::new(),
+                test_libraries: Vec::new(),
+            })
+            .collect::<Vec<_>>();
+        crate::java::validate_selection(&java_modules, &selected)?;
+        java_modules
+            .iter_mut()
+            .find(|module| module.project == ":app")
+            .context("Expected app Java module")?
+            .sources
+            .push(assets);
+        assert!(crate::java::validate_selection(&java_modules, &selected).is_err());
         Ok(())
     }
 
