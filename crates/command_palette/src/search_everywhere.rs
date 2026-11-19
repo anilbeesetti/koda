@@ -2,7 +2,9 @@ use crate::{Command, humanize_action_name, normalize_action_query};
 use command_palette_hooks::CommandPaletteFilter;
 use editor::{Editor, SelectionEffects, scroll::Autoscroll};
 use file_icons::FileIcons;
-use fuzzy_nucleo::{Case, LengthPenalty, StringMatchCandidate};
+use fuzzy_nucleo::{
+    Case, LengthPenalty, MaxResults, PathMatchOptions, StringMatchCandidate, StringMatchOptions,
+};
 use gpui::{
     Action, App, Context, DismissEvent, Entity, EventEmitter, FocusHandle, Focusable, Render,
     Subscription, Task, TaskExt, WeakEntity,
@@ -842,10 +844,12 @@ impl PickerDelegate for EverywhereDelegate {
                     let names = fuzzy_nucleo::match_strings_async(
                         &candidates,
                         &query,
-                        Case::Ignore,
-                        LengthPenalty::On,
-                        candidates.len(),
-                        &cancel,
+                        StringMatchOptions {
+                            case: Case::Ignore,
+                            length_penalty: LengthPenalty::On,
+                            max_results: MaxResults::All,
+                            cancel_flag: Some(&cancel),
+                        },
                         executor,
                     )
                     .await;
@@ -877,19 +881,23 @@ impl PickerDelegate for EverywhereDelegate {
                 &file_sets,
                 &query,
                 &None,
-                Case::Ignore,
-                MAX_RESULTS,
-                &cancel,
+                PathMatchOptions {
+                    case: Case::Ignore,
+                    max_results: MaxResults::limit::<MAX_RESULTS>(),
+                    cancel_flag: Some(&cancel),
+                },
                 executor.clone(),
             );
             let action_query = normalize_action_query(&query);
             let actions = fuzzy_nucleo::match_strings_async(
                 &commands,
                 &action_query,
-                Case::Ignore,
-                LengthPenalty::On,
-                commands.len(),
-                &cancel,
+                StringMatchOptions {
+                    case: Case::Ignore,
+                    length_penalty: LengthPenalty::On,
+                    max_results: MaxResults::All,
+                    cancel_flag: Some(&cancel),
+                },
                 executor.clone(),
             );
             let (names, files, actions) = futures::join!(names, files, actions);
@@ -977,10 +985,12 @@ impl PickerDelegate for EverywhereDelegate {
             let symbol_matches = fuzzy_nucleo::match_strings_async(
                 &candidates,
                 &query,
-                Case::Ignore,
-                LengthPenalty::On,
-                candidates.len(),
-                &cancel,
+                StringMatchOptions {
+                    case: Case::Ignore,
+                    length_penalty: LengthPenalty::On,
+                    max_results: MaxResults::All,
+                    cancel_flag: Some(&cancel),
+                },
                 executor.clone(),
             )
             .await;
