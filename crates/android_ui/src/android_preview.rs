@@ -2258,10 +2258,7 @@ impl Render for ComposePreviewView {
                                         Icon::new(status_icon)
                                             .size(IconSize::Small)
                                             .color(status_color)
-                                            .with_keyed_rotate_animation(
-                                                "compose-refresh-spinner",
-                                                2,
-                                            )
+                                            .with_rotate_animation(2)
                                             .into_any_element()
                                     } else {
                                         Icon::new(status_icon)
