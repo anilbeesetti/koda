@@ -52,6 +52,10 @@ pub fn edit_prediction_docs(cx: &App) -> String {
     format!("{docs_url}/ai/edit-prediction", docs_url = docs_url(cx))
 }
 
+pub fn skills_docs(cx: &App) -> String {
+    format!("{docs_url}/ai/skills", docs_url = docs_url(cx))
+}
+
 /// Returns the URL to Zed's Agent sandboxing documentation.
 ///
 /// Pass `section` to deep-link to a specific section anchor on the page (for
