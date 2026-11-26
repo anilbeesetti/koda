@@ -771,18 +771,18 @@ async fn test_worktree_tasks_file_update_keeps_history_of_unchanged_tasks(cx: &m
         });
     };
 
-    update_tasks(mock_tasks_from_names(["task"]), ".zed", cx);
+    update_tasks(mock_tasks_from_names(["task"]), ".koda", cx);
     register_worktree_task_used(&inventory, worktree_id, "task", cx).await;
     let task_id = newest_task(&inventory, cx).unwrap().id;
 
-    update_tasks(mock_tasks_from_names(["other"]), "nested/.zed", cx);
-    update_tasks(mock_tasks_from_names(["task", "new"]), ".zed", cx);
+    update_tasks(mock_tasks_from_names(["other"]), "nested/.koda", cx);
+    update_tasks(mock_tasks_from_names(["task", "new"]), ".koda", cx);
     assert_eq!(
         newest_task(&inventory, cx).map(|task| task.id),
         Some(task_id.clone()),
     );
 
-    update_tasks("[]".to_string(), ".zed", cx);
+    update_tasks("[]".to_string(), ".koda", cx);
     assert_eq!(newest_task(&inventory, cx).map(|task| task.id), None);
     assert_eq!(
         task_by_id(&inventory, &task_id, cx).map(|task| task.id),

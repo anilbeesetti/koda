@@ -4429,7 +4429,7 @@ async fn test_removing_worktree_notifies_settings_only_for_local_settings(
         .await;
     fs.insert_tree(
         path!("/with_settings"),
-        json!({ ".zed": { "settings.json": r#"{ "tab_size": 8 }"# } }),
+        json!({ ".koda": { "settings.json": r#"{ "tab_size": 8 }"# } }),
     )
     .await;
 
