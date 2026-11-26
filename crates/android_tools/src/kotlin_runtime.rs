@@ -16,7 +16,7 @@ use std::{
     time::{Duration, Instant, SystemTime, UNIX_EPOCH},
 };
 
-pub const PATCH_REVISION: &str = "android-9";
+pub const PATCH_REVISION: &str = "android-10";
 pub const UPDATE_INTERVAL: Duration = Duration::from_secs(6 * 60 * 60);
 const REPOSITORY: &str = "anilbeesetti/kotlin-lsp";
 const PLATFORM: &str = "macos-aarch64";
@@ -98,7 +98,7 @@ fn version(value: &str) -> Option<[u32; 3]> {
 }
 
 pub(crate) fn compatible_version(value: &str) -> bool {
-    version(value).is_some_and(|version| version >= [263, 6379, 0])
+    version(value).is_some_and(|version| version >= [271, 2085, 0])
 }
 
 fn hex(value: &str, length: usize) -> bool {
@@ -244,7 +244,9 @@ pub(crate) fn resolve_at(profile: &Path) -> Result<PathBuf> {
         generation(&root, &active.slot, &AtomicBool::new(false))?;
         return Ok(slot_path(&root, &active.slot)?.join(ENTRYPOINT));
     }
-    managed::resolve_at(profile, managed::Tool::Kotlin)
+    let binary = managed::resolve_at(profile, managed::Tool::Kotlin)?;
+    kotlin::validate_official_server(&binary)?;
+    Ok(binary)
 }
 
 fn validate_distribution(directory: &Path, runtime: &Runtime) -> Result<()> {
@@ -544,7 +546,14 @@ fn manage_at(
         offline,
         cancel,
         progress,
-    )?;
+    )
+    .with_context(|| {
+        if offline {
+            "Offline Kotlin repair needs a verified compatible archive. Connect, turn off Offline in Android: Setup, then retry Kotlin Install / repair; expired installations cannot be reused"
+        } else {
+            "Could not prepare the Kotlin runtime; retry Kotlin Install / repair in Android: Setup"
+        }
+    })?;
     let staging = tempfile::Builder::new()
         .prefix(".stage-")
         .tempdir_in(&root)?;
@@ -839,6 +848,163 @@ mod tests {
         )
     }
 
+    fn expired_profile(profile: &Path, legacy: bool) -> Result<PathBuf> {
+        let runtime = fixture(profile, kotlin::OFFICIAL_VERSION)?;
+        let binary = install(profile, &runtime)?;
+        let root = native_root(profile);
+        let active = active(&root)?.context("Missing fixture installation")?;
+        let directory = slot_path(&root, &active.slot)?;
+        let (version, revision) = if legacy {
+            ("263.4702.0", "android-8")
+        } else {
+            ("263.7084.0", "android-9")
+        };
+        let server = directory.join("kotlin-server");
+        fs::write(
+            server.join("product-info.json"),
+            json!({"buildNumber":version,"minRequiredJavaVersion":25,"envVarBaseName":""})
+                .to_string(),
+        )?;
+        fs::write(
+            server.join("zed-native-importer.json"),
+            json!({"revision":format!("{version}+{revision}")}).to_string(),
+        )?;
+        let mut generation: Generation = managed::read_json(
+            &root.join(format!("{}.json", active.slot)),
+            16 * 1024 * 1024,
+        )?;
+        generation.runtime.upstream_version = version.into();
+        generation.runtime.patch_revision = revision.into();
+        generation.runtime.release_tag = format!(
+            "koda-{version}-{revision}-{}",
+            &generation.runtime.recipe_sha256[..12]
+        );
+        generation.runtime.artifacts[0].name =
+            format!("{}-{PLATFORM}.tar.gz", generation.runtime.release_tag);
+        if legacy {
+            let legacy_entrypoint = "kotlin-server-263.4702.0/bin/intellij-server";
+            fs::rename(&server, directory.join("kotlin-server-263.4702.0"))?;
+            let destination = profile.join(&active.slot);
+            fs::rename(&directory, &destination)?;
+            let (files, modes) = provision::inventory(&destination, &AtomicBool::new(false))?;
+            save(
+                &profile.join("kotlin.json"),
+                &json!({
+                    "schema":1,"tool":"kotlin","recipe":managed::Tool::Kotlin.recipe(),
+                    "slot":active.slot,"entrypoint":legacy_entrypoint,"files":files,"modes":modes
+                }),
+            )?;
+            fs::remove_file(root.join("active.json"))?;
+            return Ok(destination.join(legacy_entrypoint));
+        }
+        (generation.files, generation.modes) =
+            provision::inventory(&directory, &AtomicBool::new(false))?;
+        save(&root.join(format!("{}.json", active.slot)), &generation)?;
+        Ok(binary)
+    }
+
+    #[test]
+    fn expired_profiles_require_online_repair_and_never_become_rollback_targets() -> Result<()> {
+        for legacy in [false, true] {
+            let profile = tempfile::tempdir()?;
+            let expired = expired_profile(profile.path(), legacy)?;
+            assert!(resolve_at(profile.path()).is_err());
+            let root = native_root(profile.path());
+            let metadata = if legacy {
+                profile.path().join("kotlin.json")
+            } else {
+                root.join("active.json")
+            };
+            let before = fs::read(&metadata)?;
+            let error = manage_at(
+                profile.path(),
+                "update",
+                true,
+                &AtomicBool::new(false),
+                &|_| {},
+                &|_| bail!("Offline must not discover"),
+                &|_, _, _| bail!("Expired runtime must not start"),
+            )
+            .expect_err("An expired profile cannot satisfy offline update");
+            assert!(format!("{error:#}").contains("Connect"));
+            assert_eq!(fs::read(&metadata)?, before);
+            assert!(expired.is_file());
+            let replacement = fixture(profile.path(), "271.3000.0")?;
+            assert!(
+                manage_at(
+                    profile.path(),
+                    "install",
+                    false,
+                    &AtomicBool::new(false),
+                    &|_| {},
+                    &|_| Ok(replacement.clone()),
+                    &|_, _, _| bail!("expired")
+                )
+                .is_err()
+            );
+            assert_eq!(fs::read(&metadata)?, before);
+            assert!(resolve_at(profile.path()).is_err());
+            let cancel = AtomicBool::new(false);
+            assert!(
+                manage_at(
+                    profile.path(),
+                    "install",
+                    false,
+                    &cancel,
+                    &|_| {},
+                    &|_| Ok(replacement.clone()),
+                    &|_, _, cancel| {
+                        cancel.store(true, Ordering::Relaxed);
+                        Ok(())
+                    }
+                )
+                .is_err()
+            );
+            assert_eq!(fs::read(&metadata)?, before);
+            let archive = root
+                .join("downloads")
+                .join(format!("{}.archive", replacement.artifact()?.sha256));
+            fs::write(&archive, b"interrupted or corrupt archive")?;
+            assert!(
+                provision::download_runtime(
+                    &root,
+                    &asset_url(&replacement.release_tag, &replacement.artifact()?.name),
+                    &replacement.artifact()?.sha256,
+                    replacement.artifact()?.size,
+                    true,
+                    &AtomicBool::new(false),
+                    &|_| {}
+                )
+                .is_err()
+            );
+            assert_eq!(fs::read(&metadata)?, before);
+            let replacement = fixture(profile.path(), "271.3000.0")?;
+            let repaired = install(profile.path(), &replacement)?;
+            assert_eq!(resolve_at(profile.path())?, repaired);
+            assert!(expired.is_file());
+            assert!(
+                active(&root)?
+                    .context("Repaired active installation")?
+                    .previous
+                    .is_none()
+            );
+            assert!(
+                manage_at(
+                    profile.path(),
+                    "rollback",
+                    true,
+                    &AtomicBool::new(false),
+                    &|_| {},
+                    &|_| bail!("Rollback must not discover"),
+                    &|_, _, _| bail!("Expired rollback must not start")
+                )
+                .is_err()
+            );
+            assert_eq!(resolve_at(profile.path())?, repaired);
+        }
+        Ok(())
+    }
+
     #[test]
     fn release_selection_requires_published_compatible_platform() -> Result<()> {
         let release = |tag: &str,
@@ -850,35 +1016,35 @@ mod tests {
                 json!({"tag_name":tag,"draft":draft,"prerelease":prerelease,"published_at":"2026-10-11T00:00:00Z","assets":[{"name":format!("{tag}-{platform}.tar.gz"),"browser_download_url":"","size":1}]}),
             )?)
         };
-        let expected = "koda-263.6379.0-android-9-abcdef012345";
+        let expected = "koda-271.2085.0-android-10-abcdef012345";
         let releases = vec![
             release(expected, false, false, PLATFORM)?,
             release(
-                "koda-263.7000.0-android-9-abcdef012345",
+                "koda-271.3000.0-android-10-abcdef012345",
                 true,
                 false,
                 PLATFORM,
             )?,
             release(
-                "koda-263.8000.0-android-9-abcdef012345",
+                "koda-271.4000.0-android-10-abcdef012345",
                 false,
                 true,
                 PLATFORM,
             )?,
             release(
-                "koda-264.1000.0-android-10-abcdef012345",
+                "koda-272.1000.0-android-11-abcdef012345",
                 false,
                 false,
                 PLATFORM,
             )?,
             release(
-                "koda-263.9000.0-android-9-abcdef012345",
+                "koda-271.5000.0-android-10-abcdef012345",
                 false,
                 false,
                 "linux-x64",
             )?,
             release(
-                "koda-263.4702.0-android-9-abcdef012345",
+                "koda-263.4702.0-android-10-abcdef012345",
                 false,
                 false,
                 PLATFORM,
@@ -890,8 +1056,11 @@ mod tests {
                 .tag_name,
             expected
         );
-        assert_eq!(tag_version("koda-+263.6379.0-android-9-abcdef012345"), None);
-        assert_eq!(tag_version("koda-263.6379.0-android-9-../../unsafe"), None);
+        assert_eq!(
+            tag_version("koda-+271.2085.0-android-10-abcdef012345"),
+            None
+        );
+        assert_eq!(tag_version("koda-271.2085.0-android-10-../../unsafe"), None);
         Ok(())
     }
 
@@ -901,7 +1070,7 @@ mod tests {
         runtime.artifact()?;
         for mutate in [
             |r: &mut Runtime| r.schema = 2,
-            |r: &mut Runtime| r.patch_revision = "android-10".into(),
+            |r: &mut Runtime| r.patch_revision = "android-11".into(),
             |r: &mut Runtime| r.upstream_version = "invalid".into(),
             |r: &mut Runtime| {
                 r.upstream_version = "invalid".into();
@@ -922,9 +1091,9 @@ mod tests {
     #[test]
     fn upgrades_are_transactional_and_rollback_keeps_both_generations() -> Result<()> {
         let profile = tempfile::tempdir()?;
-        let first = fixture(profile.path(), "263.6379.0")?;
+        let first = fixture(profile.path(), "271.2085.0")?;
         let original = install(profile.path(), &first)?;
-        let second = fixture(profile.path(), "263.7000.0")?;
+        let second = fixture(profile.path(), "271.3000.0")?;
         let failed = manage_at(
             profile.path(),
             "install",
@@ -957,9 +1126,9 @@ mod tests {
     #[test]
     fn cancellation_checksum_failure_and_network_failure_preserve_active() -> Result<()> {
         let profile = tempfile::tempdir()?;
-        let first = fixture(profile.path(), "263.6379.0")?;
+        let first = fixture(profile.path(), "271.2085.0")?;
         let original = install(profile.path(), &first)?;
-        let next = fixture(profile.path(), "263.7000.0")?;
+        let next = fixture(profile.path(), "271.3000.0")?;
         let cancel = AtomicBool::new(false);
         let cancelled_install = manage_at(
             profile.path(),
@@ -1024,7 +1193,7 @@ mod tests {
     #[test]
     fn offline_throttling_and_downgrade_do_not_download() -> Result<()> {
         let profile = tempfile::tempdir()?;
-        let current = fixture(profile.path(), "263.7000.0")?;
+        let current = fixture(profile.path(), "271.3000.0")?;
         let original = install(profile.path(), &current)?;
         for offline in [false, true] {
             let result = manage_at(
@@ -1038,7 +1207,7 @@ mod tests {
             )?;
             assert_eq!(result, original);
         }
-        let older = fixture(profile.path(), "263.6379.0")?;
+        let older = fixture(profile.path(), "271.2085.0")?;
         assert_eq!(install(profile.path(), &older)?, original);
         Ok(())
     }
@@ -1046,7 +1215,7 @@ mod tests {
     #[test]
     fn inventory_tampering_and_profile_lock_are_detected() -> Result<()> {
         let profile = tempfile::tempdir()?;
-        let runtime = fixture(profile.path(), "263.6379.0")?;
+        let runtime = fixture(profile.path(), "271.2085.0")?;
         let server = install(profile.path(), &runtime)?;
         let lock = fs::OpenOptions::new()
             .append(true)
@@ -1065,14 +1234,14 @@ mod tests {
             let body = body.to_string();
             format!("Content-Length: {}\r\n\r\n{body}", body.len())
         };
-        let good = message(json!({"id":1,"result":{"serverInfo":{"version":"ILS-263.6379.0"}}}));
-        read_initialization(good.as_bytes(), "263.6379.0")?;
-        assert!(read_initialization(&b""[..], "263.6379.0").is_err());
-        assert!(read_initialization(good.as_bytes(), "263.7000.0").is_err());
+        let good = message(json!({"id":1,"result":{"serverInfo":{"version":"ILS-271.2085.0"}}}));
+        read_initialization(good.as_bytes(), "271.2085.0")?;
+        assert!(read_initialization(&b""[..], "271.2085.0").is_err());
+        assert!(read_initialization(good.as_bytes(), "271.3000.0").is_err());
         assert!(
             read_initialization(
                 message(json!({"id":1,"error":{"message":"expired"}})).as_bytes(),
-                "263.6379.0"
+                "271.2085.0"
             )
             .is_err()
         );
@@ -1170,14 +1339,14 @@ mod tests {
     #[test]
     fn startup_probe_stops_process_group_and_reports_expiration() -> Result<()> {
         let profile = tempfile::tempdir()?;
-        let runtime = fixture(profile.path(), "263.6379.0")?;
+        let runtime = fixture(profile.path(), "271.2085.0")?;
         let binary = install(profile.path(), &runtime)?;
         let directory = binary
             .parent()
             .and_then(Path::parent)
             .and_then(Path::parent)
             .context("Missing fixture directory")?;
-        let body = json!({"id":1,"result":{"serverInfo":{"version":"ILS-263.6379.0"}}}).to_string();
+        let body = json!({"id":1,"result":{"serverInfo":{"version":"ILS-271.2085.0"}}}).to_string();
         fs::write(
             &binary,
             format!(
@@ -1194,6 +1363,124 @@ mod tests {
         let error = probe(directory, &runtime, &AtomicBool::new(false))
             .expect_err("Expired server must fail activation");
         assert!(format!("{error:#}").contains("expired"));
+        Ok(())
+    }
+
+    #[cfg(all(target_os = "macos", target_arch = "aarch64"))]
+    #[test]
+    #[ignore = "Downloads a real runtime to migrate an expired profile and verifies cancellation/corruption recovery"]
+    fn published_runtime_repairs_expired_profile_after_interruption() -> Result<()> {
+        let profile = tempfile::tempdir()?;
+        let expired = expired_profile(profile.path(), false)?;
+        let root = native_root(profile.path());
+        let before = fs::read(root.join("active.json"))?;
+        let cancel = AtomicBool::new(false);
+        let runtime: Runtime = serde_json::from_slice(PINNED)?;
+        let downloads = || {
+            fs::read_dir(root.join("downloads"))?
+                .map(|entry| entry.map(|entry| entry.file_name()))
+                .collect::<std::io::Result<std::collections::BTreeSet<_>>>()
+        };
+        let downloads_before = downloads()?;
+        let offline = manage_at(
+            profile.path(),
+            "update",
+            true,
+            &cancel,
+            &|_| {},
+            &|_| bail!("Offline discovery"),
+            &probe,
+        )
+        .expect_err("Expired profile needs an online repair");
+        ensure!(
+            format!("{offline:#}").contains("Connect"),
+            "Offline failure needs repair instructions"
+        );
+        ensure!(
+            fs::read(root.join("active.json"))? == before,
+            "Offline repair changed the active generation"
+        );
+        let interrupted = manage_at(
+            profile.path(),
+            "update",
+            false,
+            &cancel,
+            &|progress| {
+                if progress.downloaded_bytes > 0 {
+                    cancel.store(true, Ordering::Relaxed);
+                }
+            },
+            &|_| Ok(runtime.clone()),
+            &probe,
+        );
+        ensure!(
+            cancel.load(Ordering::Relaxed) && interrupted.is_err(),
+            "The real download must be interrupted"
+        );
+        ensure!(
+            fs::read(root.join("active.json"))? == before && expired.is_file(),
+            "Interruption changed the expired profile"
+        );
+        ensure!(
+            downloads()? == downloads_before,
+            "Interrupted download changed the verified cache or retained a partial archive"
+        );
+        cancel.store(false, Ordering::Relaxed);
+        let binary = manage_at(
+            profile.path(),
+            "update",
+            false,
+            &cancel,
+            &|progress| eprintln!("{}", progress.message),
+            &|_| Ok(runtime.clone()),
+            &probe,
+        )?;
+        kotlin::validate_official_server(&binary)?;
+        ensure!(
+            active(&root)?
+                .context("Repaired active generation")?
+                .previous
+                .is_none(),
+            "Expired generation offered as rollback"
+        );
+        ensure!(expired.is_file(), "Migration removed the old generation");
+        let artifact = runtime.artifact()?;
+        let archive = root
+            .join("downloads")
+            .join(format!("{}.archive", artifact.sha256));
+        fs::write(&archive, b"corrupted completed download")?;
+        let before = fs::read(root.join("active.json"))?;
+        ensure!(
+            manage_at(
+                profile.path(),
+                "install",
+                true,
+                &cancel,
+                &|_| {},
+                &latest,
+                &probe
+            )
+            .is_err(),
+            "Corrupt cache accepted offline"
+        );
+        ensure!(
+            fs::read(root.join("active.json"))? == before,
+            "Corrupt archive changed the active generation"
+        );
+        let repaired = manage_at(
+            profile.path(),
+            "install",
+            false,
+            &cancel,
+            &|progress| eprintln!("{}", progress.message),
+            &|_| Ok(runtime.clone()),
+            &probe,
+        )?;
+        kotlin::validate_official_server(&repaired)?;
+        ensure!(
+            resolve_at(profile.path())? == repaired,
+            "Retry did not activate the verified runtime"
+        );
         Ok(())
     }
 

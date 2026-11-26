@@ -1008,6 +1008,22 @@ mod tests {
                 files.insert(name, digest_file(&binary)?);
                 modes.insert(name, 0o755);
             }
+            for (name, value) in [
+                (
+                    "kotlin-server-263.4702.0/product-info.json",
+                    serde_json::json!({"buildNumber":crate::kotlin::OFFICIAL_VERSION}),
+                ),
+                (
+                    "kotlin-server-263.4702.0/zed-native-importer.json",
+                    serde_json::json!({"revision":crate::kotlin::OFFICIAL_REVISION}),
+                ),
+            ] {
+                let path = directory.join(name);
+                fs::write(&path, value.to_string())?;
+                fs::set_permissions(&path, fs::Permissions::from_mode(0o644))?;
+                files.insert(name, digest_file(&path)?);
+                modes.insert(name, 0o644);
+            }
             let manifest = serde_json::json!({"schema":1,"tool":"kotlin","recipe":Tool::Kotlin.recipe(),"slot":slot,"entrypoint":Tool::Kotlin.entrypoint(),"files":files,"modes":modes});
             fs::write(root.join("kotlin.json"), manifest.to_string())?;
             Ok(directory.join(Tool::Kotlin.entrypoint()))
