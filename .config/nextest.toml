@@ -42,7 +42,16 @@ slow-timeout = { period = "300s", terminate-after = 1 }
 
 [[profile.default.overrides]]
 filter =  'package(editor) and test(test_random_split_editor)'
+# Keep other test processes from starving this CPU-heavy 25-seed test while its
+# existing 300-second deadline remains enforced.
+threads-required = "num-test-threads"
 slow-timeout = { period = "300s", terminate-after = 1 }
+
+[[profile.default.overrides]]
+# These repeated full-session fixtures need the same isolation while retaining
+# their existing 60-second deadline and all 30/20 scheduler seeds.
+filter = 'package(=zed) and (test(=zed::tests::test_draft_made_in_a_window_that_is_still_restoring_is_kept_without_another_save) or test(=zed::tests::test_file_requested_in_a_window_that_is_still_restoring_leaves_pinned_tabs_in_place))'
+threads-required = "num-test-threads"
 
 [[profile.default.overrides]]
 filter =  'package(editor) and test(test_random_blocks)'
