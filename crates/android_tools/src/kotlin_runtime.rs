@@ -660,12 +660,25 @@ fn read_initialization(output: impl std::io::Read, expected_version: &str) -> Re
 fn probe(directory: &Path, runtime: &Runtime, cancel: &AtomicBool) -> Result<()> {
     cancelled(cancel)?;
     let profile = tempfile::tempdir()?;
+    // The server keys its workspace index by the initialized roots even when a
+    // separate system path is supplied. Empty roots share the global empty-root
+    // index, which can already be locked by another probe or a running IDE.
+    let workspace = profile.path().join("workspace");
+    fs::create_dir(&workspace)?;
+    let workspace = workspace.canonicalize()?;
+    let workspace_uri = reqwest::Url::from_directory_path(&workspace)
+        .map_err(|_| anyhow::anyhow!("Invalid Kotlin startup workspace path"))?;
+    // Keep the workspace index temporary too; --system-path alone does not
+    // redirect it from the user's shared JetBrains cache.
+    let index_directory = workspace.with_file_name("index");
+    fs::create_dir(&index_directory)?;
     let stderr_path = profile.path().join("stderr.log");
     let stderr = fs::File::create(&stderr_path)?;
     let (java_variable, java_home) =
         kotlin::private_java_environment_at(&directory.join("kotlin-server"))?;
     let mut command = Command::new(directory.join(ENTRYPOINT));
     command
+        .current_dir(&workspace)
         .args(["--stdio", "--data-sharing=none"])
         .arg(format!(
             "--system-path={}",
@@ -692,7 +705,7 @@ fn probe(directory: &Path, runtime: &Runtime, cancel: &AtomicBool) -> Result<()>
     let mut cleanup_result = None;
     let result = (|| -> Result<()> {
         let request = serde_json::to_vec(
-            &json!({"jsonrpc":"2.0","id":1,"method":"initialize","params":{"processId":std::process::id(),"rootUri":null,"workspaceFolders":[],"initializationOptions":{"projects":[]},"capabilities":{}}}),
+            &json!({"jsonrpc":"2.0","id":1,"method":"initialize","params":{"processId":std::process::id(),"rootUri":workspace_uri,"workspaceFolders":[{"uri":workspace_uri,"name":"Koda runtime startup check"}],"initializationOptions":{"projects":[],"indexDir":index_directory},"capabilities":{}}}),
         )?;
         let mut input = child.stdin.take().context("Kotlin probe has no input")?;
         write!(input, "Content-Length: {}\r\n\r\n", request.len())?;
@@ -1350,12 +1363,50 @@ mod tests {
         fs::write(
             &binary,
             format!(
-                "#!/bin/sh\nprintf '%s' 'Content-Length: {}\r\n\r\n{}'\ncat >/dev/null\n",
+                r#"#!/bin/sh
+pwd -P >"$0.cwd"
+IFS= read -r header
+IFS= read -r blank
+length=${{header#*: }}
+length=$(printf '%s' "$length" | tr -d '\r')
+dd bs=1 count="$length" of="$0.initialize" 2>/dev/null
+printf 'Content-Length: %s\r\n\r\n%s' '{}' '{}'
+cat >/dev/null
+"#,
                 body.len(),
                 body
             ),
         )?;
-        probe(directory, &runtime, &AtomicBool::new(false))?;
+        let mut previous_workspace = None;
+        for _ in 0..2 {
+            probe(directory, &runtime, &AtomicBool::new(false))?;
+            let initialize: serde_json::Value = serde_json::from_slice(&fs::read(
+                binary.with_file_name("intellij-server.initialize"),
+            )?)?;
+            let uri = initialize["params"]["rootUri"]
+                .as_str()
+                .context("Startup probe must initialize an isolated workspace")?;
+            let workspace = reqwest::Url::parse(uri)?
+                .to_file_path()
+                .map_err(|_| anyhow::anyhow!("Invalid startup workspace URI"))?;
+            let cwd = fs::read_to_string(binary.with_file_name("intellij-server.cwd"))?;
+            assert_eq!(workspace, Path::new(cwd.trim()));
+            assert_eq!(initialize["params"]["workspaceFolders"][0]["uri"], uri);
+            assert_eq!(
+                initialize["params"]["initializationOptions"]["projects"],
+                json!([])
+            );
+            let index = Path::new(
+                initialize["params"]["initializationOptions"]["indexDir"]
+                    .as_str()
+                    .context("Startup index must be isolated")?,
+            );
+            assert_eq!(index, workspace.with_file_name("index"));
+            assert!(!index.exists(), "Probe index must be cleaned up");
+            assert_ne!(previous_workspace.as_ref(), Some(&workspace));
+            assert!(!workspace.exists(), "Probe workspace must be cleaned up");
+            previous_workspace = Some(workspace);
+        }
         fs::write(
             &binary,
             "#!/bin/sh\nprintf 'This build of kotlin-server has expired.' >&2\nexit 1\n",
