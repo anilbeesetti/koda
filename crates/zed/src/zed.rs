@@ -8841,6 +8841,15 @@ mod tests {
     async fn init_startup_test(cx: &mut TestAppContext) -> Arc<AppState> {
         cx.update(|cx| cx.set_global(db::AppDatabase::test_new()));
         let app_state = init_test(cx);
+        // These restoration tests must opt in: Koda defaults to the launchpad.
+        cx.update(|cx| {
+            cx.update_global::<SettingsStore, _>(|store, cx| {
+                store.update_user_settings(cx, |settings| {
+                    settings.workspace.restore_on_startup =
+                        Some(workspace::RestoreOnStartupBehavior::LastSession);
+                });
+            });
+        });
         cx.update(|cx| db::kvp::KeyValueStore::global(cx))
             .write_kvp(onboarding::FIRST_OPEN.to_owned(), "false".to_owned())
             .await
@@ -9395,6 +9404,7 @@ mod tests {
         cx: &mut TestAppContext,
     ) {
         let app_state = save_session_without_folders(cx).await;
+        set_on_new_window(Some(settings::OnNewWindow::EmptyTab), cx);
         let (request, _cli) = cli_request(&[], cli::OpenBehavior::AlwaysNew);
         open_on_startup(request, &app_state, cx).await;
 
