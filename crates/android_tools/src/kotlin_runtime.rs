@@ -667,7 +667,8 @@ fn probe(directory: &Path, runtime: &Runtime, cancel: &AtomicBool) -> Result<()>
     fs::create_dir(&workspace)?;
     let workspace = workspace.canonicalize()?;
     let workspace_uri = reqwest::Url::from_directory_path(&workspace)
-        .map_err(|_| anyhow::anyhow!("Invalid Kotlin startup workspace path"))?;
+        .map_err(|_| anyhow::anyhow!("Invalid Kotlin startup workspace path"))?
+        .to_string();
     // Keep the workspace index temporary too; --system-path alone does not
     // redirect it from the user's shared JetBrains cache.
     let index_directory = workspace.with_file_name("index");

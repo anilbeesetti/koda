@@ -2,7 +2,9 @@ use crate::{Command, humanize_action_name, normalize_action_query};
 use command_palette_hooks::CommandPaletteFilter;
 use editor::{Editor, SelectionEffects, scroll::Autoscroll};
 use file_icons::FileIcons;
-use fuzzy_nucleo::{Case, LengthPenalty, StringMatchCandidate};
+use fuzzy_nucleo::{
+    Case, LengthPenalty, MaxResults, PathMatchOptions, StringMatchCandidate, StringMatchOptions,
+};
 use gpui::{
     Action, App, Context, DismissEvent, Entity, EventEmitter, FocusHandle, Focusable, Render,
     Subscription, Task, TaskExt, WeakEntity,
@@ -132,7 +134,7 @@ pub(super) fn init(cx: &mut App) {
                     Picker::uniform_list_with_preview(
                         EverywhereDelegate {
                             workspace: workspace_handle,
-                            project,
+                            project: project.clone(),
                             previous_focus,
                             commands,
                             recent_files,
@@ -141,6 +143,8 @@ pub(super) fn init(cx: &mut App) {
                             matches: Vec::new(),
                             selected: 0,
                             selection_changed: false,
+                            refreshing_project: false,
+                            refresh_selection: None,
                             query: String::new(),
                             loading_symbols: false,
                             symbol_error: None,
@@ -154,9 +158,42 @@ pub(super) fn init(cx: &mut App) {
                 });
                 let subscription =
                     cx.subscribe(&picker, |_, _, _: &DismissEvent, cx| cx.emit(DismissEvent));
+                let project_subscription = cx.subscribe_in(
+                    &project,
+                    window,
+                    |view: &mut SearchEverywhere, _, event, window, cx| {
+                        if matches!(
+                            event,
+                            project::Event::WorktreeUpdatedEntries(_, _)
+                                | project::Event::WorktreeAdded(_)
+                                | project::Event::WorktreeRemoved(_)
+                        ) {
+                            view.project_refresh = cx.spawn_in(window, async move |view, cx| {
+                                cx.background_executor()
+                                    .timer(std::time::Duration::from_millis(50))
+                                    .await;
+                                view.update_in(cx, |view, window, cx| {
+                                    view.picker.update(cx, |picker, cx| {
+                                        if matches!(
+                                            picker.delegate.category,
+                                            Category::All | Category::Files
+                                        ) {
+                                            picker.delegate.refreshing_project = true;
+                                            picker.refresh(window, cx);
+                                            picker.delegate.refreshing_project = false;
+                                        }
+                                    });
+                                })
+                                .log_err();
+                            });
+                        }
+                    },
+                );
                 SearchEverywhere {
                     picker,
                     _subscription: subscription,
+                    _project_subscription: project_subscription,
+                    project_refresh: Task::ready(()),
                 }
             });
         });
@@ -167,6 +204,8 @@ pub(super) fn init(cx: &mut App) {
 struct SearchEverywhere {
     picker: Entity<Picker<EverywhereDelegate>>,
     _subscription: Subscription,
+    _project_subscription: Subscription,
+    project_refresh: Task<()>,
 }
 impl ModalView for SearchEverywhere {}
 impl EventEmitter<DismissEvent> for SearchEverywhere {}
@@ -399,6 +438,8 @@ struct EverywhereDelegate {
     matches: Vec<SearchMatch>,
     selected: usize,
     selection_changed: bool,
+    refreshing_project: bool,
+    refresh_selection: Option<Target>,
     query: String,
     loading_symbols: bool,
     symbol_error: Option<String>,
@@ -407,17 +448,25 @@ struct EverywhereDelegate {
 
 impl EverywhereDelegate {
     fn append_matches(&mut self, matches: impl IntoIterator<Item = SearchMatch>) {
-        let selected_target = self
-            .selection_changed
-            .then(|| {
-                self.matches
-                    .get(self.selected)
-                    .map(|result| result.target.clone())
-            })
-            .flatten();
+        let selected_target = self.refresh_selection.clone().or_else(|| {
+            self.selection_changed
+                .then(|| {
+                    self.matches
+                        .get(self.selected)
+                        .map(|result| result.target.clone())
+                })
+                .flatten()
+        });
         let mut combined = std::mem::take(&mut self.matches);
         combined.extend(matches);
         (self.matches, self.selected) = rank_matches(combined, selected_target);
+        if self.refresh_selection.as_ref().is_some_and(|target| {
+            self.matches
+                .iter()
+                .any(|result| target.same_target(&result.target))
+        }) {
+            self.refresh_selection = None;
+        }
     }
 }
 
@@ -479,14 +528,16 @@ impl PickerDelegate for EverywhereDelegate {
         if index < self.matches.len() {
             self.selected = index;
             self.selection_changed = true;
+            self.refresh_selection = None;
         }
     }
     fn dismissed(&mut self, _: &mut Window, _: &mut Context<Picker<Self>>) {
         self.cancel.store(true, Ordering::Release);
     }
     fn retain_pending_confirmation(&self) -> bool {
-        // A queued Enter belongs to this query and category.
-        false
+        // A filesystem refresh keeps the same query and category. Edits and
+        // category changes must still discard an Enter queued for old results.
+        self.refreshing_project
     }
     fn finalize_update_matches(
         &mut self,
@@ -495,9 +546,9 @@ impl PickerDelegate for EverywhereDelegate {
         _: &mut Window,
         _: &mut Context<Picker<Self>>,
     ) -> bool {
-        // Visible results belong to the current query and can open immediately,
-        // even while another contributor is still searching.
-        self.matches.get(self.selected).is_some()
+        // Visible results can open while another contributor is searching, unless
+        // a filesystem refresh is still restoring the user's navigated target.
+        self.refresh_selection.is_none() && self.matches.get(self.selected).is_some()
     }
     fn render_editor(
         &self,
@@ -683,10 +734,19 @@ impl PickerDelegate for EverywhereDelegate {
         let cancel = self.cancel.clone();
         let category = self.category;
         let query = query.trim().to_owned();
+        self.refresh_selection = if self.refreshing_project && self.selection_changed {
+            self.refresh_selection.take().or_else(|| {
+                self.matches
+                    .get(self.selected)
+                    .map(|result| result.target.clone())
+            })
+        } else {
+            None
+        };
         self.query = query.clone();
         self.matches.clear();
         self.selected = 0;
-        self.selection_changed = false;
+        self.selection_changed = self.refresh_selection.is_some();
         self.symbol_error = None;
         self.loading_symbols = !query.is_empty()
             && matches!(
@@ -707,7 +767,12 @@ impl PickerDelegate for EverywhereDelegate {
             self.matches = recent_files
                 .iter()
                 .enumerate()
-                .filter(|(_, path)| self.project.read(cx).entry_for_path(path, cx).is_some())
+                .filter(|(_, path)| {
+                    self.project
+                        .read(cx)
+                        .entry_for_path(path, cx)
+                        .is_some_and(|entry| entry.is_file() && !entry.is_ignored)
+                })
                 .map(|(index, path)| SearchMatch {
                     category,
                     target: Target::File(path.clone()),
@@ -731,6 +796,10 @@ impl PickerDelegate for EverywhereDelegate {
                     recent_index: Some(index),
                 })
                 .collect();
+            (self.matches, self.selected) = rank_matches(
+                std::mem::take(&mut self.matches),
+                self.refresh_selection.take(),
+            );
             return Task::ready(());
         }
         // Studio promotes history entries only when they are not selected
@@ -842,10 +911,12 @@ impl PickerDelegate for EverywhereDelegate {
                     let names = fuzzy_nucleo::match_strings_async(
                         &candidates,
                         &query,
-                        Case::Ignore,
-                        LengthPenalty::On,
-                        candidates.len(),
-                        &cancel,
+                        StringMatchOptions {
+                            case: Case::Ignore,
+                            length_penalty: LengthPenalty::On,
+                            max_results: MaxResults::All,
+                            cancel_flag: Some(&cancel),
+                        },
                         executor,
                     )
                     .await;
@@ -877,19 +948,23 @@ impl PickerDelegate for EverywhereDelegate {
                 &file_sets,
                 &query,
                 &None,
-                Case::Ignore,
-                MAX_RESULTS,
-                &cancel,
+                PathMatchOptions {
+                    case: Case::Ignore,
+                    max_results: MaxResults::limit::<MAX_RESULTS>(),
+                    cancel_flag: Some(&cancel),
+                },
                 executor.clone(),
             );
             let action_query = normalize_action_query(&query);
             let actions = fuzzy_nucleo::match_strings_async(
                 &commands,
                 &action_query,
-                Case::Ignore,
-                LengthPenalty::On,
-                commands.len(),
-                &cancel,
+                StringMatchOptions {
+                    case: Case::Ignore,
+                    length_penalty: LengthPenalty::On,
+                    max_results: MaxResults::All,
+                    cancel_flag: Some(&cancel),
+                },
                 executor.clone(),
             );
             let (names, files, actions) = futures::join!(names, files, actions);
@@ -977,10 +1052,12 @@ impl PickerDelegate for EverywhereDelegate {
             let symbol_matches = fuzzy_nucleo::match_strings_async(
                 &candidates,
                 &query,
-                Case::Ignore,
-                LengthPenalty::On,
-                candidates.len(),
-                &cancel,
+                StringMatchOptions {
+                    case: Case::Ignore,
+                    length_penalty: LengthPenalty::On,
+                    max_results: MaxResults::All,
+                    cancel_flag: Some(&cancel),
+                },
                 executor.clone(),
             )
             .await;
@@ -1021,6 +1098,7 @@ impl PickerDelegate for EverywhereDelegate {
             picker
                 .update_in(cx, |picker, _, cx| {
                     picker.delegate.append_matches(symbol_matches);
+                    picker.delegate.refresh_selection = None;
                     picker.delegate.loading_symbols = false;
                     picker.delegate.symbol_error = symbol_error;
                     cx.notify();
@@ -1578,6 +1656,378 @@ mod tests {
                 .expect("Selected file remains searchable");
             assert_eq!(file.recent_index, None);
         });
+    }
+
+    #[gpui::test]
+    async fn file_search_refreshes_as_android_sources_and_build_outputs_change(
+        cx: &mut TestAppContext,
+    ) {
+        initialize_test(cx);
+        let mut cx = EditorLspTestContext::new_rust(lsp::ServerCapabilities::default(), cx).await;
+        let settle = |cx: &mut EditorLspTestContext| {
+            cx.run_until_parked();
+            cx.executor()
+                .advance_clock(std::time::Duration::from_millis(100));
+            cx.run_until_parked();
+        };
+        let workspace = cx.workspace.clone();
+        let filesystem = workspace.read_with(&cx.cx.cx, |workspace, cx| {
+            workspace.project().read(cx).fs().clone()
+        });
+        let root = EditorLspTestContext::root_path();
+        filesystem
+            .as_fake()
+            .insert_file(root.join(".gitignore"), b"**/build/\n".to_vec())
+            .await;
+        for _ in 0..2 {
+            cx.simulate_modifiers_change(Modifiers::shift());
+            cx.simulate_modifiers_change(Modifiers::none());
+        }
+        settle(&mut cx);
+        let picker = workspace.read_with(&cx.cx.cx, |workspace, cx| {
+            workspace
+                .active_modal::<SearchEverywhere>(cx)
+                .expect("Double Shift opens Search Everywhere")
+                .read(cx)
+                .picker
+                .clone()
+        });
+        picker.update_in(&mut cx.cx.cx, |picker, window, cx| {
+            picker.set_query("WeatherActivity", window, cx)
+        });
+        settle(&mut cx);
+        picker.read_with(&cx.cx.cx, |picker, _| {
+            assert!(picker.delegate.matches.is_empty())
+        });
+
+        let source = root.join("mobile/src/main/java/dev/example/WeatherActivity.kt");
+        filesystem
+            .create_dir(source.parent().expect("Source directory"))
+            .await
+            .expect("Create Android source directories");
+        filesystem
+            .as_fake()
+            .insert_file(&source, b"class WeatherActivity".to_vec())
+            .await;
+        workspace
+            .read_with(&cx.cx.cx, |workspace, cx| {
+                workspace.worktree_scans_complete(cx)
+            })
+            .await;
+        settle(&mut cx);
+        picker.read_with(&cx.cx.cx, |picker, _| {
+            assert!(
+                picker
+                    .delegate
+                    .matches
+                    .iter()
+                    .any(|result| result.label == "WeatherActivity.kt"),
+                "An unchanged query must find source entries delivered after the picker opens"
+            );
+        });
+
+        let second_source = source.with_file_name("WeatherActivityWidget.kt");
+        filesystem
+            .as_fake()
+            .insert_file(&second_source, Vec::new())
+            .await;
+        workspace
+            .read_with(&cx.cx.cx, |workspace, cx| {
+                workspace.worktree_scans_complete(cx)
+            })
+            .await;
+        settle(&mut cx);
+        cx.simulate_keystrokes("down");
+        settle(&mut cx);
+        let selected_label = picker.read_with(&cx.cx.cx, |picker, _| {
+            picker
+                .delegate
+                .matches
+                .get(picker.delegate.selected)
+                .expect("Selected result")
+                .label
+                .clone()
+        });
+        assert_eq!(selected_label, "WeatherActivityWidget.kt");
+
+        let build = root.join("mobile/build");
+        for _ in 0..2 {
+            filesystem
+                .create_dir(&build)
+                .await
+                .expect("Create build output");
+            filesystem
+                .as_fake()
+                .insert_file(build.join("WeatherActivityGenerated.kt"), Vec::new())
+                .await;
+            workspace
+                .read_with(&cx.cx.cx, |workspace, cx| {
+                    workspace.worktree_scans_complete(cx)
+                })
+                .await;
+            settle(&mut cx);
+            picker.read_with(&cx.cx.cx, |picker, _| {
+                assert_eq!(
+                    picker
+                        .delegate
+                        .matches
+                        .get(picker.delegate.selected)
+                        .expect("Selected result")
+                        .label,
+                    selected_label
+                );
+                assert!(
+                    picker
+                        .delegate
+                        .matches
+                        .iter()
+                        .any(|result| result.label == "WeatherActivity.kt")
+                );
+                assert!(
+                    !picker
+                        .delegate
+                        .matches
+                        .iter()
+                        .any(|result| result.label == "WeatherActivityGenerated.kt")
+                );
+            });
+            filesystem
+                .remove_dir(
+                    &build,
+                    project::RemoveOptions {
+                        recursive: true,
+                        ..Default::default()
+                    },
+                )
+                .await
+                .expect("Delete build output");
+            workspace
+                .read_with(&cx.cx.cx, |workspace, cx| {
+                    workspace.worktree_scans_complete(cx)
+                })
+                .await;
+            settle(&mut cx);
+        }
+        // Open both files through the workspace so the empty query has real history.
+        let paths = picker.read_with(&cx.cx.cx, |picker, _| {
+            picker
+                .delegate
+                .matches
+                .iter()
+                .filter_map(|result| match &result.target {
+                    Target::File(path) => Some(path.clone()),
+                    _ => None,
+                })
+                .collect::<Vec<_>>()
+        });
+        cx.simulate_keystrokes("escape");
+        for path in paths {
+            cx.update_workspace(|workspace, window, cx| {
+                workspace.open_path(path, None, true, window, cx)
+            })
+            .await
+            .expect("Open recent source file");
+        }
+        for _ in 0..2 {
+            cx.simulate_modifiers_change(Modifiers::shift());
+            cx.simulate_modifiers_change(Modifiers::none());
+        }
+        settle(&mut cx);
+        let picker = workspace.read_with(&cx.cx.cx, |workspace, cx| {
+            workspace
+                .active_modal::<SearchEverywhere>(cx)
+                .expect("Recent files picker")
+                .read(cx)
+                .picker
+                .clone()
+        });
+        cx.simulate_keystrokes("down");
+        let recent_selection = picker.read_with(&cx.cx.cx, |picker, _| {
+            assert!(picker.delegate.query.is_empty());
+            assert_eq!(picker.delegate.selected, 1);
+            picker.delegate.matches[picker.delegate.selected]
+                .label
+                .clone()
+        });
+        filesystem
+            .as_fake()
+            .insert_file(root.join("unrelated.txt"), Vec::new())
+            .await;
+        workspace
+            .read_with(&cx.cx.cx, |workspace, cx| {
+                workspace.worktree_scans_complete(cx)
+            })
+            .await;
+        settle(&mut cx);
+        picker.read_with(&cx.cx.cx, |picker, _| {
+            assert_eq!(
+                picker.delegate.matches[picker.delegate.selected].label, recent_selection,
+                "Filesystem refresh preserves a navigated recent file for an empty query"
+            );
+        });
+        filesystem
+            .as_fake()
+            .insert_file(
+                root.join(".gitignore"),
+                b"**/build/\n**/WeatherActivityWidget.kt\n".to_vec(),
+            )
+            .await;
+        workspace
+            .read_with(&cx.cx.cx, |workspace, cx| {
+                workspace.worktree_scans_complete(cx)
+            })
+            .await;
+        settle(&mut cx);
+        picker.read_with(&cx.cx.cx, |picker, _| {
+            assert!(
+                !picker
+                    .delegate
+                    .matches
+                    .iter()
+                    .any(|result| result.label == "WeatherActivityWidget.kt"),
+                "Newly ignored files leave recent results as well as typed searches"
+            );
+        });
+        picker.update_in(&mut cx.cx.cx, |picker, window, cx| {
+            picker.set_query("WeatherActivity", window, cx)
+        });
+        settle(&mut cx);
+        filesystem
+            .remove_file(&second_source, project::RemoveOptions::default())
+            .await
+            .expect("Delete second source");
+        filesystem
+            .remove_file(&source, project::RemoveOptions::default())
+            .await
+            .expect("Delete source");
+        workspace
+            .read_with(&cx.cx.cx, |workspace, cx| {
+                workspace.worktree_scans_complete(cx)
+            })
+            .await;
+        settle(&mut cx);
+        picker.read_with(&cx.cx.cx, |picker, _| {
+            assert!(
+                picker.delegate.matches.is_empty(),
+                "Deleted source must leave the unchanged query"
+            )
+        });
+    }
+
+    #[gpui::test]
+    async fn project_refresh_waits_for_the_navigated_symbol_before_confirming(
+        cx: &mut TestAppContext,
+    ) {
+        initialize_test(cx);
+        let mut cx = EditorLspTestContext::new_rust(
+            lsp::ServerCapabilities {
+                workspace_symbol_provider: Some(lsp::OneOf::Left(true)),
+                ..Default::default()
+            },
+            cx,
+        )
+        .await;
+        cx.set_state("struct FileType;\nfn file_function() {}ˇ\n");
+        #[expect(deprecated)]
+        let symbol = lsp::SymbolInformation {
+            name: "FileType".into(),
+            kind: lsp::SymbolKind::STRUCT,
+            tags: None,
+            deprecated: None,
+            container_name: None,
+            location: lsp::Location {
+                uri: cx.buffer_lsp_url.clone(),
+                range: lsp::Range::new(lsp::Position::new(0, 7), lsp::Position::new(0, 15)),
+            },
+        };
+        let response_symbol = symbol.clone();
+        let (sender, receiver) = futures::channel::oneshot::channel();
+        let mut receiver = Some(receiver);
+        let mut first = true;
+        cx.lsp
+            .set_request_handler::<lsp::WorkspaceSymbolRequest, _, _>(move |_, _| {
+                let response = if first {
+                    first = false;
+                    None
+                } else {
+                    Some(receiver.take().expect("One filesystem refresh"))
+                };
+                let symbol = response_symbol.clone();
+                async move {
+                    if let Some(receiver) = response {
+                        receiver.await.expect("Release refreshed symbols");
+                    }
+                    Ok(Some(lsp::WorkspaceSymbolResponse::Flat(vec![symbol])))
+                }
+            });
+        for _ in 0..2 {
+            cx.simulate_modifiers_change(Modifiers::shift());
+            cx.simulate_modifiers_change(Modifiers::none());
+        }
+        cx.run_until_parked();
+        let workspace = cx.workspace.clone();
+        let picker = workspace.read_with(&cx.cx.cx, |workspace, cx| {
+            workspace
+                .active_modal::<SearchEverywhere>(cx)
+                .expect("Search Everywhere")
+                .read(cx)
+                .picker
+                .clone()
+        });
+        picker.update_in(&mut cx.cx.cx, |picker, window, cx| {
+            picker.set_query("file", window, cx)
+        });
+        cx.run_until_parked();
+        picker.update_in(&mut cx.cx.cx, |picker, window, cx| {
+            let index = picker
+                .delegate
+                .matches
+                .iter()
+                .position(|result| matches!(result.target, Target::Symbol(_)))
+                .expect("Initial symbol");
+            picker.set_selected_index(index, None, false, window, cx);
+        });
+        let filesystem = workspace.read_with(&cx.cx.cx, |workspace, cx| {
+            workspace.project().read(cx).fs().clone()
+        });
+        filesystem
+            .as_fake()
+            .insert_file(
+                EditorLspTestContext::root_path().join("unrelated.txt"),
+                Vec::new(),
+            )
+            .await;
+        workspace
+            .read_with(&cx.cx.cx, |workspace, cx| {
+                workspace.worktree_scans_complete(cx)
+            })
+            .await;
+        cx.run_until_parked();
+        cx.executor()
+            .advance_clock(std::time::Duration::from_millis(100));
+        cx.run_until_parked();
+        picker.read_with(&cx.cx.cx, |picker, _| {
+            assert!(picker.delegate.loading_symbols);
+            assert!(picker.delegate.refresh_selection.is_some());
+            assert!(
+                !picker.delegate.matches.is_empty(),
+                "Other contributors already have results"
+            );
+        });
+        cx.simulate_keystrokes("enter");
+        cx.run_until_parked();
+        assert!(
+            workspace.read_with(&cx.cx.cx, |workspace, cx| workspace
+                .active_modal::<SearchEverywhere>(cx)
+                .is_some()),
+            "Enter must wait for the selected symbol instead of opening an unrelated file/action"
+        );
+        sender.send(()).expect("Symbol request remains pending");
+        cx.run_until_parked();
+        assert!(workspace.read_with(&cx.cx.cx, |workspace, cx| {
+            workspace.active_modal::<SearchEverywhere>(cx).is_none()
+        }));
+        cx.assert_editor_state("struct ˇFileType;\nfn file_function() {}\n");
     }
 
     #[gpui::test]
